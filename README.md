@@ -7,6 +7,7 @@ GamâLokal: An online commerce platform connecting clients with local artists fo
 
 ## RP.010.001 Release Notes (reverse chronological order)
 * feat: add signup UI and update metadata
+* feat: setup Supabase database schema, RLS policies, and auth triggers
 * chore: setup Supabase SSR and auth utilities
 * NOTES: Initial Supabase auth trigger setup complete; email confirmations currently disabled for local development testing.
 
