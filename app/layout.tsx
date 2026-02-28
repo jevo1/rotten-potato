@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Arktic | Artist Commerce Platform',
-  description: 'Connect with local artists and commission custom artwork.',
+  title: 'GamâLokal | Support Local Artists',
+  description: 'Discover, commission, and buy artwork from talented local creators.',
 }
 
 export default function RootLayout({
