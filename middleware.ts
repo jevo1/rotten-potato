@@ -1,9 +1,9 @@
 import { type NextRequest } from 'next/server'
-import { createClient } from '@/utils/supabase/middleware'
+import { updateSession } from '@/utils/supabase/middleware'
 
 export async function middleware(request: NextRequest) {
   // This intercepts every page request to refresh the user's secure session cookies
-  return await createClient(request)
+  return await updateSession(request)
 }
 
 // This tells Next.js exactly which routes to run the middleware on

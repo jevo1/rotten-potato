@@ -31,5 +31,28 @@ export async function signup(formData: FormData) {
   }
 
   revalidatePath('/', 'layout')
-  redirect('/dashboard')
+  // Redirect to home page
+  redirect('/')
+}
+
+export async function login(formData: FormData) {
+  const cookieStore = cookies()
+  const supabase = createClient(cookieStore)
+
+  const email = formData.get('email') as string
+  const password = formData.get('password') as string
+
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  })
+
+  if (error) {
+    console.error('Login error:', error.message)
+    redirect('/login?error=Invalid login credentials')
+  }
+
+  revalidatePath('/', 'layout')
+  // Redirect to home page
+  redirect('/')
 }

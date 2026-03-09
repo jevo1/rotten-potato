@@ -1,95 +1,106 @@
+// app/signup/page.tsx
 import { signup } from '../actions'
+import Link from 'next/link'
 
 export default function SignupPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
-      <div className="w-full max-w-md space-y-8 rounded-lg bg-white p-8 shadow-md">
-        <div className="text-center">
-          <h2 className="text-3xl font-extrabold text-gray-900">
-            Join GamâLokal
-          </h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Create an account to start commissioning or selling art.
-          </p>
+    <div className="relative min-h-screen w-full bg-black font-sans text-white">
+      {/* Background Image (Replace with your own image path in public folder) */}
+      <div 
+        className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=2000&auto=format&fit=crop")' }}
+      >
+        {/* Dark overlay for better text readability */}
+        <div className="absolute inset-0 bg-black/30"></div>
+      </div>
+
+      <div className="relative z-10 flex min-h-screen w-full flex-col md:flex-row">
+        {/* Left Side: Marketing Text */}
+        <div className="flex flex-1 flex-col justify-end p-8 md:p-16 lg:p-24">
+          <h1 className="mb-4 text-4xl font-medium tracking-wide md:text-5xl lg:text-6xl">
+            It's time to boost<br />
+            <span className="relative inline-block">
+              your creativity
+              <span className="absolute -bottom-2 left-0 h-1 w-full bg-teal-500"></span>
+            </span>
+          </h1>
+
+          <div className="mt-12 w-fit rounded-2xl bg-white/10 p-6 backdrop-blur-md border border-white/20">
+            <p className="text-sm text-white/80 mb-2">Already a member?</p>
+            <Link href="/login" className="flex items-center text-lg font-semibold hover:text-teal-300 transition-colors">
+              Sign in <span className="ml-2">→</span>
+            </Link>
+          </div>
         </div>
 
-        <form className="mt-8 space-y-6">
-          <div className="-space-y-px rounded-md shadow-sm">
-            {/* Full Name */}
-            <div>
-              <label htmlFor="name" className="sr-only">Full Name</label>
-              <input
-                id="name"
-                name="name"
-                type="text"
-                required
-                className="relative block w-full rounded-t-md border-0 py-1.5 pl-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                placeholder="Full Name"
-              />
+        {/* Right Side: Form */}
+        <div className="flex w-full flex-col items-center justify-center bg-white/5 p-8 backdrop-blur-lg border-l border-white/10 md:w-[450px] lg:w-[500px]">
+          <div className="w-full max-w-sm">
+            <div className="mb-10 flex items-center justify-center gap-2">
+              {/* GamâLokal Logo Placeholder */}
+              <div className="flex items-center gap-2 text-xl font-bold tracking-wider">
+                <svg className="h-6 w-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 22h20L12 2zm0 4.5l6.5 13.5h-13L12 6.5z"/></svg>
+                GamâLokal
+              </div>
             </div>
 
-            {/* Email Address */}
-            <div>
-              <label htmlFor="email" className="sr-only">Email address</label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                className="relative block w-full border-0 py-1.5 pl-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                placeholder="Email address"
-              />
-            </div>
+            <h2 className="mb-8 text-2xl font-medium">Sign up</h2>
 
-            {/* Password */}
-            <div>
-              <label htmlFor="password" className="sr-only">Password</label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                required
-                className="relative block w-full rounded-b-md border-0 py-1.5 pl-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                placeholder="Password"
-              />
-            </div>
-          </div>
+            <form className="space-y-5">
+              <div>
+                <label className="mb-1 block text-xs text-white/80">Full name</label>
+                <input
+                  name="name"
+                  type="text"
+                  required
+                  placeholder="Juan dela Cruz"
+                  className="w-full rounded-full border border-white/30 bg-transparent px-5 py-3 text-sm text-white placeholder-white/50 focus:border-white focus:outline-none focus:ring-1 focus:ring-white"
+                />
+              </div>
 
-          {/* Role Selection */}
-          <div className="flex items-center justify-center gap-6">
-             <label className="flex items-center gap-2 cursor-pointer">
-              <input 
-                type="radio" 
-                name="role" 
-                value="client" 
-                defaultChecked 
-                className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-600"
-              />
-              <span className="text-sm font-medium text-gray-900">I want to Buy Art</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input 
-                type="radio" 
-                name="role" 
-                value="artist" 
-                className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-600"
-              />
-              <span className="text-sm font-medium text-gray-900">I want to Sell Art</span>
-            </label>
-          </div>
+              <div>
+                <label className="mb-1 block text-xs text-white/80">Email</label>
+                <input
+                  name="email"
+                  type="email"
+                  required
+                  placeholder="juan@gmail.com"
+                  className="w-full rounded-full border border-white/30 bg-transparent px-5 py-3 text-sm text-white placeholder-white/50 focus:border-white focus:outline-none focus:ring-1 focus:ring-white"
+                />
+              </div>
 
-          {/* Submit Button */}
-          <div>
-            <button
-              formAction={signup}
-              className="group relative flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-            >
-              Sign up
-            </button>
+              <div>
+                <label className="mb-1 block text-xs text-white/80">Password</label>
+                <input
+                  name="password"
+                  type="password"
+                  required
+                  placeholder="••••••••"
+                  className="w-full rounded-full border border-white/30 bg-transparent px-5 py-3 text-sm text-white placeholder-white/50 focus:border-white focus:outline-none focus:ring-1 focus:ring-white"
+                />
+              </div>
+
+              {/* Role Selection */}
+              <div className="flex items-center justify-between pt-2 px-2">
+                <label className="flex cursor-pointer items-center gap-2">
+                  <input type="radio" name="role" value="client" defaultChecked className="h-4 w-4 accent-teal-500" />
+                  <span className="text-sm text-white/90">I want to Buy Art</span>
+                </label>
+                <label className="flex cursor-pointer items-center gap-2">
+                  <input type="radio" name="role" value="artist" className="h-4 w-4 accent-teal-500" />
+                  <span className="text-sm text-white/90">I want to Sell Art</span>
+                </label>
+              </div>
+
+              <button
+                formAction={signup}
+                className="mt-4 w-full rounded-full bg-white py-3 font-semibold text-teal-900 transition-colors hover:bg-gray-100"
+              >
+                Create account
+              </button>
+            </form>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   )
