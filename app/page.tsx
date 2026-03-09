@@ -3,9 +3,7 @@ import Link from "next/link";
 export default function Home() {
   return (
     <div className="relative flex min-h-screen flex-col font-sans text-white">
-      {/* Background Gradient matching the design */}
       <div className="absolute inset-0 z-0 bg-gradient-to-br from-[#1b5b71] via-[#3a686b] to-[#a36846]">
-        {/* Optional: Subtle overlay to blend the colors smoothly */}
         <div className="absolute inset-0 bg-black/10"></div>
       </div>
 
@@ -52,7 +50,7 @@ export default function Home() {
             artists and craftsmen of Baybay City, Leyte, Philippines.
           </p>
           
-          {/* CTA Buttons - No longer redundant with auth! */}
+          {/* CTA Buttons  */}
           <div className="flex flex-col items-center justify-center gap-4 pt-6 sm:flex-row w-full sm:w-auto">
             <Link
               href="/signup?role=client"
