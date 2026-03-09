@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from 'next/image'
 
 export default function Home() {
   return (
@@ -9,13 +10,16 @@ export default function Home() {
 
       {/* Header Navigation */}
       <header className="relative z-10 flex w-full items-center justify-between p-6 lg:px-12">
-        <div className="flex items-center gap-2 text-2xl font-bold tracking-wider text-white">
-          {/* GamâLokal Logo SVG */}
-          <svg className="h-8 w-8 text-[#f2a83b]" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 2L2 22h20L12 2zm0 4.5l6.5 13.5h-13L12 6.5z" />
-          </svg>
-          GamâLokal
-        </div>
+        <div className="flex items-center gap-2 text-2xl font-extrabold tracking-tight">
+            <Image 
+              src="/logo.png" 
+              alt="GamâLokal Logo" 
+              width={40} 
+              height={40} 
+              className="object-contain"
+            />
+            GamâLokal 
+         </div>
         <nav className="flex items-center gap-6 font-medium">
           <Link href="/login" className="text-white/90 hover:text-[#f2a83b] transition-colors">
             Log in
