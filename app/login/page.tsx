@@ -1,8 +1,8 @@
-import { signup, signInWithGoogle } from '../actions'
+import { login, signInWithGoogle } from '../actions'
 import Link from 'next/link'
 import Image from 'next/image'
 
-export default function SignupPage() {
+export default function LoginPage() {
   return (
     <div className="relative min-h-screen w-full bg-black font-sans text-white">
       {/* Background Image */}
@@ -17,17 +17,17 @@ export default function SignupPage() {
         {/* Left Side: Marketing Text */}
         <div className="flex flex-1 flex-col justify-end p-8 md:p-16 lg:p-24">
           <h1 className="mb-4 text-5xl font-extrabold tracking-tight md:text-6xl lg:text-7xl">
-            It's time to boost<br />
+            Welcome back to<br />
             <span className="relative inline-block mt-2">
-              your creativity
+              GamâLokal
               <span className="absolute -bottom-2 left-0 h-1.5 w-full bg-teal-500"></span>
             </span>
           </h1>
 
           <div className="mt-12 w-fit rounded-2xl bg-white/10 p-6 backdrop-blur-md border border-white/20">
-            <p className="text-sm text-white/80 mb-2 font-medium">Already a member?</p>
-            <Link href="/login" className="flex items-center text-lg font-bold hover:text-teal-300 transition-colors">
-              Sign in <span className="ml-2">→</span>
+            <p className="text-sm text-white/80 mb-2 font-medium">Not a member yet?</p>
+            <Link href="/signup" className="flex items-center text-lg font-bold hover:text-teal-300 transition-colors">
+              Sign up <span className="ml-2">→</span>
             </Link>
           </div>
         </div>
@@ -48,20 +48,9 @@ export default function SignupPage() {
                        </div>
             </div>
 
-            <h2 className="mb-8 text-3xl font-bold tracking-tight">Sign up</h2>
+            <h2 className="mb-8 text-3xl font-bold tracking-tight">Log in</h2>
 
             <form className="space-y-5">
-              <div>
-                <label className="mb-1 block text-xs font-medium text-white/80">Full name</label>
-                <input
-                  name="name"
-                  type="text"
-                  required
-                  placeholder="Juan dela Cruz"
-                  className="w-full rounded-full border border-white/30 bg-transparent px-5 py-3 text-sm text-white placeholder-white/50 focus:border-white focus:outline-none focus:ring-1 focus:ring-white"
-                />
-              </div>
-
               <div>
                 <label className="mb-1 block text-xs font-medium text-white/80">Email</label>
                 <input
@@ -84,23 +73,11 @@ export default function SignupPage() {
                 />
               </div>
 
-              {/* Role Selection */}
-              <div className="flex items-center justify-between pt-2 px-2">
-                <label className="flex cursor-pointer items-center gap-2">
-                  <input type="radio" name="role" value="client" defaultChecked className="h-4 w-4 accent-teal-500" />
-                  <span className="text-sm font-medium text-white/90">I want to Buy Art</span>
-                </label>
-                <label className="flex cursor-pointer items-center gap-2">
-                  <input type="radio" name="role" value="artist" className="h-4 w-4 accent-teal-500" />
-                  <span className="text-sm font-medium text-white/90">I want to Sell Art</span>
-                </label>
-              </div>
-
               <button
-                formAction={signup}
-                className="mt-4 w-full rounded-full bg-white py-3 font-bold text-teal-900 transition-colors hover:bg-gray-100"
+                formAction={login}
+                className="mt-6 w-full rounded-full bg-white py-3 font-bold text-teal-900 transition-colors hover:bg-gray-100"
               >
-                Create account
+                Log in
               </button>
             </form>
 
