@@ -1,12 +1,13 @@
 import { type NextRequest } from 'next/server'
-import { updateSession } from '@/utils/supabase/middleware'
+import { updateSession } from '@/utils/supabase/proxy'
 
-export async function middleware(request: NextRequest) {
+// The exported function must now be named 'proxy'
+export async function proxy(request: NextRequest) {
   // This intercepts every page request to refresh the user's secure session cookies
   return await updateSession(request)
 }
 
-// This tells Next.js exactly which routes to run the middleware on
+// This tells Next.js exactly which routes to run the proxy on
 export const config = {
   matcher: [
     /*
