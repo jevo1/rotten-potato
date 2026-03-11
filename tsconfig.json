@@ -29,6 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-  ],
+, "app/homepage/BrowsePage.tsx"  ],
   "exclude": ["node_modules"]
 }

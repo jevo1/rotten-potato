@@ -6,9 +6,10 @@ interface ButtonProps {
   label?: string;
   onClick: () => void;
   isActive?: boolean;
+  style?: React.CSSProperties;
 }
 
-export default function SymbolButton({ imageSrc, alt, label, onClick, isActive }: ButtonProps) {
+export default function SymbolButton({ imageSrc, alt, label, onClick, isActive, style }: ButtonProps) {
   return (
     <button
       onClick={onClick}
@@ -22,6 +23,7 @@ export default function SymbolButton({ imageSrc, alt, label, onClick, isActive }
         background: isActive ? '#C87941' : '#f2f2f2',
         color: isActive ? '#fff' : '#000',
         cursor: 'pointer',
+        ...style,
       }}
     >
       <Image src={imageSrc} alt={alt || 'Symbol'} width={24} height={24} />
