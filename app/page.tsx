@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from 'next/image'
 
-export default function Home() {
+export default function LandingPage() {
   return (
     <div className="relative flex min-h-screen flex-col font-sans text-white">
       <div className="absolute inset-0 z-0 bg-gradient-to-br from-[#1b5b71] via-[#3a686b] to-[#a36846]">
