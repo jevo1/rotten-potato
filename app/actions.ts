@@ -30,9 +30,9 @@ export async function signup(formData: FormData) {
     redirect('/signup?error=Could not authenticate user')
   }
 
-  revalidatePath('/', 'layout')
+  revalidatePath('/homepage', 'layout')
   // Redirect to home page
-  redirect('/')
+  redirect('/homepage')
 }
 
 export async function login(formData: FormData) {
@@ -52,9 +52,9 @@ export async function login(formData: FormData) {
     redirect('/login?error=Invalid login credentials')
   }
 
-  revalidatePath('/', 'layout')
+  revalidatePath('/homepage', 'layout')
   // Redirect to home page
-  redirect('/')
+  redirect('/homepage')
 }
 
 export async function signInWithGoogle() {
