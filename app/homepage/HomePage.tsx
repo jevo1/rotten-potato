@@ -8,60 +8,84 @@ export default function HomePage() {
         
         {/* --- Categories Section --- */}
         <div className="flex flex-wrap items-center justify-center gap-3 mb-12">
-          <button className="flex items-center gap-2 px-5 py-2 rounded-full border border-orange-300 text-orange-700 bg-orange-50/70 hover:bg-orange-100 transition-colors shadow-sm">
-            <span className="text-sm">🎨</span> <span className="font-semibold text-sm">Paintings</span>
+          {/* Paintings */}
+          <button className="group flex items-center gap-2 px-5 py-2.5 rounded-full border border-[#C87941]/30 text-[#C87941] bg-white hover:bg-[#C87941] hover:text-white transition-all shadow-sm hover:shadow-md">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10c1.38 0 2.5-1.12 2.5-2.5 0-.61-.23-1.18-.64-1.64-.37-.41-.61-.96-.61-1.55 0-1.24 1.01-2.25 2.25-2.25h2.5c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8z"/></svg>
+            <span className="font-semibold text-sm">Paintings</span>
           </button>
           
-          <button className="flex items-center gap-2 px-5 py-2 rounded-full border border-teal-400 text-teal-800 bg-teal-50/70 hover:bg-teal-100 transition-colors shadow-sm">
-            <span className="text-sm">🧵</span> <span className="font-semibold text-sm">Weaving</span>
+          {/* Weaving */}
+          <button className="group flex items-center gap-2 px-5 py-2.5 rounded-full border border-[#1C4A5C]/30 text-[#1C4A5C] bg-white hover:bg-[#1C4A5C] hover:text-white transition-all shadow-sm hover:shadow-md">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
+            <span className="font-semibold text-sm">Weaving</span>
           </button>
           
-          <button className="flex items-center gap-2 px-5 py-2 rounded-full border border-[#b88c67] text-[#7a5840] bg-[#fdf8f5] hover:bg-[#f5ebe4] transition-colors shadow-sm">
-            <span className="text-sm">🏺</span> <span className="font-semibold text-sm">Pottery</span>
+          {/* Pottery */}
+          <button className="group flex items-center gap-2 px-5 py-2.5 rounded-full border border-[#8B5A2B]/30 text-[#8B5A2B] bg-white hover:bg-[#8B5A2B] hover:text-white transition-all shadow-sm hover:shadow-md">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M7 3h10v4c0 2.5-2 4-2 4s2 1.5 2 4v6H7v-6c0-2.5 2-4 2-4s-2-1.5-2-4V3z"/></svg>
+            <span className="font-semibold text-sm">Pottery</span>
           </button>
           
-          <button className="flex items-center gap-2 px-5 py-2 rounded-full border border-stone-400 text-stone-800 bg-stone-100/70 hover:bg-stone-200 transition-colors shadow-sm">
-            <span className="text-sm">🪵</span> <span className="font-semibold text-sm">Wood Carving</span>
+          {/* Wood Carving */}
+          <button className="group flex items-center gap-2 px-5 py-2.5 rounded-full border border-stone-500/30 text-stone-600 bg-white hover:bg-stone-600 hover:text-white transition-all shadow-sm hover:shadow-md">
+             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22v-8"/><path d="M12 14c-2.5-2-5-4-5-8 0-4 10-4 10 0 0 4-2.5 6-5 8z"/></svg>
+            <span className="font-semibold text-sm">Wood Carving</span>
           </button>
           
-          <button className="flex items-center gap-2 px-5 py-2 rounded-full border border-yellow-400 text-yellow-700 bg-yellow-50/70 hover:bg-yellow-100 transition-colors shadow-sm">
-            <span className="text-sm">💍</span> <span className="font-semibold text-sm">Jewelry</span>
+          {/* Jewelry */}
+          <button className="group flex items-center gap-2 px-5 py-2.5 rounded-full border border-[#f2a83b]/50 text-[#d48b1a] bg-white hover:bg-[#f2a83b] hover:text-white transition-all shadow-sm hover:shadow-md">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 2 7 12 22 22 7 12 2"/><polyline points="2 7 12 7 22 7"/><polyline points="12 22 12 7"/></svg>
+            <span className="font-semibold text-sm">Jewelry</span>
           </button>
           
-          <button className="flex items-center gap-2 px-5 py-2 rounded-full border border-blue-400 text-blue-600 bg-blue-50/70 hover:bg-blue-100 transition-colors shadow-sm">
-            <span className="text-sm">💻</span> <span className="font-semibold text-sm">Digital Art</span>
+          {/* Digital Art */}
+          <button className="group flex items-center gap-2 px-5 py-2.5 rounded-full border border-blue-500/30 text-blue-600 bg-white hover:bg-blue-600 hover:text-white transition-all shadow-sm hover:shadow-md">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            <span className="font-semibold text-sm">Digital Art</span>
           </button>
           
-          <button className="flex items-center gap-2 px-5 py-2 rounded-full border border-purple-400 text-purple-700 bg-purple-50/70 hover:bg-purple-100 transition-colors shadow-sm">
-            <span className="text-sm">🪡</span> <span className="font-semibold text-sm">Embroidery</span>
+          {/* Embroidery */}
+          <button className="group flex items-center gap-2 px-5 py-2.5 rounded-full border border-purple-500/30 text-purple-600 bg-white hover:bg-purple-600 hover:text-white transition-all shadow-sm hover:shadow-md">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>
+            <span className="font-semibold text-sm">Embroidery</span>
           </button>
           
-          <button className="flex items-center gap-2 px-5 py-2 rounded-full border border-green-400 text-green-700 bg-green-50/70 hover:bg-green-100 transition-colors shadow-sm">
-            <span className="text-sm">📷</span> <span className="font-semibold text-sm">Photography</span>
+          {/* Photography */}
+          <button className="group flex items-center gap-2 px-5 py-2.5 rounded-full border border-teal-600/30 text-teal-600 bg-white hover:bg-teal-600 hover:text-white transition-all shadow-sm hover:shadow-md">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            <span className="font-semibold text-sm">Photography</span>
           </button>
         </div>
 
         {/* --- Quick Actions Cards Section --- */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col items-center text-center cursor-pointer hover:shadow-md transition-shadow">
-            <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center mb-4 text-xl">🎨</div>
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col items-center text-center cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+            <div className="w-14 h-14 rounded-full bg-[#C87941]/10 text-[#C87941] flex items-center justify-center mb-4">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+            </div>
             <h3 className="font-bold text-gray-900 mb-1">Post Artworks</h3>
-            <p className="text-xs text-gray-500">Share your creations</p>
+            <p className="text-xs text-gray-500 font-medium">Share your creations</p>
           </div>
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col items-center text-center cursor-pointer hover:shadow-md transition-shadow">
-            <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-4 text-xl">💬</div>
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col items-center text-center cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+            <div className="w-14 h-14 rounded-full bg-[#1C4A5C]/10 text-[#1C4A5C] flex items-center justify-center mb-4">
+               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </div>
             <h3 className="font-bold text-gray-900 mb-1">Direct Messaging</h3>
-            <p className="text-xs text-gray-500">Talk to artists</p>
+            <p className="text-xs text-gray-500 font-medium">Talk to artists</p>
           </div>
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col items-center text-center cursor-pointer hover:shadow-md transition-shadow">
-            <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center mb-4 text-xl">🛍️</div>
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col items-center text-center cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+            <div className="w-14 h-14 rounded-full bg-[#f2a83b]/20 text-[#d48b1a] flex items-center justify-center mb-4">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+            </div>
             <h3 className="font-bold text-gray-900 mb-1">Secure Payment</h3>
-            <p className="text-xs text-gray-500">Safe transactions</p>
+            <p className="text-xs text-gray-500 font-medium">Safe transactions</p>
           </div>
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col items-center text-center cursor-pointer hover:shadow-md transition-shadow">
-            <div className="w-12 h-12 rounded-full bg-stone-100 flex items-center justify-center mb-4 text-xl">📋</div>
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col items-center text-center cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+            <div className="w-14 h-14 rounded-full bg-stone-100 text-stone-600 flex items-center justify-center mb-4">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><polyline points="9 14 11 16 15 12"/></svg>
+            </div>
             <h3 className="font-bold text-gray-900 mb-1">Commissions</h3>
-            <p className="text-xs text-gray-500">Custom orders</p>
+            <p className="text-xs text-gray-500 font-medium">Custom orders</p>
           </div>
         </div>
 
@@ -70,66 +94,77 @@ export default function HomePage() {
           <div className="flex justify-between items-end mb-6">
             <div>
               <h2 className="text-2xl font-bold text-[#1C4A5C]">Featured Artworks</h2>
-              <p className="text-sm text-gray-500 mt-1">Handpicked from local Baybayanon artists</p>
+              <p className="text-sm text-gray-500 mt-1 font-medium">Handpicked from local Baybayanon artists</p>
             </div>
-            <button className="text-[#C87941] text-sm font-semibold hover:underline">View All →</button>
+            <button className="text-[#C87941] text-sm font-bold hover:text-[#a86536] transition-colors flex items-center gap-1">
+              View All <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Artwork Card 1 */}
-            <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100">
-              <div className="relative h-48 bg-gray-200">
+            <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 group">
+              <div className="relative h-56 bg-gray-100 overflow-hidden">
                  {/* Placeholder for actual image */}
-                 <div className="absolute top-3 left-3 bg-[#C87941] text-white text-xs font-bold px-2 py-1 rounded">Painting</div>
-                 <button className="absolute top-3 right-3 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm text-gray-400 hover:text-red-500">♡</button>
+                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                 <div className="absolute top-4 left-4 bg-[#C87941] text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">Painting</div>
+                 <button className="absolute top-4 right-4 w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-md text-gray-400 hover:text-red-500 hover:scale-110 transition-all">
+                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                 </button>
               </div>
               <div className="p-5">
-                <h3 className="font-bold text-lg text-gray-900">Sunset Over Baybay Bay</h3>
-                <p className="text-sm text-[#3A6A7C] mb-2">by Maria Santos</p>
-                <div className="flex items-center gap-1 mb-4 text-sm">
-                  <span className="text-yellow-400">★</span> <span className="font-bold text-gray-700">4.9</span>
+                <h3 className="font-bold text-lg text-gray-900 group-hover:text-[#1C4A5C] transition-colors">Sunset Over Baybay Bay</h3>
+                <p className="text-sm text-gray-500 font-medium mb-3">by <span className="text-[#3A6A7C]">Maria Santos</span></p>
+                <div className="flex items-center gap-1 mb-4 text-sm bg-gray-50 w-fit px-2 py-1 rounded-md">
+                  <span className="text-[#f2a83b]">★</span> <span className="font-bold text-gray-700">4.9</span>
                 </div>
                 <div className="flex justify-between items-center mt-2">
-                  <span className="font-bold text-lg text-[#C87941]">₱2,500</span>
-                  <button className="bg-[#1C4A5C] hover:bg-[#2a6279] text-white px-4 py-2 rounded-full text-sm font-semibold transition-colors">Add to Cart</button>
+                  <span className="font-extrabold text-xl text-[#C87941]">₱2,500</span>
+                  <button className="bg-[#1C4A5C] hover:bg-[#143745] text-white px-5 py-2.5 rounded-full text-sm font-bold transition-all hover:shadow-md">Add to Cart</button>
                 </div>
               </div>
             </div>
 
             {/* Artwork Card 2 */}
-            <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100">
-              <div className="relative h-48 bg-gray-200">
-                 <div className="absolute top-3 left-3 bg-[#C87941] text-white text-xs font-bold px-2 py-1 rounded">Weaving</div>
-                 <button className="absolute top-3 right-3 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm text-gray-400 hover:text-red-500">♡</button>
+            <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 group">
+              <div className="relative h-56 bg-gray-100 overflow-hidden">
+                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                 <div className="absolute top-4 left-4 bg-[#1C4A5C] text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">Weaving</div>
+                 <button className="absolute top-4 right-4 w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-md text-gray-400 hover:text-red-500 hover:scale-110 transition-all">
+                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                 </button>
               </div>
               <div className="p-5">
-                <h3 className="font-bold text-lg text-gray-900">Handwoven Pinukpok Basket</h3>
-                <p className="text-sm text-[#3A6A7C] mb-2">by Lola Nena Craft</p>
-                <div className="flex items-center gap-1 mb-4 text-sm">
-                  <span className="text-yellow-400">★</span> <span className="font-bold text-gray-700">4.7</span>
+                <h3 className="font-bold text-lg text-gray-900 group-hover:text-[#1C4A5C] transition-colors">Handwoven Pinukpok Basket</h3>
+                <p className="text-sm text-gray-500 font-medium mb-3">by <span className="text-[#3A6A7C]">Lola Nena Craft</span></p>
+                <div className="flex items-center gap-1 mb-4 text-sm bg-gray-50 w-fit px-2 py-1 rounded-md">
+                  <span className="text-[#f2a83b]">★</span> <span className="font-bold text-gray-700">4.7</span>
                 </div>
                 <div className="flex justify-between items-center mt-2">
-                  <span className="font-bold text-lg text-[#C87941]">₱850</span>
-                  <button className="bg-[#1C4A5C] hover:bg-[#2a6279] text-white px-4 py-2 rounded-full text-sm font-semibold transition-colors">Add to Cart</button>
+                  <span className="font-extrabold text-xl text-[#C87941]">₱850</span>
+                  <button className="bg-[#1C4A5C] hover:bg-[#143745] text-white px-5 py-2.5 rounded-full text-sm font-bold transition-all hover:shadow-md">Add to Cart</button>
                 </div>
               </div>
             </div>
 
             {/* Artwork Card 3 */}
-            <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100">
-              <div className="relative h-48 bg-gray-200">
-                 <div className="absolute top-3 left-3 bg-[#C87941] text-white text-xs font-bold px-2 py-1 rounded">Pottery</div>
-                 <button className="absolute top-3 right-3 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm text-gray-400 hover:text-red-500">♡</button>
+            <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 group">
+              <div className="relative h-56 bg-gray-100 overflow-hidden">
+                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                 <div className="absolute top-4 left-4 bg-[#8B5A2B] text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">Pottery</div>
+                 <button className="absolute top-4 right-4 w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-md text-gray-400 hover:text-red-500 hover:scale-110 transition-all">
+                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                 </button>
               </div>
               <div className="p-5">
-                <h3 className="font-bold text-lg text-gray-900">Celadon Sea Pottery Set</h3>
-                <p className="text-sm text-[#3A6A7C] mb-2">by Jun dela Cruz</p>
-                <div className="flex items-center gap-1 mb-4 text-sm">
-                  <span className="text-yellow-400">★</span> <span className="font-bold text-gray-700">5.0</span>
+                <h3 className="font-bold text-lg text-gray-900 group-hover:text-[#1C4A5C] transition-colors">Celadon Sea Pottery Set</h3>
+                <p className="text-sm text-gray-500 font-medium mb-3">by <span className="text-[#3A6A7C]">Jun dela Cruz</span></p>
+                <div className="flex items-center gap-1 mb-4 text-sm bg-gray-50 w-fit px-2 py-1 rounded-md">
+                  <span className="text-[#f2a83b]">★</span> <span className="font-bold text-gray-700">5.0</span>
                 </div>
                 <div className="flex justify-between items-center mt-2">
-                  <span className="font-bold text-lg text-[#C87941]">₱1,800</span>
-                  <button className="bg-[#1C4A5C] hover:bg-[#2a6279] text-white px-4 py-2 rounded-full text-sm font-semibold transition-colors">Add to Cart</button>
+                  <span className="font-extrabold text-xl text-[#C87941]">₱1,800</span>
+                  <button className="bg-[#1C4A5C] hover:bg-[#143745] text-white px-5 py-2.5 rounded-full text-sm font-bold transition-all hover:shadow-md">Add to Cart</button>
                 </div>
               </div>
             </div>
@@ -144,34 +179,27 @@ export default function HomePage() {
             <h2 className="text-2xl font-bold text-[#1C4A5C] mb-6">Community Feed</h2>
             
             {/* Feed Post 1 */}
-            <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-6">
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-6 hover:shadow-md transition-shadow">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 bg-gray-300 rounded-full"></div>
+                <div className="w-12 h-12 bg-gray-200 rounded-full border-2 border-white shadow-sm"></div>
                 <div>
-                  <h4 className="font-bold text-sm">Maria Santos</h4>
-                  <p className="text-xs text-gray-500">2 hours ago</p>
+                  <h4 className="font-bold text-sm text-gray-900">Maria Santos</h4>
+                  <p className="text-xs text-gray-400 font-medium">2 hours ago</p>
                 </div>
               </div>
-              <p className="text-sm text-gray-700 mb-4">Just finished my latest oil painting inspired by the Baybay coastline 🌊 Available for sale!</p>
-              <div className="h-64 bg-gray-200 rounded-xl mb-4 w-full"></div>
-              <div className="flex items-center gap-6 text-sm text-gray-500 border-t pt-3">
-                <button className="flex items-center gap-1 hover:text-[#C87941]"><span>♡</span> 42</button>
-                <button className="flex items-center gap-1 hover:text-[#C87941]"><span>💬</span> 8</button>
-                <button className="flex items-center gap-1 hover:text-[#C87941] ml-auto"><span>➦</span> Share</button>
+              <p className="text-sm text-gray-700 mb-4 leading-relaxed">Just finished my latest oil painting inspired by the Baybay coastline! The colors of the sunset were just too beautiful to ignore. Available for sale now. 🌊✨</p>
+              <div className="h-72 bg-gray-100 rounded-xl mb-5 w-full"></div>
+              <div className="flex items-center gap-6 text-sm text-gray-500 border-t border-gray-100 pt-4">
+                <button className="flex items-center gap-2 hover:text-[#C87941] font-medium transition-colors">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> 42
+                </button>
+                <button className="flex items-center gap-2 hover:text-[#1C4A5C] font-medium transition-colors">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> 8
+                </button>
+                <button className="flex items-center gap-2 hover:text-[#1C4A5C] font-medium transition-colors ml-auto">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Share
+                </button>
               </div>
-            </div>
-
-            {/* Feed Post 2 */}
-            <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 bg-gray-300 rounded-full"></div>
-                <div>
-                  <h4 className="font-bold text-sm">Jun dela Cruz</h4>
-                  <p className="text-xs text-gray-500">5 hours ago</p>
-                </div>
-              </div>
-              <p className="text-sm text-gray-700 mb-4">New batch of handcrafted pottery is ready! Each piece is unique and made with local clay. Taking orders now 🏺</p>
-              <div className="h-48 bg-gray-200 rounded-xl mb-4 w-full"></div>
             </div>
           </div>
 
@@ -179,54 +207,57 @@ export default function HomePage() {
           <div className="lg:col-span-1">
             <div className="flex justify-between items-end mb-6">
               <h2 className="text-2xl font-bold text-[#1C4A5C]">Top Artists</h2>
-              <button className="text-[#C87941] text-sm font-semibold hover:underline">See All</button>
+              <button className="text-[#C87941] text-sm font-bold hover:text-[#a86536] transition-colors">See All</button>
             </div>
 
             {/* Top Artists List */}
-            <div className="space-y-3 mb-8">
-              <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-gray-300 rounded-full"></div>
+            <div className="space-y-4 mb-8">
+              <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
                   <div>
-                    <h4 className="font-bold text-sm flex items-center gap-1">Maria Santos <span className="text-blue-500 text-xs">✓</span></h4>
-                    <p className="text-xs text-gray-500">Oil Painting</p>
-                    <p className="text-xs text-yellow-500 font-medium mt-1">★ 4.9 <span className="text-gray-400">· 87 sales</span></p>
+                    <h4 className="font-bold text-sm text-gray-900 flex items-center gap-1">
+                      Maria Santos 
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="#3b82f6" stroke="white" strokeWidth="2" className="text-blue-500"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    </h4>
+                    <p className="text-xs text-gray-500 font-medium">Oil Painting</p>
+                    <p className="text-xs font-bold text-gray-700 mt-1 flex items-center gap-1">
+                      <span className="text-[#f2a83b]">★</span> 4.9 <span className="text-gray-400 font-medium ml-1">· 87 sales</span>
+                    </p>
                   </div>
                 </div>
-                <button className="px-4 py-1.5 border border-gray-300 rounded-full text-xs font-semibold hover:bg-gray-50">View</button>
+                <button className="px-4 py-1.5 border-2 border-gray-100 rounded-full text-xs font-bold text-gray-600 hover:border-[#1C4A5C] hover:text-[#1C4A5C] transition-colors">View</button>
               </div>
 
-              <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-gray-300 rounded-full"></div>
+              <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
                   <div>
-                    <h4 className="font-bold text-sm flex items-center gap-1">Jun dela Cruz <span className="text-blue-500 text-xs">✓</span></h4>
-                    <p className="text-xs text-gray-500">Pottery & Ceramics</p>
-                    <p className="text-xs text-yellow-500 font-medium mt-1">★ 5.0 <span className="text-gray-400">· 63 sales</span></p>
+                    <h4 className="font-bold text-sm text-gray-900 flex items-center gap-1">
+                      Jun dela Cruz 
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="#3b82f6" stroke="white" strokeWidth="2" className="text-blue-500"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    </h4>
+                    <p className="text-xs text-gray-500 font-medium">Pottery & Ceramics</p>
+                    <p className="text-xs font-bold text-gray-700 mt-1 flex items-center gap-1">
+                      <span className="text-[#f2a83b]">★</span> 5.0 <span className="text-gray-400 font-medium ml-1">· 63 sales</span>
+                    </p>
                   </div>
                 </div>
-                <button className="px-4 py-1.5 border border-gray-300 rounded-full text-xs font-semibold hover:bg-gray-50">View</button>
-              </div>
-
-              <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-gray-300 rounded-full"></div>
-                  <div>
-                    <h4 className="font-bold text-sm flex items-center gap-1">Lola Nena Craft <span className="text-blue-500 text-xs">✓</span></h4>
-                    <p className="text-xs text-gray-500">Traditional Weaving</p>
-                    <p className="text-xs text-yellow-500 font-medium mt-1">★ 4.7 <span className="text-gray-400">· 120 sales</span></p>
-                  </div>
-                </div>
-                <button className="px-4 py-1.5 border border-gray-300 rounded-full text-xs font-semibold hover:bg-gray-50">View</button>
+                <button className="px-4 py-1.5 border-2 border-gray-100 rounded-full text-xs font-bold text-gray-600 hover:border-[#1C4A5C] hover:text-[#1C4A5C] transition-colors">View</button>
               </div>
             </div>
 
             {/* Commission CTA Card */}
-            <div className="bg-[#de8f3c] rounded-2xl p-6 text-white text-center shadow-md">
-              <div className="text-4xl mb-3">📋</div>
-              <h3 className="font-bold text-lg mb-2">Need Something Custom?</h3>
-              <p className="text-sm text-orange-100 mb-6">Post a commission request and let artists come to you!</p>
-              <button className="w-full bg-white text-[#C87941] font-bold py-2.5 rounded-full hover:bg-gray-50 transition-colors shadow-sm">
+            <div className="bg-gradient-to-br from-[#C87941] to-[#a86536] rounded-2xl p-8 text-white text-center shadow-lg relative overflow-hidden group">
+              {/* Decorative background shape */}
+              <div className="absolute -top-10 -right-10 w-32 h-32 bg-white opacity-10 rounded-full group-hover:scale-110 transition-transform duration-500"></div>
+              
+              <div className="text-4xl mb-4 relative z-10">✨</div>
+              <h3 className="font-extrabold text-xl mb-2 relative z-10">Need Something Custom?</h3>
+              <p className="text-sm text-orange-100/90 mb-8 font-medium leading-relaxed relative z-10">
+                Post a commission request and let talented Baybayanon artists come to you!
+              </p>
+              <button className="w-full bg-white text-[#C87941] font-bold py-3.5 rounded-full hover:bg-gray-50 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 shadow-sm relative z-10">
                 Post Commission
               </button>
             </div>

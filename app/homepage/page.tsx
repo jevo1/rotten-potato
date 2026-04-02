@@ -12,32 +12,42 @@ export default function Homepage() {
   const [userName, setUserName] = useState('A');
   const [profileImage, setProfileImage] = useState('/user-default.svg');
   const [activeTab, setActiveTab] = useState(0);
-  const tabLabels = ['Home', 'Browse', 'Commissions', 'Messages'];
 
   useEffect(() => {
     const fetchUser = async () => {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        if (user.user_metadata && user.user_metadata.name) {
-          setUserName(user.user_metadata.name.split(' ')[0]);
-        } else if (user.email) {
-          setUserName(user.email.split('@')[0]);
+      try {
+        const supabase = createClient();
+        const { data: { user }, error } = await supabase.auth.getUser();
+        
+        if (error) {
+          console.warn("Supabase Auth:", error.message);
+          return;
         }
-        if (user.user_metadata && user.user_metadata.avatar_url) {
-          setProfileImage(user.user_metadata.avatar_url);
+
+        if (user) {
+          if (user.user_metadata && user.user_metadata.name) {
+            setUserName(user.user_metadata.name.split(' ')[0]);
+          } else if (user.email) {
+            setUserName(user.email.split('@')[0]);
+          }
+          if (user.user_metadata && user.user_metadata.avatar_url) {
+            setProfileImage(user.user_metadata.avatar_url);
+          }
         }
+      } catch (err) {
+        console.error("Failed to fetch user:", err);
       }
     };
     fetchUser();
   }, []);
 
   return (
-    <div style={{ background: '#C87941', minHeight: '100vh', width: '100%' }}>
-      {/* The "Proudly serving" header has been removed */}
+    <div className="bg-[#FCFAF8] min-h-screen w-full flex flex-col">
       <NavBar logoText="GamâLokal" userName={userName} profileImage={profileImage} />
-	    <PageTab activeTab={activeTab} setActiveTab={setActiveTab} tabLabels={tabLabels} />
-      <div>
+      
+      <PageTab activeTab={activeTab} setActiveTab={setActiveTab} />
+      
+      <div className="flex-1">
         {activeTab === 0 && <Home />}
         {activeTab === 1 && <Browse />}
         {activeTab === 2 && <Commissions />}
