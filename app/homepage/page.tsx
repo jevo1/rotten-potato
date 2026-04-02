@@ -1,5 +1,4 @@
 "use client";
-import Image from 'next/image'
 import { useEffect, useState } from 'react';
 import { NavBar } from '../src/components/NavBar';
 import { createClient } from '@/utils/supabase/client';
@@ -35,28 +34,9 @@ export default function Homepage() {
 
   return (
     <div style={{ background: '#C87941', minHeight: '100vh', width: '100%' }}>
-      <div style={{
-        width: '100%',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        background: '#1C4A5C',
-        height: '25px',
-      }}>
-        <Image src="/map-pin.svg" alt="Map Pin" width={22} height={22} />
-        <span style={{
-          color: '#fff',
-          fontSize: '.8rem',
-          fontFamily: 'sans-serif',
-          fontWeight: 'bold',
-          textAlign: 'center',
-          marginLeft: '3px',
-        }}>
-          Proudly serving Baybay City, Leyte, Philippines
-        </span>
-      </div>
+      {/* The "Proudly serving" header has been removed */}
       <NavBar logoText="GamâLokal" userName={userName} profileImage={profileImage} />
-	  <PageTab activeTab={activeTab} setActiveTab={setActiveTab} tabLabels={tabLabels} />
+	    <PageTab activeTab={activeTab} setActiveTab={setActiveTab} tabLabels={tabLabels} />
       <div>
         {activeTab === 0 && <Home />}
         {activeTab === 1 && <Browse />}
