@@ -43,9 +43,11 @@ export default function Homepage() {
 
   return (
     <div className="bg-[#FCFAF8] min-h-screen w-full flex flex-col">
-      <NavBar logoText="GamâLokal" userName={userName} profileImage={profileImage} />
       
-      <PageTab activeTab={activeTab} setActiveTab={setActiveTab} />
+      <div className="sticky top-0 z-50 flex flex-col w-full">
+        <NavBar logoText="GamâLokal" userName={userName} profileImage={profileImage} />
+        <PageTab activeTab={activeTab} setActiveTab={setActiveTab} />
+      </div>
       
       <div className="flex-1">
         {activeTab === 0 && <Home />}
@@ -53,6 +55,7 @@ export default function Homepage() {
         {activeTab === 2 && <Commissions />}
         {activeTab === 3 && <Messages />}
       </div>
+      
     </div>
   );
 }
