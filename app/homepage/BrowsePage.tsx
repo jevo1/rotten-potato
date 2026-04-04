@@ -1,7 +1,6 @@
 import React from 'react';
 
 export default function BrowsePage() {
-  // Mock data based on your design to populate the grid
   const artworks = [
     { id: 1, title: 'Digital Baybayanon Portrait', artist: 'Carlo Mira', category: 'Digital', price: '₱3,500', rating: 4.9, reviews: 61, likes: 324, comments: 58 },
     { id: 2, title: 'Celadon Sea Pottery Set', artist: 'Jun dela Cruz', category: 'Pottery', price: '₱1,800', rating: 5.0, reviews: 47, likes: 211, comments: 37 },
