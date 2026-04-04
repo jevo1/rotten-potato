@@ -29,10 +29,9 @@ export async function signup(formData: FormData) {
     console.error('Signup error:', error.message)
     redirect('/signup?error=Could not authenticate user')
   }
-
-  revalidatePath('/homepage', 'layout')
-  // Redirect to home page
-  redirect('/homepage')
+  
+  // CHANGED: Redirect to login page instead of /homepage
+  redirect('/login?message=Account created successfully. Please log in.')
 }
 
 export async function login(formData: FormData) {
@@ -68,7 +67,7 @@ export async function signInWithGoogle() {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${origin}/auth/callback`,
+      redirectTo: `${origin}/auth/callback?next=/homepage`,
     },
   })
 
