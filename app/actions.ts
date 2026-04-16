@@ -81,3 +81,14 @@ export async function signInWithGoogle() {
     redirect(data.url)
   }
 }
+
+export async function logout() {
+  const cookieStore = cookies()
+  const supabase = await createClient(cookieStore)
+  
+  // Clear the user session from Supabase and delete the cookies
+  await supabase.auth.signOut()
+  
+  // Redirect the user back to the login page
+  redirect('/login')
+}

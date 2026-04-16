@@ -42,25 +42,34 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  // Retrieve the current user session
-  const { data: { user } } = await supabase.auth.getUser();
+ const { data: { user } } = await supabase.auth.getUser();
 
   // --- ROUTE PROTECTION LOGIC ---
-  
-  // 1. Identify which paths should be protected (require login)
-  const isProtectedRoute = request.nextUrl.pathname.startsWith('/homepage');
-  
-  // 2. Identify auth paths (pages logged-in users shouldn't need to see)
-  const isAuthRoute = request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/signup');
+  const currentPath = request.nextUrl.pathname;
 
-  // Redirect to Login if a guest tries to view a protected page
+  // 1. Define your route categories
+  const protectedRoutes = ['/homepage', '/settings', '/profile']; 
+  const authRoutes = ['/login', '/signup'];
+
+  // Check if the current path starts with any of the routes in our arrays
+  const isProtectedRoute = protectedRoutes.some(route => currentPath.startsWith(route));
+  const isAuthRoute = authRoutes.some(route => currentPath.startsWith(route));
+
+  // 2. Handle the Root Path (/)
+  if (currentPath === '/') {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = user ? '/homepage' : '/login';
+    return NextResponse.redirect(redirectUrl);
+  }
+
+  // 3. Kick guests out of private areas
   if (!user && isProtectedRoute) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = '/login';
     return NextResponse.redirect(loginUrl);
   }
 
-  // Redirect to Homepage if an authenticated user tries to go to login/signup
+  // 4. Keep logged-in users away from auth pages
   if (user && isAuthRoute) {
     const homeUrl = request.nextUrl.clone();
     homeUrl.pathname = '/homepage'; 
