@@ -42,7 +42,39 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  await supabase.auth.getUser();
+ const { data: { user } } = await supabase.auth.getUser();
+
+  // --- ROUTE PROTECTION LOGIC ---
+  const currentPath = request.nextUrl.pathname;
+
+  // 1. Define your route categories
+  const protectedRoutes = ['/homepage', '/settings', '/profile']; 
+  const authRoutes = ['/login', '/signup'];
+
+  // Check if the current path starts with any of the routes in our arrays
+  const isProtectedRoute = protectedRoutes.some(route => currentPath.startsWith(route));
+  const isAuthRoute = authRoutes.some(route => currentPath.startsWith(route));
+
+  // 2. Handle the Root Path (/)
+  if (currentPath === '/') {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = user ? '/homepage' : '/login';
+    return NextResponse.redirect(redirectUrl);
+  }
+
+  // 3. Kick guests out of private areas
+  if (!user && isProtectedRoute) {
+    const loginUrl = request.nextUrl.clone();
+    loginUrl.pathname = '/login';
+    return NextResponse.redirect(loginUrl);
+  }
+
+  // 4. Keep logged-in users away from auth pages
+  if (user && isAuthRoute) {
+    const homeUrl = request.nextUrl.clone();
+    homeUrl.pathname = '/homepage'; 
+    return NextResponse.redirect(homeUrl);
+  }
 
   return supabaseResponse;
 }
