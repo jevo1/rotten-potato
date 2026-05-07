@@ -2,70 +2,126 @@
 
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
-import { submitCommissionOffer } from '../actions'; // Ensure correct path
+import { submitCommissionOffer, createCommissionRequest } from '../actions'; 
 
 export default function CommissionsPage() {
   const [activeSubTab, setActiveSubTab] = useState('Browse Requests');
   const [openRequests, setOpenRequests] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
-  // State for the Offer Form
+  // State for Artist Offer Form
   const [activeOfferForm, setActiveOfferForm] = useState<number | null>(null);
   const [offerAmount, setOfferAmount] = useState<string>('');
   const [offerMessage, setOfferMessage] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // NEW: State for Client Posting Form Modal
+  const [isPostingModalOpen, setIsPostingModalOpen] = useState(false);
+  const [isPosting, setIsPosting] = useState(false);
+
   const supabase = createClient();
 
-  // 1. Fetch Open Requests from the Job Board
+  // 1. Fetch Open Requests
   useEffect(() => {
     const fetchOpenJobs = async () => {
       setIsLoading(true);
-      
       const { data, error } = await supabase
         .from('commission_requests')
-        .select(`
-          *,
-          client:users!commission_requests_client_id_fkey(name, avatar_url)
-        `)
+        .select(`*, client:users!commission_requests_client_id_fkey(name, avatar_url)`)
         .eq('status', 'open')
         .order('deadline', { ascending: true });
 
       if (!error && data) {
         setOpenRequests(data);
-      } else {
-        console.error("Error fetching open requests:", error);
       }
       setIsLoading(false);
     };
 
     fetchOpenJobs();
-  }, []);
+  }, [isPostingModalOpen]); // Re-fetch when the modal closes so the new job appears
 
-  // 2. Handle the Offer Submission
+  // 2. Handle Artist Submitting an Offer
   const handleSendOffer = async (requestId: number) => {
-    if (!offerAmount || !offerMessage) {
-      alert("Please enter both a price and a message.");
-      return;
-    }
-
+    if (!offerAmount || !offerMessage) return alert("Please enter a price and message.");
     setIsSubmitting(true);
     try {
       await submitCommissionOffer(requestId, parseFloat(offerAmount), offerMessage);
-      alert("Offer submitted successfully!");
-      setActiveOfferForm(null); // Close the form
+      alert("Offer submitted!");
+      setActiveOfferForm(null); 
       setOfferAmount('');
       setOfferMessage('');
     } catch (error) {
-      alert("Failed to submit offer. Please try again.");
-      console.error(error);
+      alert("Failed to submit offer.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // 3. NEW: Handle Client Posting a New Request
+  const handlePostRequest = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsPosting(true);
+    
+    try {
+      const formData = new FormData(e.currentTarget);
+      await createCommissionRequest(formData); // Calls your server action
+      alert("Commission Request Posted Successfully!");
+      setIsPostingModalOpen(false); // Close the modal
+    } catch (error) {
+      alert("Failed to post request. Please make sure you are logged in.");
+      console.error(error);
+    } finally {
+      setIsPosting(false);
+    }
+  };
+
   return (
-    <div className="bg-[#FCFAF8] min-h-screen w-full text-slate-800 font-sans pb-20">
+    <div className="bg-[#FCFAF8] min-h-screen w-full text-slate-800 font-sans pb-20 relative">
+      
+      {/* NEW: Post Commission Modal */}
+      {isPostingModalOpen && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-lg shadow-xl">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold text-[#1C4A5C]">Post a Request</h2>
+              <button onClick={() => setIsPostingModalOpen(false)} className="text-gray-500 hover:text-gray-800 font-bold text-xl">&times;</button>
+            </div>
+            
+            <form onSubmit={handlePostRequest} className="flex flex-col gap-4">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">Project Title</label>
+                <input type="text" name="title" required placeholder="e.g. Custom Watercolor Portrait" className="w-full p-2 border border-gray-300 rounded-md" />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">Detailed Description</label>
+                <textarea name="description" required rows={4} placeholder="Describe the style, size, references, etc." className="w-full p-2 border border-gray-300 rounded-md"></textarea>
+              </div>
+
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Budget (₱)</label>
+                  <input type="number" name="budget" required placeholder="e.g. 1500" className="w-full p-2 border border-gray-300 rounded-md" />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Deadline</label>
+                  <input type="date" name="deadline" required className="w-full p-2 border border-gray-300 rounded-md" />
+                </div>
+              </div>
+
+              <button 
+                type="submit" 
+                disabled={isPosting}
+                className="w-full bg-[#C87941] hover:bg-[#b06a39] text-white py-3 rounded-md font-bold mt-4 transition-colors disabled:opacity-50"
+              >
+                {isPosting ? 'Posting...' : 'Post Commission to Job Board'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+
       <div className="max-w-5xl mx-auto px-6 pt-10">
         
         {/* --- Header Section --- */}
@@ -74,7 +130,11 @@ export default function CommissionsPage() {
             <h1 className="text-3xl font-extrabold text-[#1C4A5C] mb-2">Commission Board</h1>
             <p className="text-gray-500 font-medium">Find clients looking for your specific art style</p>
           </div>
-          <button className="bg-[#C87941] hover:bg-[#b06a39] text-white px-6 py-2.5 rounded-full font-bold shadow-sm hover:shadow-md transition-all">
+          {/* UPDATED: Button now opens the modal */}
+          <button 
+            onClick={() => setIsPostingModalOpen(true)}
+            className="bg-[#C87941] hover:bg-[#b06a39] text-white px-6 py-2.5 rounded-full font-bold shadow-sm hover:shadow-md transition-all"
+          >
             Post Commission Request
           </button>
         </div>
