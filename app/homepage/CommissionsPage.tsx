@@ -214,8 +214,12 @@ export default function CommissionsPage() {
                       </span>
                     </div>
 
-                    {/* Offer Form Toggle */}
-                    {activeOfferForm === job.request_id ? (
+                    {/* Offer Form Toggle / Ownership Check */}
+                    {job.client_id === currentUserId ? (
+                      <button disabled className="bg-gray-100 text-gray-500 border border-gray-200 px-5 py-2 rounded-full text-sm font-bold cursor-not-allowed">
+                        Your Request
+                      </button>
+                    ) : activeOfferForm === job.request_id ? (
                       <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 mt-4">
                         <h4 className="font-bold text-[#1C4A5C] mb-3">Submit Your Offer</h4>
                         <div className="flex flex-col gap-3">
