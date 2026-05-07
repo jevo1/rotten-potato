@@ -8,6 +8,7 @@ export default function CommissionsPage() {
   const [activeSubTab, setActiveSubTab] = useState('Browse Requests');
   const [openRequests, setOpenRequests] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   
   // State for Artist Offer Form
   const [activeOfferForm, setActiveOfferForm] = useState<number | null>(null);
@@ -21,10 +22,17 @@ export default function CommissionsPage() {
 
   const supabase = createClient();
 
-  // 1. Fetch Open Requests
+// 1. Fetch Open Requests
   useEffect(() => {
     const fetchOpenJobs = async () => {
       setIsLoading(true);
+      
+      // NEW: Get the current logged-in user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setCurrentUserId(user.id);
+      }
+
       const { data, error } = await supabase
         .from('commission_requests')
         .select(`*, client:users!commission_requests_client_id_fkey(name, avatar_url)`)
@@ -38,7 +46,7 @@ export default function CommissionsPage() {
     };
 
     fetchOpenJobs();
-  }, [isPostingModalOpen]); // Re-fetch when the modal closes so the new job appears
+  }, [isPostingModalOpen]);
 
   // 2. Handle Artist Submitting an Offer
   const handleSendOffer = async (requestId: number) => {
