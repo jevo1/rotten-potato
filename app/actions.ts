@@ -131,9 +131,23 @@ export async function submitCommissionOffer(requestId: number, offerAmount: numb
   const cookieStore = cookies()
   const supabase = await createClient(cookieStore);
   
-  // Get the logged-in user (the artist)
+  // Get the logged-in user (the artist making the offer)
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("You must be logged in to submit an offer.");
+
+  // NEW: Fetch the original request to check who owns it
+  const { data: requestData, error: fetchError } = await supabase
+    .from('commission_requests')
+    .select('client_id')
+    .eq('request_id', requestId)
+    .single();
+
+  if (fetchError || !requestData) throw new Error('Could not find the commission request.');
+  
+  // NEW: Block the user from bidding on their own job
+  if (requestData.client_id === user.id) {
+    throw new Error("You cannot submit an offer on your own commission request.");
+  }
 
   const { error } = await supabase
     .from('commission_offers')
