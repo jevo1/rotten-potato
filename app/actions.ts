@@ -92,3 +92,98 @@ export async function logout() {
   // Redirect the user back to the login page
   redirect('/login')
 }
+
+export async function createCommissionRequest(formData: FormData) {
+  const cookieStore = cookies()
+  const supabase = await createClient(cookieStore);
+  
+  // Get the logged-in user (the client)
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("You must be logged in to post a request.");
+
+  const title = formData.get('title') as string;
+  const description = formData.get('description') as string;
+  const budget = parseFloat(formData.get('budget') as string);
+  const deadline = formData.get('deadline') as string;
+
+  const { error } = await supabase
+    .from('commission_requests')
+    .insert({
+      client_id: user.id,
+      description: `${title}\n\n${description}`, // Combining title and description for now
+      budget: budget,
+      deadline: deadline,
+      status: 'open' // Default status for the job board
+      // Notice: artist_id is left NULL!
+    });
+
+  if (error) {
+    console.error('Error posting request:', error);
+    throw new Error('Failed to post commission request.');
+  }
+
+  revalidatePath('/homepage'); // Refresh the job board
+}
+
+
+// 2. Artist submits an offer/bid on an open job
+export async function submitCommissionOffer(requestId: number, offerAmount: number, message: string) {
+  const cookieStore = cookies()
+  const supabase = await createClient(cookieStore);
+  
+  // Get the logged-in user (the artist)
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("You must be logged in to submit an offer.");
+
+  const { error } = await supabase
+    .from('commission_offers')
+    .insert({
+      request_id: requestId,
+      artist_id: user.id,
+      offer_amount: offerAmount,
+      message: message,
+      status: 'pending'
+    });
+
+  if (error) {
+    console.error('Error submitting offer:', error);
+    throw new Error('Failed to submit offer.');
+  }
+
+  revalidatePath('/homepage'); 
+}
+
+
+// 3. Client accepts an offer (The State Machine Trigger)
+export async function acceptCommissionOffer(requestId: number, offerId: number, artistId: string) {
+  const cookieStore = cookies()
+  const supabase = await createClient(cookieStore);
+  
+  // A. Mark the specific offer as 'accepted'
+  const { error: offerError } = await supabase
+    .from('commission_offers')
+    .update({ status: 'accepted' })
+    .eq('offer_id', offerId);
+
+  if (offerError) throw new Error('Failed to accept the offer.');
+
+  // B. Update the actual request: Assign the artist and change status to 'in_progress'
+  const { error: requestError } = await supabase
+    .from('commission_requests')
+    .update({ 
+      artist_id: artistId,
+      status: 'in_progress' 
+    })
+    .eq('request_id', requestId);
+
+  if (requestError) throw new Error('Failed to update the commission status.');
+
+  // C. Optional but recommended: Mark all other offers for this request as 'rejected'
+  await supabase
+    .from('commission_offers')
+    .update({ status: 'rejected' })
+    .eq('request_id', requestId)
+    .neq('offer_id', offerId);
+
+  revalidatePath('/homepage'); 
+}
