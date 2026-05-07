@@ -9,6 +9,7 @@ export default function CommissionsPage() {
   const [openRequests, setOpenRequests] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
   
   // State for Artist Offer Form
   const [activeOfferForm, setActiveOfferForm] = useState<number | null>(null);
@@ -23,14 +24,24 @@ export default function CommissionsPage() {
   const supabase = createClient();
 
 // 1. Fetch Open Requests
-  useEffect(() => {
+ useEffect(() => {
     const fetchOpenJobs = async () => {
       setIsLoading(true);
       
-      // NEW: Get the current logged-in user
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setCurrentUserId(user.id);
+        
+        // NEW: Fetch the user's role from the public.users table
+        const { data: userData } = await supabase
+          .from('users')
+          .select('role')
+          .eq('user_id', user.id)
+          .single();
+          
+        if (userData) {
+          setCurrentUserRole(userData.role);
+        }
       }
 
       const { data, error } = await supabase
@@ -214,10 +225,14 @@ export default function CommissionsPage() {
                       </span>
                     </div>
 
-                    {/* Offer Form Toggle / Ownership Check */}
+                    {/* Offer Form Toggle / Ownership & Role Check */}
                     {job.client_id === currentUserId ? (
                       <button disabled className="bg-gray-100 text-gray-500 border border-gray-200 px-5 py-2 rounded-full text-sm font-bold cursor-not-allowed">
                         Your Request
+                      </button>
+                    ) : currentUserRole !== 'artist' ? (
+                      <button disabled className="bg-gray-100 text-gray-500 border border-gray-200 px-5 py-2 rounded-full text-sm font-bold cursor-not-allowed">
+                        Artists Only
                       </button>
                     ) : activeOfferForm === job.request_id ? (
                       <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 mt-4">
