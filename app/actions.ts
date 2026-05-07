@@ -131,11 +131,21 @@ export async function submitCommissionOffer(requestId: number, offerAmount: numb
   const cookieStore = cookies()
   const supabase = await createClient(cookieStore);
   
-  // Get the logged-in user (the artist making the offer)
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("You must be logged in to submit an offer.");
 
-  // NEW: Fetch the original request to check who owns it
+  // NEW: 1. Fetch user role to ensure they are actually an artist
+  const { data: currentUserData, error: roleError } = await supabase
+    .from('users')
+    .select('role')
+    .eq('user_id', user.id)
+    .single();
+
+  if (roleError || currentUserData?.role !== 'artist') {
+    throw new Error("Only registered artists can submit offers on job board requests.");
+  }
+
+  // 2. Fetch the original request to check who owns it
   const { data: requestData, error: fetchError } = await supabase
     .from('commission_requests')
     .select('client_id')
@@ -144,7 +154,7 @@ export async function submitCommissionOffer(requestId: number, offerAmount: numb
 
   if (fetchError || !requestData) throw new Error('Could not find the commission request.');
   
-  // NEW: Block the user from bidding on their own job
+  // 3. Block the user from bidding on their own job
   if (requestData.client_id === user.id) {
     throw new Error("You cannot submit an offer on your own commission request.");
   }
