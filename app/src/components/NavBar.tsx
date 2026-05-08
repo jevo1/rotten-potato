@@ -4,12 +4,14 @@ import { logout } from '@/app/actions';
 import Image from 'next/image';
 import Link from 'next/link';
 
+// 1. Add isArtist to the props interface
 interface NavBarProps {
     logoText?: string;
     onSearch?: (query: string) => void;
     onProfileClick?: () => void;
     userName?: string;
     profileImage?: string;
+    isArtist?: boolean; 
 }
 
 export const NavBar: React.FC<NavBarProps> = ({
@@ -18,6 +20,7 @@ export const NavBar: React.FC<NavBarProps> = ({
     onProfileClick,
     userName = 'A',
     profileImage = '/user-default.svg',
+    isArtist = false, // 2. Default to false
 }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -98,15 +101,20 @@ export const NavBar: React.FC<NavBarProps> = ({
                                 Profile
                             </Link>
 
-                            <Link href="/dashboard" onClick={() => setIsProfileOpen(false)} className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 border-t border-gray-50">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-                                Dashboard
-                            </Link>
+                            {/* 3. ARTIST ONLY LINKS: Dashboard and Sales */}
+                            {isArtist && (
+                                <>
+                                    <Link href="/dashboard" onClick={() => setIsProfileOpen(false)} className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 border-t border-gray-50">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                                        Dashboard
+                                    </Link>
 
-                            <Link href="/dashboard/sales" onClick={() => setIsProfileOpen(false)} className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 border-t border-gray-50">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                                Sales
-                            </Link>
+                                    <Link href="/dashboard/sales" onClick={() => setIsProfileOpen(false)} className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 border-t border-gray-50">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                                        Sales
+                                    </Link>
+                                </>
+                            )}
 
                             <Link href="/collections" onClick={() => setIsProfileOpen(false)} className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 border-t border-gray-50">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 12 12 17 22 12"/><polyline points="2 17 12 22 22 17"/></svg>
@@ -118,11 +126,13 @@ export const NavBar: React.FC<NavBarProps> = ({
                                 Settings
                             </Link>
 
-                            {/* Artist Onboarding Link */}
-                            <Link href="/onboarding/artist" onClick={() => setIsProfileOpen(false)} className="w-full text-left px-4 py-3 text-sm text-[#1C4A5C] font-semibold hover:bg-[#e8ecef] flex items-center gap-3 border-t border-gray-100 bg-gray-50/50">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                                Become an Artist
-                            </Link>
+                            {/* 4. NON-ARTIST ONLY LINK: Become an Artist */}
+                            {!isArtist && (
+                                <Link href="/onboarding/artist" onClick={() => setIsProfileOpen(false)} className="w-full text-left px-4 py-3 text-sm text-[#1C4A5C] font-semibold hover:bg-[#e8ecef] flex items-center gap-3 border-t border-gray-100 bg-gray-50/50">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                                    Become an Artist
+                                </Link>
+                            )}
 
                             <form action={logout}>
                                 <button type="submit" className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 flex items-center gap-3 border-t border-gray-100 font-medium">
