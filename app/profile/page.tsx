@@ -35,7 +35,10 @@ export default async function ProfilePage() {
 
   // Fallbacks for UI
   const displayName = profile?.name || user.email?.split('@')[0] || 'User'
-  const displayAvatar = profile?.avatar_url || '/user-default.svg'
+  
+  // Clean check: Only use avatar_url if it actually exists in the database
+  const avatarUrl = profile?.avatar_url || null 
+  
   const isArtist = profile?.role === 'artist'
   const joinDate = new Date(profile?.created_at || user.created_at).toLocaleDateString('en-US', {
     month: 'long',
@@ -49,7 +52,7 @@ export default async function ProfilePage() {
         <NavBar 
           logoText="GamâLokal" 
           userName={displayName} 
-          profileImage={displayAvatar} 
+          profileImage={avatarUrl || '/user-default.svg'} 
           isArtist={isArtist} 
         />
       </div>
@@ -58,27 +61,35 @@ export default async function ProfilePage() {
         
         {/* Profile Header Card */}
         <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 mb-8 relative">
-          {/* Decorative Cover Gradient */}
-          <div className="h-32 w-full bg-gradient-to-r from-[#1C4A5C] to-[#3A6A7C]"></div>
+          
+          {/* Guaranteed Banner Gradient (Using inline styles to bypass Tailwind compiler issues) */}
+          <div className="h-32 w-full" style={{ background: 'linear-gradient(to right, #1C4A5C, #3A6A7C)' }}></div>
           
           <div className="px-8 pb-8 relative">
-            {/* Avatar - Negative margin pulls it up into the gradient */}
+            
             <div className="relative -mt-12 mb-4 flex justify-between items-end">
-              <div className="w-24 h-24 bg-white rounded-full p-1 shadow-md">
-                <div className="w-full h-full bg-gray-200 rounded-full overflow-hidden relative">
-                  {displayAvatar !== '/user-default.svg' ? (
-                    <Image src={displayAvatar} alt={displayName} fill className="object-cover" />
+              {/* Avatar Container: Added shrink-0 and z-10 so it never gets crushed */}
+              <div className="w-24 h-24 bg-white rounded-full p-1 shadow-md shrink-0 z-10">
+                <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 rounded-full overflow-hidden relative flex items-center justify-center">
+                  {avatarUrl ? (
+                    <Image 
+                      src={avatarUrl} 
+                      alt={displayName} 
+                      width={96} 
+                      height={96} 
+                      className="object-cover w-full h-full" 
+                    />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 text-gray-400 font-bold text-2xl">
-                      {displayName.charAt(0).toUpperCase()}
-                    </div>
+                    <span className="text-gray-400 font-black text-3xl uppercase">
+                      {displayName.charAt(0)}
+                    </span>
                   )}
                 </div>
               </div>
               
-              <button className="px-5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-bold rounded-full transition-colors border border-gray-200">
+              <Link href="/profile/edit" className="px-5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-bold rounded-full transition-colors border border-gray-200 z-10">
                 Edit Profile
-              </button>
+              </Link>
             </div>
 
             {/* Basic Info */}
@@ -164,7 +175,6 @@ export default async function ProfilePage() {
           {/* Right Column: Activity/History */}
           <div className="md:col-span-2">
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 min-h-[400px]">
-              {/* Simple Tabs for Activity */}
               <div className="flex gap-6 border-b border-gray-100 mb-6">
                 <button className="pb-3 border-b-2 border-[#1C4A5C] text-[#1C4A5C] font-bold text-sm">
                   Recent Activity
@@ -174,7 +184,6 @@ export default async function ProfilePage() {
                 </button>
               </div>
 
-              {/* Placeholder Content */}
               <div className="flex flex-col items-center justify-center h-64 text-center">
                 <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-3">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
