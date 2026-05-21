@@ -1,92 +1,129 @@
-import React from 'react';
-import Image from 'next/image';
+"use client";
+import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { createClient } from '@/utils/supabase/client';
 
 export default function HomePage() {
+  const [artworks, setArtworks] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const supabase = createClient();
+
+  useEffect(() => {
+    const fetchArtworks = async () => {
+      // Fetch available artworks dynamically on the client
+      const { data, error } = await supabase
+        .from('artworks')
+        .select(`
+          artwork_id,
+          title,
+          price,
+          file_url,
+          users ( name )
+        `)
+        .eq('status', 'available')
+        .limit(6);
+
+      if (error) {
+        console.error("Error fetching artworks:", error);
+      } else if (data) {
+        setArtworks(data);
+      }
+      setLoading(false);
+    };
+
+    fetchArtworks();
+  }, []); // Empty dependency array means this runs once when the component mounts
+
   return (
-    <div className="bg-[#FCFAF8] min-h-screen w-full text-slate-800 font-sans pb-20">
-      <div className="max-w-7xl mx-auto px-6 pt-8">
-        
-        {/* --- Categories Section --- */}
-        <div className="flex flex-wrap items-center justify-center gap-3 mb-12">
+    <div className="bg-[#FCFAF8] min-h-screen w-full text-slate-800 font-sans pb-20 relative">
+      
+      {/* --- Sticky Categories Header Section --- */}
+      <div className="sticky top-0 z-50 bg-[#FCFAF8]/95 backdrop-blur-md py-4 border-b border-gray-200 shadow-sm mb-12">
+        <div className="max-w-7xl mx-auto px-6 flex flex-wrap items-center justify-center gap-3">
           {/* Paintings */}
-          <button className="group flex items-center gap-2 px-5 py-2.5 rounded-full border border-[#C87941]/30 text-[#C87941] bg-white hover:bg-[#C87941] hover:text-white transition-all shadow-sm hover:shadow-md">
+          <button className="group flex items-center gap-2 px-5 py-2 rounded-full border border-[#C87941]/30 text-[#C87941] bg-white hover:bg-[#C87941] hover:text-white transition-all shadow-sm hover:shadow-md">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10c1.38 0 2.5-1.12 2.5-2.5 0-.61-.23-1.18-.64-1.64-.37-.41-.61-.96-.61-1.55 0-1.24 1.01-2.25 2.25-2.25h2.5c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8z"/></svg>
             <span className="font-semibold text-sm">Paintings</span>
           </button>
           
           {/* Weaving */}
-          <button className="group flex items-center gap-2 px-5 py-2.5 rounded-full border border-[#1C4A5C]/30 text-[#1C4A5C] bg-white hover:bg-[#1C4A5C] hover:text-white transition-all shadow-sm hover:shadow-md">
+          <button className="group flex items-center gap-2 px-5 py-2 rounded-full border border-[#1C4A5C]/30 text-[#1C4A5C] bg-white hover:bg-[#1C4A5C] hover:text-white transition-all shadow-sm hover:shadow-md">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
             <span className="font-semibold text-sm">Weaving</span>
           </button>
           
           {/* Pottery */}
-          <button className="group flex items-center gap-2 px-5 py-2.5 rounded-full border border-[#8B5A2B]/30 text-[#8B5A2B] bg-white hover:bg-[#8B5A2B] hover:text-white transition-all shadow-sm hover:shadow-md">
+          <button className="group flex items-center gap-2 px-5 py-2 rounded-full border border-[#8B5A2B]/30 text-[#8B5A2B] bg-white hover:bg-[#8B5A2B] hover:text-white transition-all shadow-sm hover:shadow-md">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M7 3h10v4c0 2.5-2 4-2 4s2 1.5 2 4v6H7v-6c0-2.5 2-4 2-4s-2-1.5-2-4V3z"/></svg>
             <span className="font-semibold text-sm">Pottery</span>
           </button>
           
           {/* Wood Carving */}
-          <button className="group flex items-center gap-2 px-5 py-2.5 rounded-full border border-stone-500/30 text-stone-600 bg-white hover:bg-stone-600 hover:text-white transition-all shadow-sm hover:shadow-md">
+          <button className="group flex items-center gap-2 px-5 py-2 rounded-full border border-stone-500/30 text-stone-600 bg-white hover:bg-stone-600 hover:text-white transition-all shadow-sm hover:shadow-md">
              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22v-8"/><path d="M12 14c-2.5-2-5-4-5-8 0-4 10-4 10 0 0 4-2.5 6-5 8z"/></svg>
             <span className="font-semibold text-sm">Wood Carving</span>
           </button>
           
           {/* Jewelry */}
-          <button className="group flex items-center gap-2 px-5 py-2.5 rounded-full border border-[#f2a83b]/50 text-[#d48b1a] bg-white hover:bg-[#f2a83b] hover:text-white transition-all shadow-sm hover:shadow-md">
+          <button className="group flex items-center gap-2 px-5 py-2 rounded-full border border-[#f2a83b]/50 text-[#d48b1a] bg-white hover:bg-[#f2a83b] hover:text-white transition-all shadow-sm hover:shadow-md">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 2 7 12 22 22 7 12 2"/><polyline points="2 7 12 7 22 7"/><polyline points="12 22 12 7"/></svg>
             <span className="font-semibold text-sm">Jewelry</span>
           </button>
           
           {/* Digital Art */}
-          <button className="group flex items-center gap-2 px-5 py-2.5 rounded-full border border-blue-500/30 text-blue-600 bg-white hover:bg-blue-600 hover:text-white transition-all shadow-sm hover:shadow-md">
+          <button className="group flex items-center gap-2 px-5 py-2 rounded-full border border-blue-500/30 text-blue-600 bg-white hover:bg-blue-600 hover:text-white transition-all shadow-sm hover:shadow-md">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
             <span className="font-semibold text-sm">Digital Art</span>
           </button>
           
           {/* Embroidery */}
-          <button className="group flex items-center gap-2 px-5 py-2.5 rounded-full border border-purple-500/30 text-purple-600 bg-white hover:bg-purple-600 hover:text-white transition-all shadow-sm hover:shadow-md">
+          <button className="group flex items-center gap-2 px-5 py-2 rounded-full border border-purple-500/30 text-purple-600 bg-white hover:bg-purple-600 hover:text-white transition-all shadow-sm hover:shadow-md">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>
             <span className="font-semibold text-sm">Embroidery</span>
           </button>
           
           {/* Photography */}
-          <button className="group flex items-center gap-2 px-5 py-2.5 rounded-full border border-teal-600/30 text-teal-600 bg-white hover:bg-teal-600 hover:text-white transition-all shadow-sm hover:shadow-md">
+          <button className="group flex items-center gap-2 px-5 py-2 rounded-full border border-teal-600/30 text-teal-600 bg-white hover:bg-teal-600 hover:text-white transition-all shadow-sm hover:shadow-md">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
             <span className="font-semibold text-sm">Photography</span>
           </button>
         </div>
+      </div>
 
+      <div className="max-w-7xl mx-auto px-6">
         {/* --- Quick Actions Cards Section --- */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col items-center text-center cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+          <Link href="/post-artwork" className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col items-center text-center cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
             <div className="w-14 h-14 rounded-full bg-[#C87941]/10 text-[#C87941] flex items-center justify-center mb-4">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
             </div>
             <h3 className="font-bold text-gray-900 mb-1">Post Artworks</h3>
             <p className="text-xs text-gray-500 font-medium">Share your creations</p>
-          </div>
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col items-center text-center cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+          </Link>
+
+          <Link href="/messages" className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col items-center text-center cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
             <div className="w-14 h-14 rounded-full bg-[#1C4A5C]/10 text-[#1C4A5C] flex items-center justify-center mb-4">
                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             </div>
             <h3 className="font-bold text-gray-900 mb-1">Direct Messaging</h3>
             <p className="text-xs text-gray-500 font-medium">Talk to artists</p>
-          </div>
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col items-center text-center cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+          </Link>
+
+          <Link href="/payments" className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col items-center text-center cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
             <div className="w-14 h-14 rounded-full bg-[#f2a83b]/20 text-[#d48b1a] flex items-center justify-center mb-4">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
             </div>
             <h3 className="font-bold text-gray-900 mb-1">Secure Payment</h3>
             <p className="text-xs text-gray-500 font-medium">Safe transactions</p>
-          </div>
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col items-center text-center cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+          </Link>
+
+          <Link href="/commissions" className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col items-center text-center cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
             <div className="w-14 h-14 rounded-full bg-stone-100 text-stone-600 flex items-center justify-center mb-4">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><polyline points="9 14 11 16 15 12"/></svg>
             </div>
             <h3 className="font-bold text-gray-900 mb-1">Commissions</h3>
             <p className="text-xs text-gray-500 font-medium">Custom orders</p>
-          </div>
+          </Link>
         </div>
 
         {/* --- Featured Artworks Section --- */}
@@ -102,72 +139,41 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Artwork Card 1 */}
-            <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 group">
-              <div className="relative h-56 bg-gray-100 overflow-hidden">
-                 {/* Placeholder for actual image */}
-                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-                 <div className="absolute top-4 left-4 bg-[#C87941] text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">Painting</div>
-                 <button className="absolute top-4 right-4 w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-md text-gray-400 hover:text-red-500 hover:scale-110 transition-all">
-                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                 </button>
-              </div>
-              <div className="p-5">
-                <h3 className="font-bold text-lg text-gray-900 group-hover:text-[#1C4A5C] transition-colors">Sunset Over Baybay Bay</h3>
-                <p className="text-sm text-gray-500 font-medium mb-3">by <span className="text-[#3A6A7C]">Maria Santos</span></p>
-                <div className="flex items-center gap-1 mb-4 text-sm bg-gray-50 w-fit px-2 py-1 rounded-md">
-                  <span className="text-[#f2a83b]">★</span> <span className="font-bold text-gray-700">4.9</span>
+            {loading ? (
+              <p className="text-gray-500 col-span-3">Loading artworks...</p>
+            ) : artworks && artworks.length > 0 ? (
+              artworks.map((art) => (
+                <div key={art.artwork_id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 group">
+                  <div className="relative h-56 bg-gray-100 overflow-hidden">
+                     {/* Dynamic image loading */}
+                     <img 
+                        src={art.file_url || '/background.png'} 
+                        alt={art.title}
+                        className="object-cover w-full h-full"
+                     />
+                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                     <button className="absolute top-4 right-4 w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-md text-gray-400 hover:text-red-500 hover:scale-110 transition-all">
+                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                     </button>
+                  </div>
+                  <div className="p-5">
+                    <h3 className="font-bold text-lg text-gray-900 group-hover:text-[#1C4A5C] transition-colors">{art.title}</h3>
+                    <p className="text-sm text-gray-500 font-medium mb-3">
+                      {/* Using optional chaining to safely access nested user data */}
+                      by <span className="text-[#3A6A7C]">{art.users?.name || 'Unknown Artist'}</span>
+                    </p>
+                    <div className="flex justify-between items-center mt-4">
+                      <span className="font-extrabold text-xl text-[#C87941]">₱{art.price}</span>
+                      <button className="bg-[#1C4A5C] hover:bg-[#143745] text-white px-5 py-2.5 rounded-full text-sm font-bold transition-all hover:shadow-md">
+                        Add to Cart
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex justify-between items-center mt-2">
-                  <span className="font-extrabold text-xl text-[#C87941]">₱2,500</span>
-                  <button className="bg-[#1C4A5C] hover:bg-[#143745] text-white px-5 py-2.5 rounded-full text-sm font-bold transition-all hover:shadow-md">Add to Cart</button>
-                </div>
-              </div>
-            </div>
-
-            {/* Artwork Card 2 */}
-            <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 group">
-              <div className="relative h-56 bg-gray-100 overflow-hidden">
-                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-                 <div className="absolute top-4 left-4 bg-[#1C4A5C] text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">Weaving</div>
-                 <button className="absolute top-4 right-4 w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-md text-gray-400 hover:text-red-500 hover:scale-110 transition-all">
-                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                 </button>
-              </div>
-              <div className="p-5">
-                <h3 className="font-bold text-lg text-gray-900 group-hover:text-[#1C4A5C] transition-colors">Handwoven Pinukpok Basket</h3>
-                <p className="text-sm text-gray-500 font-medium mb-3">by <span className="text-[#3A6A7C]">Lola Nena Craft</span></p>
-                <div className="flex items-center gap-1 mb-4 text-sm bg-gray-50 w-fit px-2 py-1 rounded-md">
-                  <span className="text-[#f2a83b]">★</span> <span className="font-bold text-gray-700">4.7</span>
-                </div>
-                <div className="flex justify-between items-center mt-2">
-                  <span className="font-extrabold text-xl text-[#C87941]">₱850</span>
-                  <button className="bg-[#1C4A5C] hover:bg-[#143745] text-white px-5 py-2.5 rounded-full text-sm font-bold transition-all hover:shadow-md">Add to Cart</button>
-                </div>
-              </div>
-            </div>
-
-            {/* Artwork Card 3 */}
-            <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 group">
-              <div className="relative h-56 bg-gray-100 overflow-hidden">
-                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-                 <div className="absolute top-4 left-4 bg-[#8B5A2B] text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">Pottery</div>
-                 <button className="absolute top-4 right-4 w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-md text-gray-400 hover:text-red-500 hover:scale-110 transition-all">
-                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                 </button>
-              </div>
-              <div className="p-5">
-                <h3 className="font-bold text-lg text-gray-900 group-hover:text-[#1C4A5C] transition-colors">Celadon Sea Pottery Set</h3>
-                <p className="text-sm text-gray-500 font-medium mb-3">by <span className="text-[#3A6A7C]">Jun dela Cruz</span></p>
-                <div className="flex items-center gap-1 mb-4 text-sm bg-gray-50 w-fit px-2 py-1 rounded-md">
-                  <span className="text-[#f2a83b]">★</span> <span className="font-bold text-gray-700">5.0</span>
-                </div>
-                <div className="flex justify-between items-center mt-2">
-                  <span className="font-extrabold text-xl text-[#C87941]">₱1,800</span>
-                  <button className="bg-[#1C4A5C] hover:bg-[#143745] text-white px-5 py-2.5 rounded-full text-sm font-bold transition-all hover:shadow-md">Add to Cart</button>
-                </div>
-              </div>
-            </div>
+              ))
+            ) : (
+              <p className="text-gray-500 italic col-span-3">No artworks available right now. Check back soon!</p>
+            )}
           </div>
         </div>
 
@@ -247,19 +253,20 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Commission CTA Card */}
-            <div className="bg-gradient-to-br from-[#C87941] to-[#a86536] rounded-2xl p-8 text-white text-center shadow-lg relative overflow-hidden group">
-              {/* Decorative background shape */}
+            {/* Commission CTA Card - Updated Theme */}
+            <div className="bg-gradient-to-br from-[#1C4A5C] to-[#143745] rounded-2xl p-8 text-white text-center shadow-lg relative overflow-hidden group">
               <div className="absolute -top-10 -right-10 w-32 h-32 bg-white opacity-10 rounded-full group-hover:scale-110 transition-transform duration-500"></div>
               
               <div className="text-4xl mb-4 relative z-10">✨</div>
               <h3 className="font-extrabold text-xl mb-2 relative z-10">Need Something Custom?</h3>
-              <p className="text-sm text-orange-100/90 mb-8 font-medium leading-relaxed relative z-10">
+              <p className="text-sm text-blue-50/90 mb-8 font-medium leading-relaxed relative z-10">
                 Post a commission request and let talented Baybayanon artists come to you!
               </p>
-              <button className="w-full bg-white text-[#C87941] font-bold py-3.5 rounded-full hover:bg-gray-50 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 shadow-sm relative z-10">
-                Post Commission
-              </button>
+              <Link href="/commissions">
+                <button className="w-full bg-[#f2a83b] text-slate-900 font-bold py-3.5 rounded-full hover:bg-[#ffbd59] hover:shadow-lg hover:-translate-y-1 transition-all duration-300 shadow-sm relative z-10">
+                  Post Commission
+                </button>
+              </Link>
             </div>
 
           </div>
