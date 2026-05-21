@@ -202,7 +202,7 @@ export async function acceptCommissionOffer(requestId: number, offerId: number, 
 
   if (requestError) throw new Error('Failed to update the commission status.');
 
-  // C. Optional but recommended: Mark all other offers for this request as 'rejected'
+  // C. Mark all other offers for this request as 'rejected'
   await supabase
     .from('commission_offers')
     .update({ status: 'rejected' })
@@ -210,4 +210,54 @@ export async function acceptCommissionOffer(requestId: number, offerId: number, 
     .neq('offer_id', offerId);
 
   revalidatePath('/homepage'); 
+}
+
+export async function postArtwork(formData: FormData) {
+  const cookieStore = cookies()
+  const supabase = await createClient(cookieStore);
+  
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("You must be logged in to post artwork.");
+
+  const title = formData.get('title') as string;
+  const description = formData.get('description') as string;
+  const price = parseFloat(formData.get('price') as string);
+  const file = formData.get('image') as File;
+
+  if (!file || file.size === 0) throw new Error("Please upload an image.");
+
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${user.id}-${Math.random()}.${fileExt}`;
+  
+  const { error: uploadError } = await supabase.storage
+    .from('artworks')
+    .upload(fileName, file);
+
+  if (uploadError) {
+    console.error("Upload error:", uploadError);
+    throw new Error('Failed to upload image.');
+  }
+
+  const { data: publicUrlData } = supabase.storage
+    .from('artworks')
+    .getPublicUrl(fileName);
+
+  const { error: dbError } = await supabase
+    .from('artworks')
+    .insert({
+      user_id: user.id,
+      title: title,
+      description: description,
+      price: price,
+      file_url: publicUrlData.publicUrl,
+      status: 'available'
+    });
+
+  if (dbError) {
+    console.error("Database error:", dbError);
+    throw new Error('Failed to save artwork details.');
+  }
+
+  revalidatePath('/homepage');
+  redirect('/homepage');
 }
