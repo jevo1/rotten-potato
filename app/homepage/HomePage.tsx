@@ -2,10 +2,17 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/utils/supabase/client';
+import SendMessageModal from '../src/components/SendMessageModal'; // Import the new modal
 
 export default function HomePage() {
   const [artworks, setArtworks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // State for the Message Modal
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedArtistId, setSelectedArtistId] = useState('');
+  const [selectedArtistName, setSelectedArtistName] = useState('');
+  
   const supabase = createClient();
 
   useEffect(() => {
@@ -33,6 +40,13 @@ export default function HomePage() {
 
     fetchArtworks();
   }, []); // Empty dependency array means this runs once when the component mounts
+
+  // Function to trigger the modal
+  const openMessageModal = (id: string, name: string) => {
+    setSelectedArtistId(id);
+    setSelectedArtistName(name);
+    setIsModalOpen(true);
+  };
 
   return (
     <div className="bg-[#FCFAF8] min-h-screen w-full text-slate-800 font-sans pb-20 relative">
@@ -232,7 +246,12 @@ export default function HomePage() {
                     </p>
                   </div>
                 </div>
-                <button className="px-4 py-1.5 border-2 border-gray-100 rounded-full text-xs font-bold text-gray-600 hover:border-[#1C4A5C] hover:text-[#1C4A5C] transition-colors">View</button>
+                <button 
+                  onClick={() => openMessageModal('5d4f3608-d791-4e9f-b342-01c616e53f74', 'Maria Santos')}
+                  className="px-4 py-1.5 border-2 border-gray-100 rounded-full text-xs font-bold text-gray-600 hover:border-[#1C4A5C] hover:text-[#1C4A5C] transition-colors"
+                >
+                  Message
+                </button>
               </div>
 
               <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
@@ -249,7 +268,12 @@ export default function HomePage() {
                     </p>
                   </div>
                 </div>
-                <button className="px-4 py-1.5 border-2 border-gray-100 rounded-full text-xs font-bold text-gray-600 hover:border-[#1C4A5C] hover:text-[#1C4A5C] transition-colors">View</button>
+                <button 
+                  onClick={() => openMessageModal('placeholder-uuid-2', 'Jun dela Cruz')}
+                  className="px-4 py-1.5 border-2 border-gray-100 rounded-full text-xs font-bold text-gray-600 hover:border-[#1C4A5C] hover:text-[#1C4A5C] transition-colors"
+                >
+                  Message
+                </button>
               </div>
             </div>
 
@@ -272,6 +296,14 @@ export default function HomePage() {
           </div>
         </div>
 
+        {/* --- Render the Modal --- */}
+        <SendMessageModal 
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          receiverId={selectedArtistId}
+          receiverName={selectedArtistName}
+        />
+        
       </div>
     </div>
   );
