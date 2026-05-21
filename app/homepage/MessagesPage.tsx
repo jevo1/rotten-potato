@@ -64,14 +64,20 @@ export default function MessagesPage() {
       console.error("Error fetching messages:", error);
     } else if (data) {
       
+      // Group messages by the "other" user
       const convoMap = new Map<string, Conversation>();
       
-      data.forEach((msg: Message) => {
+      data.forEach((rawMsg: any) => {
+        const msg = rawMsg as Message;
         const isSender = msg.sender_id === user.id;
         const otherUserId = isSender ? msg.receiver_id : msg.sender_id;
+        
+        const receiverName = Array.isArray(msg.receiver) ? msg.receiver[0]?.name : msg.receiver?.name;
+        const senderName = Array.isArray(msg.sender) ? msg.sender[0]?.name : msg.sender?.name;
+
         const otherUserName = isSender 
-          ? (msg.receiver?.name || 'Unknown User') 
-          : (msg.sender?.name || 'Unknown User');
+          ? (receiverName || 'Unknown User') 
+          : (senderName || 'Unknown User');
 
         if (!convoMap.has(otherUserId)) {
           convoMap.set(otherUserId, {
