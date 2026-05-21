@@ -202,7 +202,7 @@ export async function acceptCommissionOffer(requestId: number, offerId: number, 
 
   if (requestError) throw new Error('Failed to update the commission status.');
 
-  // C. Optional but recommended: Mark all other offers for this request as 'rejected'
+  // C. Mark all other offers for this request as 'rejected'
   await supabase
     .from('commission_offers')
     .update({ status: 'rejected' })
