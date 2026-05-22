@@ -261,3 +261,29 @@ export async function postArtwork(formData: FormData) {
   revalidatePath('/homepage');
   redirect('/homepage');
 }
+
+// 5. Send a direct message to another user
+export async function sendMessage(receiverId: string, content: string) {
+  const cookieStore = cookies()
+  const supabase = await createClient(cookieStore);
+  
+  // 1. Verify the sender is logged in
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("You must be logged in to send a message.");
+
+  // 2. Insert the message into the database
+  const { error } = await supabase
+    .from('messages')
+    .insert({
+      sender_id: user.id,
+      receiver_id: receiverId,
+      content: content
+    });
+
+  if (error) {
+    console.error("Database error:", error);
+    throw new Error('Failed to send the message.');
+  }
+
+  revalidatePath('/homepage');
+}
