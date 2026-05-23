@@ -345,3 +345,40 @@ export async function updateArtistProfile(formData: FormData) {
   revalidatePath('/homepage');
   redirect('/homepage');
 }
+
+// Complete a commission and leave a review
+export async function completeCommissionAndReview(
+  requestId: number, 
+  artistId: string, 
+  rating: number, 
+  comment: string
+) {
+  const cookieStore = cookies();
+  const supabase = await createClient(cookieStore);
+
+  // 1. Mark request as completed
+  const { error: reqError } = await supabase
+    .from('commission_requests')
+    .update({ status: 'completed' })
+    .eq('request_id', requestId);
+
+  if (reqError) throw new Error('Failed to update request status.');
+
+  // 2. Insert the review
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const { error: reviewError } = await supabase
+    .from('rating_reviews')
+    .insert({
+      client_id: user.id,
+      artist_id: artistId,
+      request_id: requestId,
+      rating: rating,
+      comment: comment
+    });
+
+  if (reviewError) throw new Error('Failed to post review.');
+
+  revalidatePath('/homepage');
+}

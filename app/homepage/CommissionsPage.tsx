@@ -1,12 +1,13 @@
-'use client'
+"use client";
 
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
-import { submitCommissionOffer, createCommissionRequest } from '../actions'; 
+import { submitCommissionOffer, createCommissionRequest, completeCommissionAndReview } from '../actions'; 
 
 export default function CommissionsPage() {
   const [activeSubTab, setActiveSubTab] = useState('Browse Requests');
   const [openRequests, setOpenRequests] = useState<any[]>([]);
+  const [myRequests, setMyRequests] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
@@ -17,49 +18,65 @@ export default function CommissionsPage() {
   const [offerMessage, setOfferMessage] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // NEW: State for Client Posting Form Modal
+  // State for Client Posting Form Modal
   const [isPostingModalOpen, setIsPostingModalOpen] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
 
+  // State for Review Modal
+  const [reviewJob, setReviewJob] = useState<any>(null);
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState('');
+  const [isReviewing, setIsReviewing] = useState(false);
+
   const supabase = createClient();
 
-// 1. Fetch Open Requests
- useEffect(() => {
-    const fetchOpenJobs = async () => {
-      setIsLoading(true);
+  const fetchData = async () => {
+    setIsLoading(true);
+    
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      setCurrentUserId(user.id);
       
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setCurrentUserId(user.id);
+      const { data: userData } = await supabase
+        .from('users')
+        .select('role')
+        .eq('user_id', user.id)
+        .single();
         
-        // NEW: Fetch the user's role from the public.users table
-        const { data: userData } = await supabase
-          .from('users')
-          .select('role')
-          .eq('user_id', user.id)
-          .single();
-          
-        if (userData) {
-          setCurrentUserRole(userData.role);
-        }
-      }
+      if (userData) setCurrentUserRole(userData.role);
 
-      const { data, error } = await supabase
+      // Fetch 'My Requests' (Client perspective)
+      const { data: myReqData } = await supabase
         .from('commission_requests')
-        .select(`*, client:users!commission_requests_client_id_fkey(name, avatar_url)`)
-        .eq('status', 'open')
-        .order('deadline', { ascending: true });
+        .select(`
+          *,
+          artist:users!artist_id ( name )
+        `)
+        .eq('client_id', user.id)
+        .order('request_id', { ascending: false });
+        
+      if (myReqData) setMyRequests(myReqData);
+    }
 
-      if (!error && data) {
-        setOpenRequests(data);
-      }
-      setIsLoading(false);
-    };
+    // Fetch Open Public Requests
+    const { data, error } = await supabase
+      .from('commission_requests')
+      .select(`
+        request_id, title, description, budget, deadline, status, client_id,
+        client:users!client_id ( name, avatar_url )
+      `)
+      .eq('status', 'open')
+      .order('request_id', { ascending: false });
 
-    fetchOpenJobs();
-  }, [isPostingModalOpen]);
+    if (!error && data) setOpenRequests(data);
+    
+    setIsLoading(false);
+  };
 
-  // 2. Handle Artist Submitting an Offer
+  useEffect(() => {
+    fetchData();
+  }, [isPostingModalOpen, isReviewing]);
+
   const handleSendOffer = async (requestId: number) => {
     if (!offerAmount || !offerMessage) return alert("Please enter a price and message.");
     setIsSubmitting(true);
@@ -76,28 +93,46 @@ export default function CommissionsPage() {
     }
   };
 
-  // 3. NEW: Handle Client Posting a New Request
   const handlePostRequest = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsPosting(true);
-    
     try {
       const formData = new FormData(e.currentTarget);
-      await createCommissionRequest(formData); // Calls your server action
+      await createCommissionRequest(formData);
       alert("Commission Request Posted Successfully!");
-      setIsPostingModalOpen(false); // Close the modal
+      setIsPostingModalOpen(false);
     } catch (error) {
-      alert("Failed to post request. Please make sure you are logged in.");
+      alert("Failed to post request.");
       console.error(error);
     } finally {
       setIsPosting(false);
     }
   };
 
+  const handleSubmitReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reviewJob || !reviewJob.artist_id) return;
+    setIsReviewing(true);
+    
+    try {
+      await completeCommissionAndReview(reviewJob.request_id, reviewJob.artist_id, rating, comment);
+      alert("Review submitted successfully!");
+      setReviewJob(null);
+      setRating(5);
+      setComment('');
+      fetchData(); // Refresh the lists
+    } catch (error) {
+      console.error(error);
+      alert("Failed to submit review.");
+    } finally {
+      setIsReviewing(false);
+    }
+  };
+
   return (
     <div className="bg-[#FCFAF8] min-h-screen w-full text-slate-800 font-sans pb-20 relative">
       
-      {/* NEW: Post Commission Modal */}
+      {/* Post Commission Modal */}
       {isPostingModalOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl p-6 w-full max-w-lg shadow-xl">
@@ -109,22 +144,22 @@ export default function CommissionsPage() {
             <form onSubmit={handlePostRequest} className="flex flex-col gap-4">
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-1">Project Title</label>
-                <input type="text" name="title" required placeholder="e.g. Custom Watercolor Portrait" className="w-full p-2 border border-gray-300 rounded-md" />
+                <input type="text" name="title" required placeholder="e.g. Custom Watercolor Portrait" className="w-full p-2 border border-gray-300 rounded-md outline-none focus:border-[#1C4A5C]" />
               </div>
               
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-1">Detailed Description</label>
-                <textarea name="description" required rows={4} placeholder="Describe the style, size, references, etc." className="w-full p-2 border border-gray-300 rounded-md"></textarea>
+                <textarea name="description" required rows={4} placeholder="Describe the style, size, references, etc." className="w-full p-2 border border-gray-300 rounded-md outline-none focus:border-[#1C4A5C]"></textarea>
               </div>
 
               <div className="flex gap-4">
                 <div className="flex-1">
                   <label className="block text-sm font-bold text-gray-700 mb-1">Budget (₱)</label>
-                  <input type="number" name="budget" required placeholder="e.g. 1500" className="w-full p-2 border border-gray-300 rounded-md" />
+                  <input type="number" name="budget" required placeholder="e.g. 1500" className="w-full p-2 border border-gray-300 rounded-md outline-none focus:border-[#1C4A5C]" />
                 </div>
                 <div className="flex-1">
                   <label className="block text-sm font-bold text-gray-700 mb-1">Deadline</label>
-                  <input type="date" name="deadline" required className="w-full p-2 border border-gray-300 rounded-md" />
+                  <input type="date" name="deadline" required className="w-full p-2 border border-gray-300 rounded-md outline-none focus:border-[#1C4A5C]" />
                 </div>
               </div>
 
@@ -133,23 +168,78 @@ export default function CommissionsPage() {
                 disabled={isPosting}
                 className="w-full bg-[#C87941] hover:bg-[#b06a39] text-white py-3 rounded-md font-bold mt-4 transition-colors disabled:opacity-50"
               >
-                {isPosting ? 'Posting...' : 'Post Commission to Job Board'}
+                {isPosting ? 'Posting...' : 'Post Commission'}
               </button>
             </form>
           </div>
         </div>
       )}
 
+      {/* NEW: Review & Complete Modal */}
+      {reviewJob && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl">
+            <h2 className="text-2xl font-extrabold text-[#1C4A5C] mb-1">Complete Commission</h2>
+            <p className="text-gray-500 text-sm mb-6">Leave a review for <strong className="text-gray-700">{reviewJob.artist?.name || 'the artist'}</strong>.</p>
+            
+            <form onSubmit={handleSubmitReview} className="flex flex-col gap-5">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Rating</label>
+                <div className="flex gap-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setRating(star)}
+                      className={`text-3xl transition-transform hover:scale-110 ${star <= rating ? 'text-[#C87941]' : 'text-gray-200'}`}
+                    >
+                      ★
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">Your Review</label>
+                <textarea 
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  required 
+                  rows={3} 
+                  placeholder="How was it working with this artist?" 
+                  className="w-full p-3 border border-gray-200 rounded-xl outline-none focus:border-[#1C4A5C] focus:ring-2 focus:ring-[#1C4A5C]/20 transition-all resize-none"
+                ></textarea>
+              </div>
+
+              <div className="flex gap-3 mt-4">
+                <button 
+                  type="button" 
+                  onClick={() => setReviewJob(null)}
+                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl font-bold transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  disabled={isReviewing}
+                  className="flex-1 bg-[#1C4A5C] hover:bg-[#143745] text-white py-3 rounded-xl font-bold transition-colors disabled:opacity-50"
+                >
+                  {isReviewing ? 'Submitting...' : 'Submit Review'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <div className="max-w-5xl mx-auto px-6 pt-10">
         
-        {/* --- Header Section --- */}
+        {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
             <h1 className="text-3xl font-extrabold text-[#1C4A5C] mb-2">Commission Board</h1>
             <p className="text-gray-500 font-medium">Find clients looking for your specific art style</p>
           </div>
-          {/* UPDATED: Button now opens the modal */}
           <button 
             onClick={() => setIsPostingModalOpen(true)}
             className="bg-[#C87941] hover:bg-[#b06a39] text-white px-6 py-2.5 rounded-full font-bold shadow-sm hover:shadow-md transition-all"
@@ -158,7 +248,7 @@ export default function CommissionsPage() {
           </button>
         </div>
 
-        {/* --- Sub-Tabs --- */}
+        {/* Sub-Tabs */}
         <div className="flex gap-2 mb-8 bg-gray-100/50 p-1 rounded-xl w-fit border border-gray-200">
           <button 
             onClick={() => setActiveSubTab('Browse Requests')}
@@ -178,106 +268,60 @@ export default function CommissionsPage() {
           </button>
         </div>
 
-        {/* --- Public Job Board View --- */}
+        {/* Browse Requests Tab */}
         {activeSubTab === 'Browse Requests' && (
           <div className="flex flex-col gap-5">
             {isLoading ? (
-              <p className="text-center py-10 text-gray-500">Loading open commissions...</p>
+              <p className="text-center py-10 text-gray-500 font-medium">Loading open commissions...</p>
             ) : openRequests.length === 0 ? (
-              <p className="text-center py-10 text-gray-500">No open commission requests right now.</p>
+              <p className="text-center py-10 text-gray-500 font-medium">No open commission requests right now.</p>
             ) : (
               openRequests.map((job) => (
                 <div key={job.request_id} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 transition-shadow">
-                  
-                  {/* Job Header */}
                   <div className="flex items-start justify-between gap-4 mb-4">
                     <div className="flex gap-4">
                       {job.client?.avatar_url ? (
-                        <img src={job.client.avatar_url} alt="avatar" className="w-12 h-12 rounded-full border border-gray-100" />
+                        <img src={job.client.avatar_url} alt="avatar" className="w-12 h-12 rounded-full border border-gray-100 object-cover" />
                       ) : (
-                        <div className="w-12 h-12 rounded-full bg-gray-200 shrink-0 border border-gray-100 flex items-center justify-center text-gray-400 font-bold">
+                        <div className="w-12 h-12 rounded-full bg-[#1C4A5C]/10 shrink-0 border border-gray-100 flex items-center justify-center text-[#1C4A5C] font-bold text-xl">
                           {job.client?.name?.charAt(0) || '?'}
                         </div>
                       )}
-                      
                       <div>
-                        <h3 className="text-lg font-bold text-[#1C4A5C]">Request #{job.request_id}</h3>
+                        <h3 className="text-lg font-bold text-gray-900">{job.title ? job.title : `Request #${job.request_id}`}</h3>
                         <p className="text-sm text-gray-500 font-medium">by {job.client?.name || 'Unknown Client'}</p>
                       </div>
                     </div>
-                    <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold uppercase">
+                    <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
                       {job.status}
                     </span>
                   </div>
 
-                  {/* Job Details */}
                   <div className="pl-16">
-                    <p className="text-sm text-gray-700 mb-5 whitespace-pre-wrap">
-                      {job.description}
-                    </p>
-
+                    <p className="text-sm text-gray-700 mb-5 whitespace-pre-wrap">{job.description}</p>
                     <div className="flex flex-wrap items-center gap-6 text-xs font-medium text-gray-500 mb-6">
-                      <span className="text-[#C87941] font-bold">
-                        Client Budget: ₱{job.budget}
-                      </span>
-                      <span>
-                        Deadline: {job.deadline ? new Date(job.deadline).toLocaleDateString() : 'Flexible'}
-                      </span>
+                      <span className="text-[#C87941] font-bold text-sm">Client Budget: ₱{job.budget}</span>
+                      <span>Deadline: {job.deadline ? new Date(job.deadline).toLocaleDateString() : 'Flexible'}</span>
                     </div>
 
-                    {/* Offer Form Toggle / Ownership & Role Check */}
                     {job.client_id === currentUserId ? (
-                      <button disabled className="bg-gray-100 text-gray-500 border border-gray-200 px-5 py-2 rounded-full text-sm font-bold cursor-not-allowed">
-                        Your Request
-                      </button>
+                      <button disabled className="bg-gray-100 text-gray-500 border border-gray-200 px-5 py-2 rounded-full text-sm font-bold cursor-not-allowed">Your Request</button>
                     ) : currentUserRole !== 'artist' ? (
-                      <button disabled className="bg-gray-100 text-gray-500 border border-gray-200 px-5 py-2 rounded-full text-sm font-bold cursor-not-allowed">
-                        Artists Only
-                      </button>
+                      <button disabled className="bg-gray-100 text-gray-500 border border-gray-200 px-5 py-2 rounded-full text-sm font-bold cursor-not-allowed">Artists Only</button>
                     ) : activeOfferForm === job.request_id ? (
                       <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 mt-4">
                         <h4 className="font-bold text-[#1C4A5C] mb-3">Submit Your Offer</h4>
                         <div className="flex flex-col gap-3">
-                          <input 
-                            type="number" 
-                            placeholder="Your Price (₱)" 
-                            className="p-2 border rounded-md"
-                            value={offerAmount}
-                            onChange={(e) => setOfferAmount(e.target.value)}
-                            disabled={isSubmitting}
-                          />
-                          <textarea 
-                            placeholder="Pitch your ideas to the client..." 
-                            className="p-2 border rounded-md min-h-[80px]"
-                            value={offerMessage}
-                            onChange={(e) => setOfferMessage(e.target.value)}
-                            disabled={isSubmitting}
-                          />
+                          <input type="number" placeholder="Your Price (₱)" className="p-2 border border-gray-200 rounded-md outline-none" value={offerAmount} onChange={(e) => setOfferAmount(e.target.value)} disabled={isSubmitting} />
+                          <textarea placeholder="Pitch your ideas to the client..." className="p-2 border border-gray-200 rounded-md min-h-[80px] outline-none" value={offerMessage} onChange={(e) => setOfferMessage(e.target.value)} disabled={isSubmitting} />
                           <div className="flex gap-2 mt-2">
-                            <button 
-                              onClick={() => handleSendOffer(job.request_id)}
-                              disabled={isSubmitting}
-                              className="bg-[#C87941] text-white px-4 py-2 rounded-md font-bold text-sm hover:bg-[#b06a39]"
-                            >
-                              {isSubmitting ? 'Sending...' : 'Confirm Offer'}
-                            </button>
-                            <button 
-                              onClick={() => setActiveOfferForm(null)}
-                              disabled={isSubmitting}
-                              className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md font-bold text-sm hover:bg-gray-300"
-                            >
-                              Cancel
-                            </button>
+                            <button onClick={() => handleSendOffer(job.request_id)} disabled={isSubmitting} className="bg-[#C87941] text-white px-4 py-2 rounded-md font-bold text-sm hover:bg-[#b06a39]">{isSubmitting ? 'Sending...' : 'Confirm Offer'}</button>
+                            <button onClick={() => setActiveOfferForm(null)} disabled={isSubmitting} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md font-bold text-sm hover:bg-gray-300">Cancel</button>
                           </div>
                         </div>
                       </div>
                     ) : (
-                      <button 
-                        onClick={() => setActiveOfferForm(job.request_id)}
-                        className="bg-[#C87941] hover:bg-[#b06a39] text-white px-5 py-2 rounded-full text-sm font-bold transition-colors shadow-sm"
-                      >
-                        Send Offer
-                      </button>
+                      <button onClick={() => setActiveOfferForm(job.request_id)} className="bg-[#C87941] hover:bg-[#b06a39] text-white px-5 py-2 rounded-full text-sm font-bold transition-colors shadow-sm">Send Offer</button>
                     )}
                   </div>
                 </div>
@@ -286,10 +330,58 @@ export default function CommissionsPage() {
           </div>
         )}
 
-        {/* Placeholder for 'My Requests' Tab */}
+        {/* My Requests Tab */}
         {activeSubTab === 'My Requests' && (
-          <div className="text-center py-10 text-gray-500">
-            We will wire up the client's offer review dashboard here next!
+          <div className="flex flex-col gap-5">
+            {isLoading ? (
+              <p className="text-center py-10 text-gray-500 font-medium">Loading your requests...</p>
+            ) : myRequests.length === 0 ? (
+              <div className="text-center py-16 bg-white rounded-3xl border border-gray-100 border-dashed">
+                <div className="text-4xl mb-3">📝</div>
+                <h3 className="text-lg font-bold text-gray-900">You haven't posted any requests</h3>
+                <p className="text-gray-500 text-sm mt-1 mb-4">Need custom art? Post a request for artists to bid on.</p>
+                <button onClick={() => setIsPostingModalOpen(true)} className="text-[#C87941] font-bold hover:underline">Post your first request</button>
+              </div>
+            ) : (
+              myRequests.map((job) => (
+                <div key={job.request_id} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                  <div>
+                    <div className="flex items-center gap-3 mb-1">
+                      <h3 className="text-xl font-bold text-[#1C4A5C]">{job.title || `Request #${job.request_id}`}</h3>
+                      <span className={`px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider ${
+                        job.status === 'open' ? 'bg-blue-50 text-blue-600' :
+                        job.status === 'in_progress' ? 'bg-orange-50 text-orange-600' :
+                        'bg-green-50 text-green-600'
+                      }`}>
+                        {job.status.replace('_', ' ')}
+                      </span>
+                    </div>
+                    <p className="text-gray-500 text-sm mb-3">Budget: ₱{job.budget} • Deadline: {new Date(job.deadline).toLocaleDateString()}</p>
+                    
+                    {job.artist_id && (
+                      <p className="text-sm font-medium text-gray-700 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100 inline-block">
+                        🎨 Working with: <span className="font-bold text-[#1C4A5C]">{job.artist?.name || 'Unknown Artist'}</span>
+                      </p>
+                    )}
+                  </div>
+                  
+                  {job.status === 'in_progress' && (
+                    <button 
+                      onClick={() => setReviewJob(job)}
+                      className="bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 rounded-full font-bold shadow-sm transition-all whitespace-nowrap"
+                    >
+                      Complete & Review
+                    </button>
+                  )}
+                  {job.status === 'completed' && (
+                    <span className="text-green-600 font-bold flex items-center gap-1">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                      Completed
+                    </span>
+                  )}
+                </div>
+              ))
+            )}
           </div>
         )}
 
