@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { createClient } from '@/utils/supabase/client';
 import SendMessageModal from '../src/components/SendMessageModal'; 
+import { Star, MessageSquare, ExternalLink, Share2, Heart, MessageCircle, Plus } from 'lucide-react';
 
 interface Artwork {
   artwork_id: number;
@@ -155,8 +156,9 @@ export default function HomePage() {
                          by <span className="text-[#f2a83b] font-bold">{art.users?.name}</span>
                       </p>
                       <div className="flex items-center gap-4">
-                          <button className="bg-[#f2a83b] text-slate-900 px-10 py-4 rounded-full font-black hover:bg-[#ffbd59] transition-all hover:scale-105 active:scale-95 shadow-lg">
+                          <button className="bg-[#f2a83b] text-slate-900 px-10 py-4 rounded-full font-black hover:bg-[#ffbd59] transition-all hover:scale-105 active:scale-95 shadow-lg flex items-center gap-2">
                               View Artwork
+                              <ExternalLink size={18} />
                           </button>
                           <span className="text-2xl font-black text-white">₱{art.price}</span>
                       </div>
@@ -202,14 +204,15 @@ export default function HomePage() {
                 className="w-full h-auto max-h-[550px] object-contain"
               />
             </div>
-            <div className="flex items-center gap-6 text-sm text-gray-500 border-t border-gray-100 pt-4">              <button className="flex items-center gap-2 hover:text-[#C87941] font-medium transition-colors">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> 42
+            <div className="flex items-center gap-6 text-sm text-gray-500 border-t border-gray-100 pt-4">
+              <button className="flex items-center gap-2 hover:text-[#C87941] font-medium transition-colors">
+                <Heart size={18} strokeWidth={2} /> 42
               </button>
               <button className="flex items-center gap-2 hover:text-[#1C4A5C] font-medium transition-colors">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> 8
+                <MessageCircle size={18} strokeWidth={2} /> 8
               </button>
               <button className="flex items-center gap-2 hover:text-[#1C4A5C] font-medium transition-colors ml-auto">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Share
+                <Share2 size={18} strokeWidth={2} /> Share
               </button>
             </div>
           </div>
@@ -243,20 +246,21 @@ export default function HomePage() {
                       <h4 className="font-bold text-[11px] text-gray-900 flex items-center gap-1 truncate">
                         {artist.name} 
                         {artist.rating >= 4.5 && (
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="#3b82f6" stroke="white" strokeWidth="2" className="text-blue-500 flex-none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                          <Star size={10} fill="#3b82f6" stroke="white" strokeWidth={2} className="text-blue-500 flex-none" />
                         )}
                       </h4>
                       <p className="text-[9px] text-gray-500 font-medium truncate">{artist.specialty}</p>
                       <p className="text-[9px] font-bold text-gray-700 mt-0.5 flex items-center gap-1">
-                        <span className={artist.rating > 0 ? "text-[#f2a83b]" : "text-gray-300"}>★</span> 
+                        <Star size={10} className={artist.rating > 0 ? "text-[#f2a83b] fill-[#f2a83b]" : "text-gray-300"} />
                         {artist.rating > 0 ? artist.rating : "New"} 
                       </p>
                     </div>
                   </div>
                   <button 
                     onClick={() => openMessageModal(artist.id, artist.name)}
-                    className="px-2.5 py-1 border border-gray-100 rounded-full text-[9px] font-bold text-gray-600 hover:border-[#1C4A5C] hover:text-[#1C4A5C] transition-colors flex-none"
+                    className="px-2.5 py-1 border border-gray-100 rounded-full text-[9px] font-bold text-gray-600 hover:border-[#1C4A5C] hover:text-[#1C4A5C] transition-colors flex-none flex items-center gap-1"
                   >
+                    <MessageSquare size={10} />
                     Message
                   </button>
                 </div>
@@ -276,8 +280,9 @@ export default function HomePage() {
               Post a commission and let local artists come to you!
             </p>
             <Link href="/commissions">
-              <button className="w-full bg-[#f2a83b] text-slate-900 font-bold py-2.5 rounded-full hover:bg-[#ffbd59] hover:shadow-lg hover:-translate-y-1 transition-all duration-300 shadow-sm relative z-10 text-[11px]">
+              <button className="w-full bg-[#f2a83b] text-slate-900 font-bold py-2.5 rounded-full hover:bg-[#ffbd59] hover:shadow-lg hover:-translate-y-1 transition-all duration-300 shadow-sm relative z-10 text-[11px] flex items-center justify-center gap-2">
                 Post Commission
+                <Plus size={14} strokeWidth={3} />
               </button>
             </Link>
           </div>

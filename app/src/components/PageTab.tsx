@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import PostArtworkModal from './PostArtworkModal';
+import { Home, Globe, ClipboardList, MessageSquare, Plus } from 'lucide-react';
 
 interface PageTabProps {
   activeTab: number;
@@ -10,34 +11,25 @@ export default function PageTab({ activeTab, setActiveTab }: PageTabProps) {
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
   
   const tabs = [
-    // ... rest of tabs array
     {
       id: 0,
       label: 'Home',
-      icon: (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-      )
+      icon: <Home size={18} strokeWidth={2.5} />
     },
     {
       id: 1,
       label: 'Browse',
-      icon: (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-      )
+      icon: <Globe size={18} strokeWidth={2.5} />
     },
     {
       id: 2,
       label: 'Commission',
-      icon: (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><line x1="8" y1="11" x2="16" y2="11"/><line x1="8" y1="15" x2="16" y2="15"/></svg>
-      )
+      icon: <ClipboardList size={18} strokeWidth={2.5} />
     },
     {
       id: 3,
       label: 'Messages',
-      icon: (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-      )
+      icon: <MessageSquare size={18} strokeWidth={2.5} />
     }
   ];
 
@@ -69,9 +61,10 @@ export default function PageTab({ activeTab, setActiveTab }: PageTabProps) {
         {/* Right Side: Post Artwork Button */}
         <button 
           onClick={() => setIsPostModalOpen(true)}
-          className="bg-[#f2a83b] hover:bg-[#ffbd59] text-zinc-900 font-bold px-6 py-2 rounded-full text-sm transition-all shadow-sm hover:shadow hover:-translate-y-0.5"
+          className="bg-[#f2a83b] hover:bg-[#ffbd59] text-zinc-900 font-bold px-6 py-2 rounded-full text-sm transition-all shadow-sm hover:shadow hover:-translate-y-0.5 flex items-center gap-2"
         >
-          + Post Artwork
+          <Plus size={16} strokeWidth={3} />
+          Post Artwork
         </button>
 
       </div>
