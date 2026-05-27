@@ -30,6 +30,8 @@ export default function BrowsePage() {
     'Jewelry',
     'Paintings',
     'Weaving',
+    'Wood Carving',
+    'Embroidery',
     'Crafts'
   ];
 
