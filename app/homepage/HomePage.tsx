@@ -195,7 +195,7 @@ export default function HomePage() {
             <p className="text-sm text-gray-700 mb-4 leading-relaxed">Just finished my latest oil painting inspired by the Baybay coastline! The colors of the sunset were just too beautiful to ignore. Available for sale now. 🌊✨</p>
             <div className="relative w-full overflow-hidden rounded-xl mb-5 bg-gray-50 border border-gray-100 flex items-center justify-center">
               <Image 
-                src="/portait.jpg" 
+                src="/background.png" 
                 alt="Post content"
                 width={800}
                 height={1000}
