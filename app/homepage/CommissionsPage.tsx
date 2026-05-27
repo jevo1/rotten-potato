@@ -18,16 +18,14 @@ export default function CommissionsPage() {
   const [offerMessage, setOfferMessage] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // State for Client Posting Form Modal
   const [isPostingModalOpen, setIsPostingModalOpen] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
 
-  // State for Review Modal
   const [reviewJob, setReviewJob] = useState<any>(null);
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
   const [isReviewing, setIsReviewing] = useState(false);
-  const [isAccepting, setIsAccepting] = useState(false); // ADDED: Loading state for accepting an offer
+  const [isAccepting, setIsAccepting] = useState(false);
 
   const supabase = createClient();
 
@@ -46,7 +44,6 @@ export default function CommissionsPage() {
         
       if (userData) setCurrentUserRole(userData.role);
 
-      // ADDED: Fetch 'My Requests' with the incoming offers attached!
       const { data: myReqData } = await supabase
         .from('commission_requests')
         .select(`
@@ -63,7 +60,6 @@ export default function CommissionsPage() {
       if (myReqData) setMyRequests(myReqData);
     }
 
-    // Fetch Open Public Requests
     const { data, error } = await supabase
       .from('commission_requests')
       .select(`
@@ -91,7 +87,7 @@ export default function CommissionsPage() {
       setActiveOfferForm(null); 
       setOfferAmount('');
       setOfferMessage('');
-      fetchData(); // Refresh to see the new offer
+      fetchData(); 
     } catch (error) {
       alert("Failed to submit offer.");
     } finally {
@@ -115,14 +111,13 @@ export default function CommissionsPage() {
     }
   };
 
-  // ADDED: Function to handle the client clicking "Hire this Artist"
   const handleAcceptOffer = async (requestId: number, offerId: number, artistId: string) => {
     if (!confirm("Are you sure you want to hire this artist?")) return;
     setIsAccepting(true);
     try {
       await acceptCommissionOffer(requestId, offerId, artistId);
       alert("Artist hired successfully!");
-      fetchData(); // Refresh the page so it updates to "in_progress"
+      fetchData(); 
     } catch (error) {
       console.error(error);
       alert("Failed to accept offer.");
