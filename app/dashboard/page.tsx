@@ -99,7 +99,7 @@ export default function DashboardPage() {
             </Link>
             <button 
               onClick={() => setIsPostModalOpen(true)}
-              className="bg-[#C87941] hover:bg-[#a86536] text-white px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-orange-200 transition-all flex items-center gap-2 hover:scale-[1.02] active:scale-95"
+              className="bg-[#f2a83b] hover:bg-[#e09b36] text-slate-900 px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest shadow-sm hover:shadow-md transition-all flex items-center gap-2 hover:scale-[1.02] active:scale-95"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               New Artwork

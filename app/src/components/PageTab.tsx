@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import PostArtworkModal from './PostArtworkModal';
-import { Home, Globe, ClipboardList, MessageSquare, Plus } from 'lucide-react';
+import { Home, Store, ClipboardList, MessageSquare, Plus } from 'lucide-react';
 
 interface PageTabProps {
   activeTab: number;
@@ -18,8 +18,8 @@ export default function PageTab({ activeTab, setActiveTab }: PageTabProps) {
     },
     {
       id: 1,
-      label: 'Browse',
-      icon: <Globe size={18} strokeWidth={2.5} />
+      label: 'Marketplace',
+      icon: <Store size={18} strokeWidth={2.5} />
     },
     {
       id: 2,
@@ -61,7 +61,7 @@ export default function PageTab({ activeTab, setActiveTab }: PageTabProps) {
         {/* Right Side: Post Artwork Button */}
         <button 
           onClick={() => setIsPostModalOpen(true)}
-          className="bg-[#f2a83b] hover:bg-[#ffbd59] text-zinc-900 font-bold px-6 py-2 rounded-full text-sm transition-all shadow-sm hover:shadow hover:-translate-y-0.5 flex items-center gap-2"
+          className="bg-[#f2a83b] hover:bg-[#e09b36] text-slate-900 font-bold px-6 py-2 rounded-full text-sm transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5 flex items-center gap-2"
         >
           <Plus size={16} strokeWidth={3} />
           Post Artwork
