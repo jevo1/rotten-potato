@@ -15,7 +15,6 @@ export async function updateProfile(formData: FormData) {
   const name = formData.get('name') as string
   let avatarUrl = null
 
-  // --- NEW: Handle Avatar Image Upload ---
   const avatarFile = formData.get('avatar_image') as File
   
   if (avatarFile && avatarFile.size > 0) {
@@ -32,7 +31,6 @@ export async function updateProfile(formData: FormData) {
       throw new Error('Failed to upload profile picture')
     }
 
-    // Get the public URL
     const { data: { publicUrl } } = supabase
       .storage
       .from('avatars')
@@ -41,8 +39,12 @@ export async function updateProfile(formData: FormData) {
     avatarUrl = publicUrl
   }
 
-  // --- Prepare User Update ---
-  const userUpdateData: any = { name }
+  interface UserUpdate {
+    name: string;
+    avatar_url?: string;
+  }
+  
+  const userUpdateData: UserUpdate = { name }
   if (avatarUrl) {
     userUpdateData.avatar_url = avatarUrl
   }

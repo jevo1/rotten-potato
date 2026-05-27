@@ -39,7 +39,7 @@ export default function LandingPage() {
           
           {/* Top Badge */}
           <div className="flex items-center gap-2 rounded-full border border-[#f2a83b] px-5 py-1.5 text-sm font-medium text-[#f2a83b]">
-            <span className="text-xs">⭐</span> Baybay City's Premier Art Marketplace
+            <span className="text-xs">⭐</span> Baybay City&apos;s Premier Art Marketplace
           </div>
 
           {/* Headline */}

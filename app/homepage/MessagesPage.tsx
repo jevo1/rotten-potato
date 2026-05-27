@@ -1,18 +1,22 @@
 "use client";
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { sendMessage } from '@/app/actions';
 
-// Define types for our grouped data
+type MessageUser = {
+  name: string;
+};
+
 type Message = {
   message_id: string;
   content: string;
   timestamp: string;
   sender_id: string;
   receiver_id: string;
-  sender?: any; 
-  receiver?: any;
+  sender?: MessageUser | MessageUser[]; 
+  receiver?: MessageUser | MessageUser[];
 };
+
 type Conversation = {
   otherUserId: string;
   otherUserName: string;
@@ -26,18 +30,17 @@ export default function MessagesPage() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   
-  // Reply State
   const [replyText, setReplyText] = useState('');
   const [isSending, setIsSending] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
 
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  }, []);
 
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       setLoading(false);
@@ -45,7 +48,6 @@ export default function MessagesPage() {
     }
     setCurrentUserId(user.id);
 
-    // Fetch all messages involving the user
     const { data, error } = await supabase
       .from('messages')
       .select(`
@@ -58,17 +60,15 @@ export default function MessagesPage() {
         receiver:users!messages_receiver_id_fkey ( name )
       `)
       .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
-      .order('timestamp', { ascending: true }); // Ascending so oldest is at top, newest at bottom
+      .order('timestamp', { ascending: true });
 
     if (error) {
       console.error("Error fetching messages:", error);
     } else if (data) {
       
-      // Group messages by the "other" user
       const convoMap = new Map<string, Conversation>();
       
-      data.forEach((rawMsg: any) => {
-        const msg = rawMsg as Message;
+      (data as Message[]).forEach((msg) => {
         const isSender = msg.sender_id === user.id;
         const otherUserId = isSender ? msg.receiver_id : msg.sender_id;
         
@@ -104,15 +104,69 @@ export default function MessagesPage() {
       }
     }
     setLoading(false);
-  };
+  }, [supabase, activeConvoId]);
 
   useEffect(() => {
     fetchMessages();
-  }, []);
+  }, [fetchMessages]);
+
+  useEffect(() => {
+    if (!currentUserId) return;
+
+    const channel = supabase
+      .channel('realtime_messages')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+        },
+        async (payload) => {
+          const newMessage = payload.new as Message;
+          
+          if (newMessage.sender_id !== currentUserId && newMessage.receiver_id !== currentUserId) return;
+
+          let needsRefetch = false;
+          
+          setConversations(prev => {
+            const isDuplicate = prev.some(c => c.messages.some(m => m.message_id === newMessage.message_id));
+            if (isDuplicate) return prev;
+
+            const otherUserId = newMessage.sender_id === currentUserId ? newMessage.receiver_id : newMessage.sender_id;
+            const existingConvoIndex = prev.findIndex(c => c.otherUserId === otherUserId);
+
+            if (existingConvoIndex === -1) {
+              needsRefetch = true;
+              return prev;
+            }
+
+            const updatedConversations = [...prev];
+            const convo = { ...updatedConversations[existingConvoIndex] };
+            convo.messages = [...convo.messages, newMessage];
+            convo.latestMessageTime = newMessage.timestamp;
+            updatedConversations[existingConvoIndex] = convo;
+            
+            return updatedConversations.sort(
+              (a, b) => new Date(b.latestMessageTime).getTime() - new Date(a.latestMessageTime).getTime()
+            );
+          });
+
+          if (needsRefetch) {
+            fetchMessages();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentUserId, fetchMessages, supabase]);
 
   useEffect(() => {
     scrollToBottom();
-  }, [activeConvoId, conversations]);
+  }, [activeConvoId, conversations, scrollToBottom]);
 
   const handleSendReply = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -122,7 +176,6 @@ export default function MessagesPage() {
     try {
       await sendMessage(activeConvoId, replyText);
       setReplyText('');
-      await fetchMessages(); 
     } catch (error) {
       console.error(error);
       alert("Failed to send reply.");
@@ -232,7 +285,6 @@ export default function MessagesPage() {
                     className="flex-1 max-h-32 min-h-[50px] p-3 rounded-2xl border border-gray-200 focus:border-[#1C4A5C] focus:ring-2 focus:ring-[#1C4A5C]/20 outline-none resize-none text-sm transition-all"
                     rows={1}
                     onKeyDown={(e) => {
-                      // Pressing Enter sends the message (Shift+Enter for new line)
                       if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault();
                         handleSendReply(e);

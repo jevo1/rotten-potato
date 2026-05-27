@@ -17,7 +17,7 @@ export default function SignupPage() {
         {/* Left Side: Marketing Text */}
         <div className="flex flex-1 flex-col justify-end p-8 md:p-16 lg:p-24">
           <h1 className="mb-4 text-5xl font-extrabold tracking-tight md:text-6xl lg:text-7xl">
-            It's time to boost<br />
+            It&apos;s time to boost<br />
             <span className="relative inline-block mt-2">
               your creativity
               <span className="absolute -bottom-2 left-0 h-1.5 w-full bg-teal-500"></span>

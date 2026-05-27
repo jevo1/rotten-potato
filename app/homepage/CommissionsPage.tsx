@@ -1,13 +1,44 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { submitCommissionOffer, createCommissionRequest, completeCommissionAndReview, acceptCommissionOffer } from '../actions'; 
 
+interface CommissionOffer {
+  offer_id: number;
+  message: string;
+  offer_amount: number;
+  status: string;
+  artist_id: string;
+  artist: {
+    name: string;
+    avatar_url: string;
+  };
+}
+
+interface CommissionRequest {
+  request_id: number;
+  title: string;
+  description: string;
+  budget: number;
+  deadline: string;
+  status: string;
+  client_id: string;
+  artist_id?: string;
+  client: {
+    name: string;
+    avatar_url: string;
+  };
+  artist?: {
+    name: string;
+  };
+  offers?: CommissionOffer[];
+}
+
 export default function CommissionsPage() {
   const [activeSubTab, setActiveSubTab] = useState('Browse Requests');
-  const [openRequests, setOpenRequests] = useState<any[]>([]);
-  const [myRequests, setMyRequests] = useState<any[]>([]);
+  const [openRequests, setOpenRequests] = useState<CommissionRequest[]>([]);
+  const [myRequests, setMyRequests] = useState<CommissionRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
@@ -21,7 +52,7 @@ export default function CommissionsPage() {
   const [isPostingModalOpen, setIsPostingModalOpen] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
 
-  const [reviewJob, setReviewJob] = useState<any>(null);
+  const [reviewJob, setReviewJob] = useState<CommissionRequest | null>(null);
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
   const [isReviewing, setIsReviewing] = useState(false);
@@ -29,7 +60,7 @@ export default function CommissionsPage() {
 
   const supabase = createClient();
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setIsLoading(true);
     
     const { data: { user } } = await supabase.auth.getUser();
@@ -57,7 +88,7 @@ export default function CommissionsPage() {
         .eq('client_id', user.id)
         .order('request_id', { ascending: false });
         
-      if (myReqData) setMyRequests(myReqData);
+      if (myReqData) setMyRequests(myReqData as unknown as CommissionRequest[]);
     }
 
     const { data, error } = await supabase
@@ -69,14 +100,14 @@ export default function CommissionsPage() {
       .eq('status', 'open')
       .order('request_id', { ascending: false });
 
-    if (!error && data) setOpenRequests(data);
+    if (!error && data) setOpenRequests(data as unknown as CommissionRequest[]);
     
     setIsLoading(false);
-  };
+  }, [supabase]);
 
   useEffect(() => {
     fetchData();
-  }, [isPostingModalOpen, isReviewing]);
+  }, [isPostingModalOpen, isReviewing, fetchData]);
 
   const handleSendOffer = async (requestId: number) => {
     if (!offerAmount || !offerMessage) return alert("Please enter a price and message.");
@@ -88,7 +119,7 @@ export default function CommissionsPage() {
       setOfferAmount('');
       setOfferMessage('');
       fetchData(); 
-    } catch (error) {
+    } catch {
       alert("Failed to submit offer.");
     } finally {
       setIsSubmitting(false);
@@ -355,7 +386,7 @@ export default function CommissionsPage() {
             ) : myRequests.length === 0 ? (
               <div className="text-center py-16 bg-white rounded-3xl border border-gray-100 border-dashed">
                 <div className="text-4xl mb-3">📝</div>
-                <h3 className="text-lg font-bold text-gray-900">You haven't posted any requests</h3>
+                <h3 className="text-lg font-bold text-gray-900">You haven&apos;t posted any requests</h3>
                 <p className="text-gray-500 text-sm mt-1 mb-4">Need custom art? Post a request for artists to bid on.</p>
                 <button onClick={() => setIsPostingModalOpen(true)} className="text-[#C87941] font-bold hover:underline">Post your first request</button>
               </div>
@@ -399,12 +430,12 @@ export default function CommissionsPage() {
                     )}
                   </div>
 
-                  {/* ADDED: Incoming Offers Section */}
+                  {/* Incoming Offers Section */}
                   {job.status === 'open' && job.offers && job.offers.length > 0 && (
                     <div className="mt-4 pt-4 border-t border-gray-100">
                       <h4 className="text-sm font-bold text-gray-900 mb-3">Incoming Offers</h4>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {job.offers.map((offer: any) => (
+                        {job.offers.map((offer: CommissionOffer) => (
                           <div key={offer.offer_id} className="bg-gray-50 p-4 rounded-xl border border-gray-200">
                             <div className="flex justify-between items-start mb-2">
                               <div>
