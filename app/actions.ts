@@ -211,6 +211,7 @@ export async function postArtwork(formData: FormData) {
 
   const title = formData.get('title') as string;
   const description = formData.get('description') as string;
+  const category = formData.get('category') as string;
   const price = parseFloat(formData.get('price') as string);
   const file = formData.get('image') as File;
 
@@ -238,6 +239,7 @@ export async function postArtwork(formData: FormData) {
       user_id: user.id,
       title: title,
       description: description,
+      category: category,
       price: price,
       file_url: publicUrlData.publicUrl,
       status: 'available'
@@ -249,7 +251,6 @@ export async function postArtwork(formData: FormData) {
   }
 
   revalidatePath('/homepage');
-  redirect('/homepage');
 }
 
 // 5. Send a direct message to another user
@@ -377,5 +378,57 @@ export async function completeCommissionAndReview(
   if (reviewError) throw new Error('Failed to post review.');
 
   revalidatePath('/homepage');
+}
+
+export async function getArtworks(options: {
+  search?: string;
+  category?: string;
+  sortBy?: 'popular' | 'price_asc' | 'price_desc' | 'newest';
+}) {
+  const cookieStore = cookies();
+  const supabase = await createClient(cookieStore);
+
+  let query = supabase
+    .from('artworks')
+    .select(`
+      artwork_id,
+      title,
+      description,
+      price,
+      file_url,
+      category,
+      status,
+      users ( name )
+    `);
+
+  // Filtering
+  if (options.category && options.category !== 'All Categories') {
+    query = query.eq('category', options.category);
+  }
+
+  if (options.search) {
+    query = query.ilike('title', `%${options.search}%`);
+  }
+
+  // Sorting
+  if (options.sortBy === 'price_asc') {
+    query = query.order('price', { ascending: true });
+  } else if (options.sortBy === 'price_desc') {
+    query = query.order('price', { ascending: false });
+  } else {
+    // Default sorting by title if created_at is missing
+    query = query.order('title', { ascending: true });
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    console.error("Supabase error fetching artworks:", error.message, error.details, error.hint);
+    throw new Error(`Failed to fetch artworks: ${error.message}`);
+  }
+
+  return data?.map(artwork => ({
+    ...artwork,
+    users: Array.isArray(artwork.users) ? artwork.users[0] : artwork.users
+  }));
 }
 

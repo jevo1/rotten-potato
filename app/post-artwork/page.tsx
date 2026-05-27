@@ -2,11 +2,13 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { postArtwork } from '@/app/actions';
 
 export default function PostArtworkPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const router = useRouter();
 
   // Helper to show a preview of the image before uploading
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -21,6 +23,7 @@ export default function PostArtworkPage() {
     setIsSubmitting(true);
     try {
       await postArtwork(formData);
+      router.push('/homepage');
     } catch (error) {
       console.error(error);
       alert("Something went wrong while posting your artwork.");
@@ -85,6 +88,26 @@ export default function PostArtworkPage() {
               />
             </div>
             <div className="space-y-2">
+              <label className="block text-sm font-bold text-gray-700">Category *</label>
+              <select 
+                name="category" 
+                required 
+                defaultValue=""
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#1C4A5C] focus:ring-2 focus:ring-[#1C4A5C]/20 outline-none bg-white transition-all appearance-none"
+              >
+                <option value="" disabled>Select a category</option>
+                <option value="Digital">Digital</option>
+                <option value="Pottery">Pottery</option>
+                <option value="Jewelry">Jewelry</option>
+                <option value="Paintings">Paintings</option>
+                <option value="Weaving">Weaving</option>
+                <option value="Crafts">Crafts</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
               <label className="block text-sm font-bold text-gray-700">Price (₱) *</label>
               <input 
                 type="number" 
@@ -112,9 +135,19 @@ export default function PostArtworkPage() {
             <button 
               type="submit" 
               disabled={isSubmitting}
-              className="flex-1 bg-[#C87941] text-white font-bold py-3.5 rounded-full hover:bg-[#a86536] hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 bg-[#C87941] text-white font-bold py-3.5 rounded-full hover:bg-[#a86536] hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              {isSubmitting ? 'Posting...' : 'Post to Marketplace'}
+              {isSubmitting ? (
+                <>
+                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span>Posting...</span>
+                </>
+              ) : (
+                'Post to Marketplace'
+              )}
             </button>
           </div>
 
