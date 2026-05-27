@@ -55,19 +55,19 @@ export const NavBar: React.FC<NavBarProps> = ({
                 {/* Messages Icon */}
                 <button className="relative text-gray-500 hover:text-[#C87941] hover:bg-orange-50 p-2.5 rounded-full transition-all">
                     <MessageCircle size={20} strokeWidth={2} />
-                    <span className="absolute top-1.5 right-1.5 bg-[#f2a83b] text-white text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-full border-2 border-white">3</span>
+                    <span className="absolute top-1.5 right-1.5 bg-gray-800 text-white text-[8px] font-bold w-3.5 h-3.5 flex items-center justify-center rounded-full">3</span>
                 </button>
 
                 {/* Notifications Icon */}
                 <button className="relative text-gray-500 hover:text-[#1C4A5C] hover:bg-slate-50 p-2.5 rounded-full transition-all">
                     <Bell size={20} strokeWidth={2} />
-                    <span className="absolute top-1.5 right-1.5 bg-[#1C4A5C] text-white text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-full border-2 border-white">5</span>
+                    <span className="absolute top-1.5 right-1.5 bg-gray-800 text-white text-[8px] font-bold w-3.5 h-3.5 flex items-center justify-center rounded-full">5</span>
                 </button>
 
                 {/* Cart/Bag Icon */}
                 <button className="relative text-gray-500 hover:text-[#8B5A2B] hover:bg-stone-50 p-2.5 rounded-full transition-all">
                     <ShoppingCart size={20} strokeWidth={2} />
-                    <span className="absolute top-1.5 right-1.5 bg-[#8B5A2B] text-white text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-full border-2 border-white">2</span>
+                    <span className="absolute top-1.5 right-1.5 bg-gray-800 text-white text-[8px] font-bold w-3.5 h-3.5 flex items-center justify-center rounded-full">2</span>
                 </button>
 
                 {/* Profile Dropdown */}
