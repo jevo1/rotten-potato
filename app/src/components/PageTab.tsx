@@ -18,7 +18,7 @@ export default function PageTab({ activeTab, setActiveTab }: PageTabProps) {
     },
     {
       id: 1,
-      label: 'Browse',
+      label: 'Marketplace',
       icon: <Globe size={18} strokeWidth={2.5} />
     },
     {
