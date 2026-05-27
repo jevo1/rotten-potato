@@ -45,7 +45,7 @@ export default function EditProfilePage() {
     };
 
     fetchProfileData();
-  }, []);
+  }, [supabase]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -55,7 +55,6 @@ export default function EditProfilePage() {
     
     try {
       await updateArtistProfile(formData);
-      // The server action handles the redirect on success
     } catch (error) {
       console.error(error);
       alert("Failed to update profile. Please try again.");

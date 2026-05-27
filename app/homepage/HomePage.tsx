@@ -4,15 +4,32 @@ import Link from 'next/link';
 import { createClient } from '@/utils/supabase/client';
 import SendMessageModal from '../src/components/SendMessageModal'; 
 
+interface Artwork {
+  artwork_id: number;
+  title: string;
+  price: number;
+  file_url: string;
+  users: {
+    name: string;
+  } | null;
+}
+
+interface ArtistRanked {
+  id: string;
+  name: string;
+  avatar: string;
+  specialty: string;
+  rating: number;
+  reviewCount: number;
+}
+
 export default function HomePage() {
-  const [artworks, setArtworks] = useState<any[]>([]);
+  const [artworks, setArtworks] = useState<Artwork[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // NEW: State for the dynamic Top Artists
-  const [topArtists, setTopArtists] = useState<any[]>([]);
+  const [topArtists, setTopArtists] = useState<ArtistRanked[]>([]);
   const [loadingArtists, setLoadingArtists] = useState(true);
   
-  // State for the Message Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedArtistId, setSelectedArtistId] = useState('');
   const [selectedArtistName, setSelectedArtistName] = useState('');
@@ -21,7 +38,6 @@ export default function HomePage() {
 
   useEffect(() => {
     const fetchData = async () => {
-      // 1. Fetch available artworks dynamically on the client
       const { data: artData, error: artError } = await supabase
         .from('artworks')
         .select(`
@@ -35,11 +51,10 @@ export default function HomePage() {
         .limit(6);
 
       if (!artError && artData) {
-        setArtworks(artData);
+        setArtworks(artData as unknown as Artwork[]);
       }
       setLoading(false);
 
-      // 2. NEW: Fetch artists, their profiles, and their reviews
       const { data: artistsData, error: artistsError } = await supabase
         .from('users')
         .select(`
@@ -51,11 +66,18 @@ export default function HomePage() {
         `)
         .eq('role', 'artist');
 
+      interface ArtistData {
+        user_id: string;
+        name: string;
+        avatar_url: string;
+        artist_profiles: { specialty: string }[];
+        rating_reviews: { rating: number }[];
+      }
+
       if (!artistsError && artistsData) {
-        // Calculate the average rating and sort them
-        const ranked = artistsData.map((artist: any) => {
+        const ranked = (artistsData as unknown as ArtistData[]).map((artist) => {
           const reviews = artist.rating_reviews || [];
-          const totalStars = reviews.reduce((sum: number, r: any) => sum + r.rating, 0);
+          const totalStars = reviews.reduce((sum: number, r: { rating: number }) => sum + r.rating, 0);
           const avg = reviews.length > 0 ? (totalStars / reviews.length).toFixed(1) : "0";
           
           return {
@@ -66,7 +88,7 @@ export default function HomePage() {
             rating: parseFloat(avg),
             reviewCount: reviews.length
           };
-        }).sort((a, b) => b.rating - a.rating).slice(0, 5); // Keep only the top 5
+        }).sort((a, b) => b.rating - a.rating).slice(0, 5);
         
         setTopArtists(ranked);
       }
@@ -74,9 +96,8 @@ export default function HomePage() {
     };
 
     fetchData();
-  }, []); 
+  }, [supabase]); 
 
-  // Function to trigger the modal
   const openMessageModal = (id: string, name: string) => {
     setSelectedArtistId(id);
     setSelectedArtistName(name);
