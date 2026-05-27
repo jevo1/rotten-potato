@@ -1,5 +1,5 @@
-import React from 'react';
-import Link from 'next/link';
+import React, { useState } from 'react';
+import PostArtworkModal from './PostArtworkModal';
 
 interface PageTabProps {
   activeTab: number;
@@ -7,8 +7,10 @@ interface PageTabProps {
 }
 
 export default function PageTab({ activeTab, setActiveTab }: PageTabProps) {
+  const [isPostModalOpen, setIsPostModalOpen] = useState(false);
   
   const tabs = [
+    // ... rest of tabs array
     {
       id: 0,
       label: 'Home',
@@ -65,13 +67,15 @@ export default function PageTab({ activeTab, setActiveTab }: PageTabProps) {
         </div>
 
         {/* Right Side: Post Artwork Button */}
-        <Link href="/post-artwork">
-          <button className="bg-[#f2a83b] hover:bg-[#ffbd59] text-zinc-900 font-bold px-6 py-2 rounded-full text-sm transition-all shadow-sm hover:shadow hover:-translate-y-0.5">
-            + Post Artwork
-          </button>
-        </Link>
+        <button 
+          onClick={() => setIsPostModalOpen(true)}
+          className="bg-[#f2a83b] hover:bg-[#ffbd59] text-zinc-900 font-bold px-6 py-2 rounded-full text-sm transition-all shadow-sm hover:shadow hover:-translate-y-0.5"
+        >
+          + Post Artwork
+        </button>
 
       </div>
+      <PostArtworkModal isOpen={isPostModalOpen} onClose={() => setIsPostModalOpen(false)} />
     </div>
   );
 }

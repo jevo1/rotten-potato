@@ -73,7 +73,7 @@ export default function SendMessageModal({ isOpen, onClose, receiverId, receiver
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder={`Hi ${receiverName}, I'm interested in your art...`}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#1C4A5C] focus:ring-2 focus:ring-[#1C4A5C]/20 outline-none transition-all resize-none text-sm"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#1C4A5C] focus:ring-2 focus:ring-[#1C4A5C]/20 outline-none transition-all resize-none text-sm text-gray-900"
             ></textarea>
 
             <div className="mt-6 flex justify-end gap-3">
