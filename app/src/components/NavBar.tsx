@@ -4,6 +4,7 @@ import { logout } from '@/app/actions';
 import Image from 'next/image';
 import Link from 'next/link';
 import PostArtworkModal from './PostArtworkModal';
+import { Search, MessageSquare, Bell, ShoppingCart, ChevronDown, UserRound, LayoutGrid, DollarSign, Sparkles, LogOut, Plus } from 'lucide-react';
 
 interface NavBarProps {
     logoText?: string;
@@ -46,15 +47,18 @@ export const NavBar: React.FC<NavBarProps> = ({
             {/* Search Bar */}
             <div className="flex-1 max-w-3xl mx-8">
                 <div className="flex w-full">
-                    <input
-                        type="text"
-                        placeholder="Search artworks, artists, crafts..."
-                        value={searchQuery}
-                        onChange={handleSearch}
-                        className="w-full border border-r-0 border-[#C87941] rounded-l-full pl-5 pr-4 py-2.5 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#C87941] focus:border-[#C87941] transition-colors"
-                    />
+                    <div className="relative flex-1">
+                        <input
+                            type="text"
+                            placeholder="Search artworks, artists, crafts..."
+                            value={searchQuery}
+                            onChange={handleSearch}
+                            className="w-full border border-r-0 border-[#C87941] rounded-l-full pl-12 pr-4 py-2.5 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#C87941] focus:border-[#C87941] transition-colors"
+                        />
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} strokeWidth={2.5} />
+                    </div>
                     <button className="bg-[#C87941] hover:bg-[#b06a39] text-white px-6 rounded-r-full border border-[#C87941] flex items-center justify-center transition-colors">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        <Search size={18} strokeWidth={2.5} />
                     </button>
                 </div>
             </div>
@@ -68,26 +72,26 @@ export const NavBar: React.FC<NavBarProps> = ({
                     onClick={() => setIsPostModalOpen(true)}
                     className="flex items-center gap-2 bg-[#1C4A5C] text-white px-5 py-2.5 rounded-full font-bold text-sm hover:bg-[#143745] hover:scale-105 transition-all shadow-md active:scale-95"
                   >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    <Plus size={18} strokeWidth={3} />
                     Post Artwork
                   </button>
                 )}
 
                 {/* Messages Icon */}
                 <button className="relative text-[#C87941] hover:text-[#b06a39] transition-colors">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    <MessageSquare size={22} strokeWidth={1.5} />
                     <span className="absolute -top-1.5 -right-1.5 bg-[#f2a83b] text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full border border-white">3</span>
                 </button>
 
                 {/* Notifications Icon */}
                 <button className="relative text-[#C87941] hover:text-[#b06a39] transition-colors">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                    <Bell size={24} strokeWidth={1.5} />
                     <span className="absolute -top-1.5 -right-1.5 bg-[#1C4A5C] text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full border border-white">5</span>
                 </button>
 
                 {/* Cart/Bag Icon */}
                 <button className="relative text-[#C87941] hover:text-[#b06a39] transition-colors">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                    <ShoppingCart size={24} strokeWidth={1.5} />
                     <span className="absolute -top-1.5 -right-1.5 bg-[#8B5A2B] text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full border border-white">2</span>
                 </button>
 
@@ -99,14 +103,14 @@ export const NavBar: React.FC<NavBarProps> = ({
                     >
                         <Image src={profileImage} alt="Profile" width={28} height={28} className="rounded-full bg-gray-200" />
                         <span className="text-[#C87941] text-sm font-semibold">{userName}</span>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C87941" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                        <ChevronDown size={14} strokeWidth={1.5} className={`transition-transform duration-200 ${isProfileOpen ? 'rotate-180' : ''}`} />
                     </button>
 
                     {isProfileOpen && (
                         <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-100 rounded-xl shadow-lg z-50 overflow-hidden">
                             
                             <Link href="/profile" onClick={() => setIsProfileOpen(false)} className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                <UserRound size={16} strokeWidth={1.5} />
                                 Profile
                             </Link>
 
@@ -114,12 +118,12 @@ export const NavBar: React.FC<NavBarProps> = ({
                             {isArtist && (
                                 <>
                                     <Link href="/dashboard" onClick={() => setIsProfileOpen(false)} className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 border-t border-gray-50">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                                        <LayoutGrid size={16} strokeWidth={2} />
                                         Dashboard
                                     </Link>
 
                                     <Link href="/dashboard/sales" onClick={() => setIsProfileOpen(false)} className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 border-t border-gray-50">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                                        <DollarSign size={16} strokeWidth={2} />
                                         Sales
                                     </Link>
                                 </>
@@ -128,14 +132,14 @@ export const NavBar: React.FC<NavBarProps> = ({
                             {/* NON-ARTIST ONLY LINK */}
                             {!isArtist && (
                                 <Link href="/onboarding/artist" onClick={() => setIsProfileOpen(false)} className="w-full text-left px-4 py-3 text-sm text-[#1C4A5C] font-semibold hover:bg-[#e8ecef] flex items-center gap-3 border-t border-gray-100 bg-gray-50/50">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                                    <Sparkles size={16} strokeWidth={2} />
                                     Become an Artist
                                 </Link>
                             )}
 
                             <form action={logout}>
                                 <button type="submit" className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 flex items-center gap-3 border-t border-gray-100 font-medium">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                                    <LogOut size={16} strokeWidth={2} />
                                     Logout
                                 </button>
                             </form>
