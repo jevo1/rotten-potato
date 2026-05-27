@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { createClient } from '@/utils/supabase/server';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
@@ -86,12 +87,13 @@ export default async function DashboardPage() {
                     {myArtworks.map((art) => (
                       <div key={art.artwork_id} className="border border-gray-100 rounded-xl overflow-hidden hover:shadow-md transition-shadow group flex flex-col">
                         <div className="h-40 bg-gray-100 relative overflow-hidden">
-                           <img 
+                           <Image 
                               src={art.file_url || '/background.png'} 
                               alt={art.title}
-                              className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
+                              fill
+                              className="object-cover group-hover:scale-105 transition-transform duration-500"
                            />
-                           <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-md text-xs font-bold shadow-sm uppercase tracking-wider">
+                           <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-md text-xs font-bold shadow-sm uppercase tracking-wider z-10">
                              {art.status}
                            </div>
                         </div>
