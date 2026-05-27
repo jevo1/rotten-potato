@@ -24,6 +24,8 @@ interface ArtistRanked {
   reviewCount: number;
 }
 
+const supabase = createClient();
+
 export default function HomePage() {
   const [artworks, setArtworks] = useState<Artwork[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,11 +33,20 @@ export default function HomePage() {
   const [topArtists, setTopArtists] = useState<ArtistRanked[]>([]);
   const [loadingArtists, setLoadingArtists] = useState(true);
   
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  useEffect(() => {
+    if (artworks.length > 0) {
+      const timer = setInterval(() => {
+        setCurrentSlide((prev) => (prev + 1) % artworks.length);
+      }, 5000); // Change slide every 5 seconds
+      return () => clearInterval(timer);
+    }
+  }, [artworks]);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedArtistId, setSelectedArtistId] = useState('');
   const [selectedArtistName, setSelectedArtistName] = useState('');
-  
-  const supabase = createClient();
 
   useEffect(() => {
     const fetchArtworks = async () => {
@@ -59,7 +70,7 @@ export default function HomePage() {
     };
 
     fetchArtworks();
-  }, [supabase]);
+  }, []);
 
   useEffect(() => {
     const fetchArtists = async () => {
@@ -104,7 +115,7 @@ export default function HomePage() {
     };
 
     fetchArtists();
-  }, [supabase]); 
+  }, []); 
 
   const openMessageModal = (id: string, name: string) => {
     setSelectedArtistId(id);
@@ -113,59 +124,61 @@ export default function HomePage() {
   };
 
   return (
-    <div className="bg-[#FCFAF8] h-[calc(100vh-76px)] overflow-hidden">
-      <div className="max-w-[1600px] mx-auto h-full grid grid-cols-12">
+    <div className="bg-[#FCFAF8] h-[calc(100vh-116px)] overflow-hidden">
+      <div className="max-w-7xl mx-auto h-full grid grid-cols-12">
         {/* Left Column (8 units) */}
         <div className="col-span-12 lg:col-span-8 overflow-y-auto custom-scrollbar h-full px-6 pt-8 pb-20">
-          {/* --- Featured Artworks Section --- */}
-          <div className="mb-16">
-            <div className="flex justify-between items-end mb-6">
-              <div>
-                <h2 className="text-2xl font-bold text-[#1C4A5C]">Featured Artworks</h2>
-                <p className="text-sm text-gray-500 mt-1 font-medium">Handpicked from local Baybayanon artists</p>
+          {/* Artwork Carousel */}
+          <div className="relative h-[450px] rounded-3xl overflow-hidden mb-10 shadow-xl group">
+            {loading ? (
+              <div className="w-full h-full bg-gray-100 animate-pulse flex items-center justify-center">
+                <p className="text-gray-400 font-medium">Loading featured artworks...</p>
               </div>
-              <button className="text-[#C87941] text-sm font-bold hover:text-[#a86536] transition-colors flex items-center gap-1">
-                View All <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {loading ? (
-                <p className="text-gray-500 col-span-3">Loading artworks...</p>
-              ) : artworks && artworks.length > 0 ? (
-                artworks.map((art) => (
-                  <div key={art.artwork_id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 group">
-                    <div className="relative h-56 bg-gray-100 overflow-hidden">
-                       {/* Dynamic image loading */}
-                       <Image 
-                          src={art.file_url || '/background.png'} 
-                          alt={art.title}
-                          fill
-                          className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
-                       />
-                       <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-                       <button className="absolute top-4 right-4 w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-md text-gray-400 hover:text-red-500 hover:scale-110 transition-all">
-                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                       </button>
-                    </div>
-                    <div className="p-5">
-                      <h3 className="font-bold text-lg text-gray-900 group-hover:text-[#1C4A5C] transition-colors">{art.title}</h3>
-                      <p className="text-sm text-gray-500 font-medium mb-3">
-                        by <span className="text-[#3A6A7C]">{art.users?.name || 'Unknown Artist'}</span>
+            ) : artworks.length > 0 ? (
+              <>
+                {artworks.map((art, index) => (
+                  <div 
+                    key={art.artwork_id}
+                    className={`absolute inset-0 transition-all duration-1000 ease-in-out ${index === currentSlide ? 'opacity-100 scale-100' : 'opacity-0 scale-105 pointer-events-none'}`}
+                  >
+                    <Image 
+                      src={art.file_url || '/background.png'} 
+                      alt={art.title}
+                      fill
+                      className="object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
+                    <div className="absolute bottom-12 left-12 text-white max-w-xl">
+                      <span className="inline-block bg-[#f2a83b] text-slate-900 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full mb-4">Featured Artwork</span>
+                      <h2 className="text-5xl font-black mb-3 leading-tight">{art.title}</h2>
+                      <p className="text-lg font-medium opacity-90 mb-8 flex items-center gap-2">
+                         by <span className="text-[#f2a83b] font-bold">{art.users?.name}</span>
                       </p>
-                      <div className="flex justify-between items-center mt-4">
-                        <span className="font-extrabold text-xl text-[#C87941]">₱{art.price}</span>
-                        <button className="bg-[#1C4A5C] hover:bg-[#143745] text-white px-5 py-2.5 rounded-full text-sm font-bold transition-all hover:shadow-md">
-                          Add to Cart
-                        </button>
+                      <div className="flex items-center gap-4">
+                          <button className="bg-[#f2a83b] text-slate-900 px-10 py-4 rounded-full font-black hover:bg-[#ffbd59] transition-all hover:scale-105 active:scale-95 shadow-lg">
+                              View Artwork
+                          </button>
+                          <span className="text-2xl font-black text-white">₱{art.price}</span>
                       </div>
                     </div>
                   </div>
-                ))
-              ) : (
-                <p className="text-gray-500 italic col-span-3">No artworks available right now. Check back soon!</p>
-              )}
-            </div>
+                ))}
+                {/* Slide Indicators */}
+                <div className="absolute bottom-8 right-12 flex gap-3">
+                  {artworks.map((_, i) => (
+                    <button 
+                      key={i} 
+                      onClick={() => setCurrentSlide(i)}
+                      className={`h-1.5 rounded-full transition-all duration-500 ${i === currentSlide ? 'bg-[#f2a83b] w-12' : 'bg-white/30 w-6 hover:bg-white/60'}`}
+                    />
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                <p className="text-gray-400 italic">No featured artworks available.</p>
+              </div>
+            )}
           </div>
 
           <h2 className="text-2xl font-bold text-[#1C4A5C] mb-6">Community Feed</h2>
