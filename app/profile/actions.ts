@@ -12,7 +12,6 @@ export async function updateProfile(formData: FormData) {
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) throw new Error('Unauthorized')
 
-  // Extract text fields
   const name = formData.get('name') as string
   let avatarUrl = null
 
@@ -23,7 +22,6 @@ export async function updateProfile(formData: FormData) {
     const fileExtension = avatarFile.name.split('.').pop()
     const fileName = `${user.id}-${Date.now()}.${fileExtension}` // Unique filename
 
-    // Upload to a storage bucket named 'avatars'
     const { data: uploadData, error: uploadError } = await supabase
       .storage
       .from('avatars')
@@ -46,10 +44,9 @@ export async function updateProfile(formData: FormData) {
   // --- Prepare User Update ---
   const userUpdateData: any = { name }
   if (avatarUrl) {
-    userUpdateData.avatar_url = avatarUrl // Only update if a new image was uploaded
+    userUpdateData.avatar_url = avatarUrl
   }
 
-  // Update the main users table
   const { error: userError } = await supabase
     .from('users')
     .update(userUpdateData)
@@ -57,7 +54,6 @@ export async function updateProfile(formData: FormData) {
 
   if (userError) throw new Error('Failed to update user profile')
 
-  // --- Artist Profile Update (Remains the same) ---
   const { data: profile } = await supabase
     .from('users')
     .select('role')

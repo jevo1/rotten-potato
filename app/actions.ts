@@ -30,7 +30,6 @@ export async function signup(formData: FormData) {
     redirect('/signup?error=Could not authenticate user')
   }
   
-  // CHANGED: Redirect to login page instead of /homepage
   redirect('/login?message=Account created successfully. Please log in.')
 }
 
@@ -52,7 +51,6 @@ export async function login(formData: FormData) {
   }
 
   revalidatePath('/homepage', 'layout')
-  // Redirect to home page
   redirect('/homepage')
 }
 
@@ -60,8 +58,6 @@ export async function signInWithGoogle() {
   const cookieStore = cookies()
   const supabase = createClient(cookieStore)
   
-  // We need the base URL to tell Google where to redirect back to.
-  // In production, you should set NEXT_PUBLIC_SITE_URL in your .env
   const origin = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
 
   const { data, error } = await supabase.auth.signInWithOAuth({
@@ -76,7 +72,6 @@ export async function signInWithGoogle() {
     redirect('/login?error=Could not authenticate with Google')
   }
 
-  // Redirect the user to the Google consent screen
   if (data.url) {
     redirect(data.url)
   }
@@ -86,7 +81,6 @@ export async function logout() {
   const cookieStore = cookies()
   const supabase = await createClient(cookieStore)
   
-  // Clear the user session from Supabase and delete the cookies
   await supabase.auth.signOut()
   
   // Redirect the user back to the login page
@@ -97,7 +91,6 @@ export async function createCommissionRequest(formData: FormData) {
   const cookieStore = cookies()
   const supabase = await createClient(cookieStore);
   
-  // Get the logged-in user (the client)
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("You must be logged in to post a request.");
 
@@ -110,21 +103,18 @@ export async function createCommissionRequest(formData: FormData) {
     .from('commission_requests')
     .insert({
       client_id: user.id,
-      description: `${title}\n\n${description}`, // Combining title and description for now
+      title: title,              
+      description: description,  
       budget: budget,
       deadline: deadline,
-      status: 'open' // Default status for the job board
-      // Notice: artist_id is left NULL!
+      status: 'open' 
     });
-
   if (error) {
     console.error('Error posting request:', error);
     throw new Error('Failed to post commission request.');
   }
-
-  revalidatePath('/homepage'); // Refresh the job board
+  revalidatePath('/homepage');
 }
-
 
 // 2. Artist submits an offer/bid on an open job
 export async function submitCommissionOffer(requestId: number, offerAmount: number, message: string) {
@@ -287,3 +277,105 @@ export async function sendMessage(receiverId: string, content: string) {
 
   revalidatePath('/homepage');
 }
+
+// 6. Update or Create an Artist Profile
+export async function updateArtistProfile(formData: FormData) {
+  const cookieStore = cookies();
+  const supabase = await createClient(cookieStore);
+  
+  // 1. Verify the user is logged in
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("You must be logged in to update your profile.");
+
+  // 2. Extract data from the form
+  const name = formData.get('name') as string;
+  const specialty = formData.get('specialty') as string;
+  const location = formData.get('location') as string;
+  const priceRange = formData.get('price_range') as string;
+
+  // 3. Update the base 'users' table (for the name)
+  if (name) {
+    const { error: userError } = await supabase
+      .from('users')
+      .update({ name: name })
+      .eq('user_id', user.id);
+
+    if (userError) {
+      console.error("Error updating user:", userError);
+      throw new Error('Failed to update name.');
+    }
+  }
+
+  // 4. Check if the artist profile already exists
+  const { data: existingProfile } = await supabase
+    .from('artist_profiles')
+    .select('profile_id')
+    .eq('user_id', user.id)
+    .single();
+
+  // 5. Insert or Update the artist_profiles table
+  if (existingProfile) {
+    const { error: profileError } = await supabase
+      .from('artist_profiles')
+      .update({
+        specialty: specialty,
+        location: location,
+        price_range: priceRange
+      })
+      .eq('user_id', user.id);
+
+    if (profileError) throw new Error('Failed to update artist profile.');
+  } else {
+    const { error: insertError } = await supabase
+      .from('artist_profiles')
+      .insert({
+        user_id: user.id,
+        specialty: specialty,
+        location: location,
+        price_range: priceRange
+      });
+
+    if (insertError) throw new Error('Failed to create artist profile.');
+  }
+
+  revalidatePath('/homepage');
+  redirect('/homepage');
+}
+
+// Complete a commission and leave a review
+export async function completeCommissionAndReview(
+  requestId: number, 
+  artistId: string, 
+  rating: number, 
+  comment: string
+) {
+  const cookieStore = cookies();
+  const supabase = await createClient(cookieStore);
+
+  // 1. Mark request as completed
+  const { error: reqError } = await supabase
+    .from('commission_requests')
+    .update({ status: 'completed' })
+    .eq('request_id', requestId);
+
+  if (reqError) throw new Error('Failed to update request status.');
+
+  // 2. Insert the review
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const { error: reviewError } = await supabase
+    .from('rating_reviews')
+    .insert({
+      client_id: user.id,
+      artist_id: artistId,
+      request_id: requestId,
+      rating: rating,
+      comment: comment
+    });
+
+  if (reviewError) throw new Error('Failed to post review.');
+
+  revalidatePath('/homepage');
+}
+

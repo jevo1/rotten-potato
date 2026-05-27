@@ -1,181 +1,156 @@
-import { createClient } from '@/utils/supabase/server'
-import { cookies } from 'next/headers'
-import { redirect } from 'next/navigation'
-import { NavBar } from '@/app/src/components/NavBar'
-import { updateProfile } from '../actions'
-import Link from 'next/link'
-import Image from 'next/image'
+"use client";
 
-export default async function EditProfilePage() {
-  const cookieStore = cookies()
-  const supabase = await createClient(cookieStore)
+import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { createClient } from '@/utils/supabase/client';
+import { updateArtistProfile } from '@/app/actions';
 
-  // 1. Authenticate & Fetch Data
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
-  if (authError || !user) redirect('/login')
+export default function EditProfilePage() {
+  const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const [name, setName] = useState('');
+  const [specialty, setSpecialty] = useState('');
+  const [location, setLocation] = useState('');
+  const [priceRange, setPriceRange] = useState('');
 
-  const { data: profile } = await supabase
-    .from('users')
-    .select('*')
-    .eq('user_id', user.id)
-    .single()
+  const supabase = createClient();
 
-  let artistDetails = null
-  if (profile?.role === 'artist') {
-    const { data: artistData } = await supabase
-      .from('artist_profiles')
-      .select('*')
-      .eq('user_id', user.id)
-      .single()
-    artistDetails = artistData
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: userData } = await supabase
+        .from('users')
+        .select('name')
+        .eq('user_id', user.id)
+        .single();
+        
+      if (userData?.name) setName(userData.name);
+
+      const { data: profileData } = await supabase
+        .from('artist_profiles')
+        .select('specialty, location, price_range')
+        .eq('user_id', user.id)
+        .single();
+
+      if (profileData) {
+        setSpecialty(profileData.specialty || '');
+        setLocation(profileData.location || '');
+        setPriceRange(profileData.price_range || '');
+      }
+      
+      setLoading(false);
+    };
+
+    fetchProfileData();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    
+    const formData = new FormData(e.currentTarget);
+    
+    try {
+      await updateArtistProfile(formData);
+      // The server action handles the redirect on success
+    } catch (error) {
+      console.error(error);
+      alert("Failed to update profile. Please try again.");
+      setIsSubmitting(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center bg-[#FCFAF8] text-[#1C4A5C] font-bold">Loading your profile...</div>;
   }
 
-  const isArtist = profile?.role === 'artist'
-
   return (
-    <div className="bg-[#FCFAF8] min-h-screen w-full flex flex-col font-sans">
-      <div className="sticky top-0 z-50 w-full">
-        <NavBar 
-          logoText="GamâLokal" 
-          userName={profile?.name || 'User'} 
-          profileImage={profile?.avatar_url || '/user-default.svg'} 
-          isArtist={isArtist} 
-        />
-      </div>
-
-      <main className="flex-1 max-w-2xl mx-auto w-full px-6 py-10">
-        <div className="flex items-center justify-between mb-8">
+    <div className="bg-[#FCFAF8] min-h-screen w-full flex items-center justify-center p-6 font-sans text-slate-800">
+      <div className="w-full max-w-2xl bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+        
+        {/* Header */}
+        <div className="bg-[#1C4A5C] p-6 text-white flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-black text-[#1C4A5C]">Edit Profile</h1>
-            <p className="text-gray-500 font-medium mt-1">Update your personal and public information.</p>
+            <h1 className="text-2xl font-extrabold">Edit Artist Profile</h1>
+            <p className="text-sm text-blue-50/80 font-medium mt-1">Set up your portfolio so Baybayanon clients can find you.</p>
           </div>
-          <Link href="/profile" className="text-sm font-bold text-gray-400 hover:text-gray-700">
-            Cancel
+          <Link href="/homepage" className="text-white/70 hover:text-white transition-colors bg-white/10 p-2 rounded-full hover:bg-white/20">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </Link>
         </div>
 
-        <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
-          <form action={updateProfile} className="space-y-6">
+        {/* Edit Form */}
+        <form onSubmit={handleSubmit} className="p-8 space-y-6">
+          
+          <div className="space-y-2">
+            <label className="block text-sm font-bold text-gray-700">Display Name *</label>
+            <input 
+              type="text" 
+              name="name" 
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required 
+              placeholder="e.g. Maria Santos"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#1C4A5C] focus:ring-2 focus:ring-[#1C4A5C]/20 outline-none transition-all"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="block text-sm font-bold text-gray-700">Specialty</label>
+            <input 
+              type="text" 
+              name="specialty" 
+              value={specialty}
+              onChange={(e) => setSpecialty(e.target.value)}
+              placeholder="e.g. Oil Painting, Pottery, Weaving"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#1C4A5C] focus:ring-2 focus:ring-[#1C4A5C]/20 outline-none transition-all"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="block text-sm font-bold text-gray-700">Location (Barangay)</label>
+              <input 
+                type="text" 
+                name="location"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)} 
+                placeholder="e.g. Brgy. Guadalupe"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#1C4A5C] focus:ring-2 focus:ring-[#1C4A5C]/20 outline-none transition-all"
+              />
+            </div>
             
-            {/* Profile Picture Upload Section */}
-            <div>
-              <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 border-b border-gray-100 pb-2">Profile Picture</h2>
-              <div className="flex items-center gap-6">
-                {/* Current Avatar Preview */}
-                <div className="w-20 h-20 rounded-full bg-gray-100 border border-gray-200 overflow-hidden shrink-0 relative">
-                  {profile?.avatar_url && profile.avatar_url !== '/user-default.svg' ? (
-                    <Image 
-                      src={profile.avatar_url} 
-                      alt="Current avatar" 
-                      width={80} 
-                      height={80} 
-                      className="object-cover w-full h-full" 
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold text-2xl">
-                      {profile?.name?.charAt(0).toUpperCase() || '?'}
-                    </div>
-                  )}
-                </div>
-                
-                {/* File Input */}
-                <div className="flex-1">
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Upload new image</label>
-                  <input 
-                    type="file" 
-                    name="avatar_image" 
-                    accept="image/*"
-                    className="block w-full text-sm text-gray-500
-                      file:mr-4 file:py-2.5 file:px-4
-                      file:rounded-full file:border-0
-                      file:text-sm file:font-bold
-                      file:bg-[#1C4A5C]/10 file:text-[#1C4A5C]
-                      hover:file:bg-[#1C4A5C]/20 transition-colors"
-                  />
-                  <p className="text-xs text-gray-400 mt-2 font-medium">Recommended: Square JPG or PNG, max 5MB.</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Standard User Fields */}
-            <div>
-              <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 border-b border-gray-100 pb-2">Basic Info</h2>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1">Full Name</label>
-                  <input 
-                    type="text" 
-                    name="name" 
-                    defaultValue={profile?.name || ''} 
-                    required 
-                    className="w-full p-3 border text-gray-700 border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#C87941] focus:border-[#C87941]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-gray-400 mb-1">Email Address (Cannot be changed)</label>
-                  <input 
-                    type="email" 
-                    disabled 
-                    defaultValue={user.email || ''} 
-                    className="w-full p-3 border border-gray-100 bg-gray-50 text-gray-400 rounded-xl cursor-not-allowed"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Artist Specific Fields */}
-            {isArtist && artistDetails && (
-              <div className="pt-4">
-                <h2 className="text-sm font-bold text-[#C87941] uppercase tracking-wider mb-4 border-b border-gray-100 pb-2">Public Studio Info</h2>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-1">Main Specialty</label>
-                    <input 
-                      type="text" 
-                      name="specialty" 
-                      defaultValue={artistDetails.specialty || ''} 
-                      required 
-                      className="w-full p-3 border text-gray-700 border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#1C4A5C] focus:border-[#1C4A5C]"
-                    />
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-1">Location</label>
-                      <input 
-                        type="text" 
-                        name="location" 
-                        defaultValue={artistDetails.location || ''} 
-                        required 
-                        className="w-full p-3 border text-gray-700 border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#1C4A5C] focus:border-[#1C4A5C]"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-1">Price Range</label>
-                      <input 
-                        type="text" 
-                        name="price_range" 
-                        defaultValue={artistDetails.price_range || ''} 
-                        required 
-                        className="w-full p-3 border text-gray-700 border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#1C4A5C] focus:border-[#1C4A5C]"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div className="pt-6 border-t border-gray-100">
-              <button 
-                type="submit" 
-                className="w-full bg-[#1C4A5C] hover:bg-[#143745] text-white py-3.5 rounded-xl font-bold shadow-sm transition-all hover:shadow"
+            <div className="space-y-2">
+              <label className="block text-sm font-bold text-gray-700">Price Range</label>
+              <select 
+                name="price_range" 
+                value={priceRange}
+                onChange={(e) => setPriceRange(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#1C4A5C] focus:ring-2 focus:ring-[#1C4A5C]/20 outline-none transition-all bg-white"
               >
-                Save Changes
-              </button>
+                <option value="" disabled>Select a range</option>
+                <option value="₱ - Budget Friendly (Under ₱500)">₱ - Budget Friendly (Under ₱500)</option>
+                <option value="₱₱ - Mid Range (₱500 - ₱2,000)">₱₱ - Mid Range (₱500 - ₱2,000)</option>
+                <option value="₱₱₱ - Premium (₱2,000+)">₱₱₱ - Premium (₱2,000+)</option>
+              </select>
             </div>
-            
-          </form>
-        </div>
-      </main>
+          </div>
+
+          <div className="pt-6 border-t border-gray-100">
+            <button 
+              type="submit" 
+              disabled={isSubmitting}
+              className="w-full bg-[#C87941] text-white font-bold py-3.5 rounded-full hover:bg-[#a86536] hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSubmitting ? 'Saving Profile...' : 'Save Profile'}
+            </button>
+          </div>
+
+        </form>
+      </div>
     </div>
-  )
+  );
 }
