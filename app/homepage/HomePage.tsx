@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { createClient } from '@/utils/supabase/client';
 import SendMessageModal from '../src/components/SendMessageModal'; 
 
@@ -26,6 +27,7 @@ interface ArtistRanked {
 export default function HomePage() {
   const [artworks, setArtworks] = useState<Artwork[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState('All');
   
   const [topArtists, setTopArtists] = useState<ArtistRanked[]>([]);
   const [loadingArtists, setLoadingArtists] = useState(true);
@@ -37,8 +39,9 @@ export default function HomePage() {
   const supabase = createClient();
 
   useEffect(() => {
-    const fetchData = async () => {
-      const { data: artData, error: artError } = await supabase
+    const fetchArtworks = async () => {
+      setLoading(true);
+      let query = supabase
         .from('artworks')
         .select(`
           artwork_id,
@@ -47,14 +50,25 @@ export default function HomePage() {
           file_url,
           users ( name )
         `)
-        .eq('status', 'available')
-        .limit(6);
+        .eq('status', 'available');
 
-      if (!artError && artData) {
-        setArtworks(artData as unknown as Artwork[]);
+      if (selectedCategory !== 'All') {
+        query = query.eq('category', selectedCategory);
+      }
+
+      const { data, error } = await query.limit(6);
+
+      if (!error && data) {
+        setArtworks(data as unknown as Artwork[]);
       }
       setLoading(false);
+    };
 
+    fetchArtworks();
+  }, [supabase, selectedCategory]);
+
+  useEffect(() => {
+    const fetchArtists = async () => {
       const { data: artistsData, error: artistsError } = await supabase
         .from('users')
         .select(`
@@ -95,7 +109,7 @@ export default function HomePage() {
       setLoadingArtists(false);
     };
 
-    fetchData();
+    fetchArtists();
   }, [supabase]); 
 
   const openMessageModal = (id: string, name: string) => {
@@ -104,98 +118,42 @@ export default function HomePage() {
     setIsModalOpen(true);
   };
 
+  const categories = [
+    { name: 'All', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg> },
+    { name: 'Paintings', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10c1.38 0 2.5-1.12 2.5-2.5 0-.61-.23-1.18-.64-1.64-.37-.41-.61-.96-.61-1.55 0-1.24 1.01-2.25 2.25-2.25h2.5c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8z"/></svg> },
+    { name: 'Weaving', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg> },
+    { name: 'Pottery', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M7 3h10v4c0 2.5-2 4-2 4s2 1.5 2 4v6H7v-6c0-2.5 2-4 2-4s-2-1.5-2-4V3z"/></svg> },
+    { name: 'Wood Carving', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22v-8"/><path d="M12 14c-2.5-2-5-4-5-8 0-4 10-4 10 0 0 4-2.5 6-5 8z"/></svg> },
+    { name: 'Jewelry', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 2 7 12 22 22 7 12 2"/><polyline points="2 7 12 7 22 7"/><polyline points="12 22 12 7"/></svg> },
+    { name: 'Digital', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> },
+    { name: 'Embroidery', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg> },
+    { name: 'Photography', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> },
+  ];
+
   return (
     <div className="bg-[#FCFAF8] min-h-screen w-full text-slate-800 font-sans pb-20 relative">
       
       {/* --- Sticky Categories Header Section --- */}
       <div className="sticky top-0 z-50 bg-[#FCFAF8]/95 backdrop-blur-md py-4 border-b border-gray-200 shadow-sm mb-12">
         <div className="max-w-7xl mx-auto px-6 flex flex-wrap items-center justify-center gap-3">
-          {/* Paintings */}
-          <button className="group flex items-center gap-2 px-5 py-2 rounded-full border border-[#C87941]/30 text-[#C87941] bg-white hover:bg-[#C87941] hover:text-white transition-all shadow-sm hover:shadow-md">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10c1.38 0 2.5-1.12 2.5-2.5 0-.61-.23-1.18-.64-1.64-.37-.41-.61-.96-.61-1.55 0-1.24 1.01-2.25 2.25-2.25h2.5c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8z"/></svg>
-            <span className="font-semibold text-sm">Paintings</span>
-          </button>
-          
-          {/* Weaving */}
-          <button className="group flex items-center gap-2 px-5 py-2 rounded-full border border-[#1C4A5C]/30 text-[#1C4A5C] bg-white hover:bg-[#1C4A5C] hover:text-white transition-all shadow-sm hover:shadow-md">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
-            <span className="font-semibold text-sm">Weaving</span>
-          </button>
-          
-          {/* Pottery */}
-          <button className="group flex items-center gap-2 px-5 py-2 rounded-full border border-[#8B5A2B]/30 text-[#8B5A2B] bg-white hover:bg-[#8B5A2B] hover:text-white transition-all shadow-sm hover:shadow-md">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M7 3h10v4c0 2.5-2 4-2 4s2 1.5 2 4v6H7v-6c0-2.5 2-4 2-4s-2-1.5-2-4V3z"/></svg>
-            <span className="font-semibold text-sm">Pottery</span>
-          </button>
-          
-          {/* Wood Carving */}
-          <button className="group flex items-center gap-2 px-5 py-2 rounded-full border border-stone-500/30 text-stone-600 bg-white hover:bg-stone-600 hover:text-white transition-all shadow-sm hover:shadow-md">
-             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22v-8"/><path d="M12 14c-2.5-2-5-4-5-8 0-4 10-4 10 0 0 4-2.5 6-5 8z"/></svg>
-            <span className="font-semibold text-sm">Wood Carving</span>
-          </button>
-          
-          {/* Jewelry */}
-          <button className="group flex items-center gap-2 px-5 py-2 rounded-full border border-[#f2a83b]/50 text-[#d48b1a] bg-white hover:bg-[#f2a83b] hover:text-white transition-all shadow-sm hover:shadow-md">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 2 7 12 22 22 7 12 2"/><polyline points="2 7 12 7 22 7"/><polyline points="12 22 12 7"/></svg>
-            <span className="font-semibold text-sm">Jewelry</span>
-          </button>
-          
-          {/* Digital Art */}
-          <button className="group flex items-center gap-2 px-5 py-2 rounded-full border border-blue-500/30 text-blue-600 bg-white hover:bg-blue-600 hover:text-white transition-all shadow-sm hover:shadow-md">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-            <span className="font-semibold text-sm">Digital Art</span>
-          </button>
-          
-          {/* Embroidery */}
-          <button className="group flex items-center gap-2 px-5 py-2 rounded-full border border-purple-500/30 text-purple-600 bg-white hover:bg-purple-600 hover:text-white transition-all shadow-sm hover:shadow-md">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>
-            <span className="font-semibold text-sm">Embroidery</span>
-          </button>
-          
-          {/* Photography */}
-          <button className="group flex items-center gap-2 px-5 py-2 rounded-full border border-teal-600/30 text-teal-600 bg-white hover:bg-teal-600 hover:text-white transition-all shadow-sm hover:shadow-md">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-            <span className="font-semibold text-sm">Photography</span>
-          </button>
+          {categories.map((cat) => (
+            <button 
+              key={cat.name}
+              onClick={() => setSelectedCategory(cat.name)}
+              className={`group flex items-center gap-2 px-5 py-2 rounded-full border transition-all shadow-sm hover:shadow-md ${
+                selectedCategory === cat.name 
+                  ? 'bg-[#1C4A5C] text-white border-[#1C4A5C]' 
+                  : 'bg-white text-gray-600 border-gray-200 hover:border-[#1C4A5C]/30 hover:text-[#1C4A5C]'
+              }`}
+            >
+              {cat.icon}
+              <span className="font-semibold text-sm">{cat.name}</span>
+            </button>
+          ))}
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-6">
-        {/* --- Quick Actions Cards Section --- */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
-          <Link href="/post-artwork" className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col items-center text-center cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-            <div className="w-14 h-14 rounded-full bg-[#C87941]/10 text-[#C87941] flex items-center justify-center mb-4">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-            </div>
-            <h3 className="font-bold text-gray-900 mb-1">Post Artworks</h3>
-            <p className="text-xs text-gray-500 font-medium">Share your creations</p>
-          </Link>
-
-          <Link href="/messages" className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col items-center text-center cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-            <div className="w-14 h-14 rounded-full bg-[#1C4A5C]/10 text-[#1C4A5C] flex items-center justify-center mb-4">
-               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            </div>
-            <h3 className="font-bold text-gray-900 mb-1">Direct Messaging</h3>
-            <p className="text-xs text-gray-500 font-medium">Talk to artists</p>
-          </Link>
-
-          <Link href="/payments" className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col items-center text-center cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-            <div className="w-14 h-14 rounded-full bg-[#f2a83b]/20 text-[#d48b1a] flex items-center justify-center mb-4">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
-            </div>
-            <h3 className="font-bold text-gray-900 mb-1">Secure Payment</h3>
-            <p className="text-xs text-gray-500 font-medium">Safe transactions</p>
-          </Link>
-
-          <Link href="/commissions" className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col items-center text-center cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-            <div className="w-14 h-14 rounded-full bg-stone-100 text-stone-600 flex items-center justify-center mb-4">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><polyline points="9 14 11 16 15 12"/></svg>
-            </div>
-            <h3 className="font-bold text-gray-900 mb-1">Commissions</h3>
-            <p className="text-xs text-gray-500 font-medium">Custom orders</p>
-          </Link>
-        </div>
-
         {/* --- Featured Artworks Section --- */}
         <div className="mb-16">
           <div className="flex justify-between items-end mb-6">
@@ -216,9 +174,10 @@ export default function HomePage() {
                 <div key={art.artwork_id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 group">
                   <div className="relative h-56 bg-gray-100 overflow-hidden">
                      {/* Dynamic image loading */}
-                     <img 
+                     <Image 
                         src={art.file_url || '/background.png'} 
                         alt={art.title}
+                        fill
                         className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
                      />
                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
@@ -294,7 +253,7 @@ export default function HomePage() {
                   <div key={artist.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
                     <div className="flex items-center gap-4">
                       {artist.avatar ? (
-                        <img src={artist.avatar} alt={artist.name} className="w-12 h-12 bg-gray-200 rounded-full object-cover" />
+                        <Image src={artist.avatar} alt={artist.name} width={48} height={48} className="bg-gray-200 rounded-full object-cover" />
                       ) : (
                         <div className="w-12 h-12 bg-gradient-to-br from-[#1C4A5C] to-[#3A6A7C] text-white flex items-center justify-center font-bold text-lg rounded-full">
                           {artist.name?.charAt(0) || '?'}
