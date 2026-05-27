@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import PostArtworkModal from './PostArtworkModal';
-import { Home, Globe, ClipboardList, MessageSquare, Plus } from 'lucide-react';
+import { Home, Store, ClipboardList, MessageSquare, Plus } from 'lucide-react';
 
 interface PageTabProps {
   activeTab: number;
@@ -19,7 +19,7 @@ export default function PageTab({ activeTab, setActiveTab }: PageTabProps) {
     {
       id: 1,
       label: 'Marketplace',
-      icon: <Globe size={18} strokeWidth={2.5} />
+      icon: <Store size={18} strokeWidth={2.5} />
     },
     {
       id: 2,
