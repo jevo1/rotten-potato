@@ -2,11 +2,15 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/utils/supabase/client';
-import SendMessageModal from '../src/components/SendMessageModal'; // Import the new modal
+import SendMessageModal from '../src/components/SendMessageModal'; 
 
 export default function HomePage() {
   const [artworks, setArtworks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // NEW: State for the dynamic Top Artists
+  const [topArtists, setTopArtists] = useState<any[]>([]);
+  const [loadingArtists, setLoadingArtists] = useState(true);
   
   // State for the Message Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -16,9 +20,9 @@ export default function HomePage() {
   const supabase = createClient();
 
   useEffect(() => {
-    const fetchArtworks = async () => {
-      // Fetch available artworks dynamically on the client
-      const { data, error } = await supabase
+    const fetchData = async () => {
+      // 1. Fetch available artworks dynamically on the client
+      const { data: artData, error: artError } = await supabase
         .from('artworks')
         .select(`
           artwork_id,
@@ -30,16 +34,47 @@ export default function HomePage() {
         .eq('status', 'available')
         .limit(6);
 
-      if (error) {
-        console.error("Error fetching artworks:", error);
-      } else if (data) {
-        setArtworks(data);
+      if (!artError && artData) {
+        setArtworks(artData);
       }
       setLoading(false);
+
+      // 2. NEW: Fetch artists, their profiles, and their reviews
+      const { data: artistsData, error: artistsError } = await supabase
+        .from('users')
+        .select(`
+          user_id, 
+          name, 
+          avatar_url,
+          artist_profiles ( specialty ),
+          rating_reviews!artist_id ( rating )
+        `)
+        .eq('role', 'artist');
+
+      if (!artistsError && artistsData) {
+        // Calculate the average rating and sort them
+        const ranked = artistsData.map((artist: any) => {
+          const reviews = artist.rating_reviews || [];
+          const totalStars = reviews.reduce((sum: number, r: any) => sum + r.rating, 0);
+          const avg = reviews.length > 0 ? (totalStars / reviews.length).toFixed(1) : "0";
+          
+          return {
+            id: artist.user_id,
+            name: artist.name,
+            avatar: artist.avatar_url,
+            specialty: artist.artist_profiles?.[0]?.specialty || 'Creator',
+            rating: parseFloat(avg),
+            reviewCount: reviews.length
+          };
+        }).sort((a, b) => b.rating - a.rating).slice(0, 5); // Keep only the top 5
+        
+        setTopArtists(ranked);
+      }
+      setLoadingArtists(false);
     };
 
-    fetchArtworks();
-  }, []); // Empty dependency array means this runs once when the component mounts
+    fetchData();
+  }, []); 
 
   // Function to trigger the modal
   const openMessageModal = (id: string, name: string) => {
@@ -163,7 +198,7 @@ export default function HomePage() {
                      <img 
                         src={art.file_url || '/background.png'} 
                         alt={art.title}
-                        className="object-cover w-full h-full"
+                        className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
                      />
                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
                      <button className="absolute top-4 right-4 w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-md text-gray-400 hover:text-red-500 hover:scale-110 transition-all">
@@ -173,7 +208,6 @@ export default function HomePage() {
                   <div className="p-5">
                     <h3 className="font-bold text-lg text-gray-900 group-hover:text-[#1C4A5C] transition-colors">{art.title}</h3>
                     <p className="text-sm text-gray-500 font-medium mb-3">
-                      {/* Using optional chaining to safely access nested user data */}
                       by <span className="text-[#3A6A7C]">{art.users?.name || 'Unknown Artist'}</span>
                     </p>
                     <div className="flex justify-between items-center mt-4">
@@ -223,61 +257,57 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Sidebar Column */}
+          {/* Sidebar Column: Dynamic Top Artists */}
           <div className="lg:col-span-1">
             <div className="flex justify-between items-end mb-6">
               <h2 className="text-2xl font-bold text-[#1C4A5C]">Top Artists</h2>
               <button className="text-[#C87941] text-sm font-bold hover:text-[#a86536] transition-colors">See All</button>
             </div>
 
-            {/* Top Artists List */}
+            {/* Render Dynamic Top Artists List */}
             <div className="space-y-4 mb-8">
-              <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
-                  <div>
-                    <h4 className="font-bold text-sm text-gray-900 flex items-center gap-1">
-                      Maria Santos 
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="#3b82f6" stroke="white" strokeWidth="2" className="text-blue-500"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                    </h4>
-                    <p className="text-xs text-gray-500 font-medium">Oil Painting</p>
-                    <p className="text-xs font-bold text-gray-700 mt-1 flex items-center gap-1">
-                      <span className="text-[#f2a83b]">★</span> 4.9 <span className="text-gray-400 font-medium ml-1">· 87 sales</span>
-                    </p>
+              {loadingArtists ? (
+                <p className="text-gray-500 text-sm text-center py-4">Loading top creators...</p>
+              ) : topArtists && topArtists.length > 0 ? (
+                topArtists.map((artist) => (
+                  <div key={artist.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
+                    <div className="flex items-center gap-4">
+                      {artist.avatar ? (
+                        <img src={artist.avatar} alt={artist.name} className="w-12 h-12 bg-gray-200 rounded-full object-cover" />
+                      ) : (
+                        <div className="w-12 h-12 bg-gradient-to-br from-[#1C4A5C] to-[#3A6A7C] text-white flex items-center justify-center font-bold text-lg rounded-full">
+                          {artist.name?.charAt(0) || '?'}
+                        </div>
+                      )}
+                      <div>
+                        <h4 className="font-bold text-sm text-gray-900 flex items-center gap-1">
+                          {artist.name} 
+                          {artist.rating >= 4.5 && (
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="#3b82f6" stroke="white" strokeWidth="2" className="text-blue-500"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                          )}
+                        </h4>
+                        <p className="text-xs text-gray-500 font-medium">{artist.specialty}</p>
+                        <p className="text-xs font-bold text-gray-700 mt-1 flex items-center gap-1">
+                          <span className={artist.rating > 0 ? "text-[#f2a83b]" : "text-gray-300"}>★</span> 
+                          {artist.rating > 0 ? artist.rating : "New"} 
+                          {artist.reviewCount > 0 && <span className="text-gray-400 font-medium ml-1">· {artist.reviewCount} reviews</span>}
+                        </p>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => openMessageModal(artist.id, artist.name)}
+                      className="px-4 py-1.5 border-2 border-gray-100 rounded-full text-xs font-bold text-gray-600 hover:border-[#1C4A5C] hover:text-[#1C4A5C] transition-colors"
+                    >
+                      Message
+                    </button>
                   </div>
-                </div>
-                <button 
-                  onClick={() => openMessageModal('5d4f3608-d791-4e9f-b342-01c616e53f74', 'Maria Santos')}
-                  className="px-4 py-1.5 border-2 border-gray-100 rounded-full text-xs font-bold text-gray-600 hover:border-[#1C4A5C] hover:text-[#1C4A5C] transition-colors"
-                >
-                  Message
-                </button>
-              </div>
-
-              <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
-                  <div>
-                    <h4 className="font-bold text-sm text-gray-900 flex items-center gap-1">
-                      Jun dela Cruz 
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="#3b82f6" stroke="white" strokeWidth="2" className="text-blue-500"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                    </h4>
-                    <p className="text-xs text-gray-500 font-medium">Pottery & Ceramics</p>
-                    <p className="text-xs font-bold text-gray-700 mt-1 flex items-center gap-1">
-                      <span className="text-[#f2a83b]">★</span> 5.0 <span className="text-gray-400 font-medium ml-1">· 63 sales</span>
-                    </p>
-                  </div>
-                </div>
-                <button 
-                  onClick={() => openMessageModal('placeholder-uuid-2', 'Jun dela Cruz')}
-                  className="px-4 py-1.5 border-2 border-gray-100 rounded-full text-xs font-bold text-gray-600 hover:border-[#1C4A5C] hover:text-[#1C4A5C] transition-colors"
-                >
-                  Message
-                </button>
-              </div>
+                ))
+              ) : (
+                <p className="text-gray-500 text-sm text-center py-4 bg-white rounded-xl border border-gray-100">No rated artists yet.</p>
+              )}
             </div>
 
-            {/* Commission CTA Card - Updated Theme */}
+            {/* Commission CTA Card */}
             <div className="bg-gradient-to-br from-[#1C4A5C] to-[#143745] rounded-2xl p-8 text-white text-center shadow-lg relative overflow-hidden group">
               <div className="absolute -top-10 -right-10 w-32 h-32 bg-white opacity-10 rounded-full group-hover:scale-110 transition-transform duration-500"></div>
               
