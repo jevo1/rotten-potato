@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
-import { submitCommissionOffer, createCommissionRequest, completeCommissionAndReview } from '../actions'; 
+import { submitCommissionOffer, createCommissionRequest, completeCommissionAndReview, acceptCommissionOffer } from '../actions'; 
 
 export default function CommissionsPage() {
   const [activeSubTab, setActiveSubTab] = useState('Browse Requests');
@@ -27,6 +27,7 @@ export default function CommissionsPage() {
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
   const [isReviewing, setIsReviewing] = useState(false);
+  const [isAccepting, setIsAccepting] = useState(false); // ADDED: Loading state for accepting an offer
 
   const supabase = createClient();
 
@@ -45,12 +46,16 @@ export default function CommissionsPage() {
         
       if (userData) setCurrentUserRole(userData.role);
 
-      // Fetch 'My Requests' (Client perspective)
+      // ADDED: Fetch 'My Requests' with the incoming offers attached!
       const { data: myReqData } = await supabase
         .from('commission_requests')
         .select(`
           *,
-          artist:users!artist_id ( name )
+          artist:users!artist_id ( name ),
+          offers:commission_offers (
+            offer_id, message, offer_amount, status, artist_id,
+            artist:users!artist_id ( name, avatar_url )
+          )
         `)
         .eq('client_id', user.id)
         .order('request_id', { ascending: false });
@@ -86,6 +91,7 @@ export default function CommissionsPage() {
       setActiveOfferForm(null); 
       setOfferAmount('');
       setOfferMessage('');
+      fetchData(); // Refresh to see the new offer
     } catch (error) {
       alert("Failed to submit offer.");
     } finally {
@@ -109,6 +115,22 @@ export default function CommissionsPage() {
     }
   };
 
+  // ADDED: Function to handle the client clicking "Hire this Artist"
+  const handleAcceptOffer = async (requestId: number, offerId: number, artistId: string) => {
+    if (!confirm("Are you sure you want to hire this artist?")) return;
+    setIsAccepting(true);
+    try {
+      await acceptCommissionOffer(requestId, offerId, artistId);
+      alert("Artist hired successfully!");
+      fetchData(); // Refresh the page so it updates to "in_progress"
+    } catch (error) {
+      console.error(error);
+      alert("Failed to accept offer.");
+    } finally {
+      setIsAccepting(false);
+    }
+  };
+
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!reviewJob || !reviewJob.artist_id) return;
@@ -120,7 +142,7 @@ export default function CommissionsPage() {
       setReviewJob(null);
       setRating(5);
       setComment('');
-      fetchData(); // Refresh the lists
+      fetchData();
     } catch (error) {
       console.error(error);
       alert("Failed to submit review.");
@@ -175,7 +197,7 @@ export default function CommissionsPage() {
         </div>
       )}
 
-      {/* NEW: Review & Complete Modal */}
+      {/* Review Modal */}
       {reviewJob && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl">
@@ -344,41 +366,76 @@ export default function CommissionsPage() {
               </div>
             ) : (
               myRequests.map((job) => (
-                <div key={job.request_id} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                  <div>
-                    <div className="flex items-center gap-3 mb-1">
-                      <h3 className="text-xl font-bold text-[#1C4A5C]">{job.title || `Request #${job.request_id}`}</h3>
-                      <span className={`px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider ${
-                        job.status === 'open' ? 'bg-blue-50 text-blue-600' :
-                        job.status === 'in_progress' ? 'bg-orange-50 text-orange-600' :
-                        'bg-green-50 text-green-600'
-                      }`}>
-                        {job.status.replace('_', ' ')}
-                      </span>
+                <div key={job.request_id} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-4">
+                    <div>
+                      <div className="flex items-center gap-3 mb-1">
+                        <h3 className="text-xl font-bold text-[#1C4A5C]">{job.title || `Request #${job.request_id}`}</h3>
+                        <span className={`px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider ${
+                          job.status === 'open' ? 'bg-blue-50 text-blue-600' :
+                          job.status === 'in_progress' ? 'bg-orange-50 text-orange-600' :
+                          'bg-green-50 text-green-600'
+                        }`}>
+                          {job.status.replace('_', ' ')}
+                        </span>
+                      </div>
+                      <p className="text-gray-500 text-sm mb-3">Budget: ₱{job.budget} • Deadline: {new Date(job.deadline).toLocaleDateString()}</p>
+                      
+                      {job.artist_id && (
+                        <p className="text-sm font-medium text-gray-700 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100 inline-block">
+                          🎨 Working with: <span className="font-bold text-[#1C4A5C]">{job.artist?.name || 'Unknown Artist'}</span>
+                        </p>
+                      )}
                     </div>
-                    <p className="text-gray-500 text-sm mb-3">Budget: ₱{job.budget} • Deadline: {new Date(job.deadline).toLocaleDateString()}</p>
                     
-                    {job.artist_id && (
-                      <p className="text-sm font-medium text-gray-700 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100 inline-block">
-                        🎨 Working with: <span className="font-bold text-[#1C4A5C]">{job.artist?.name || 'Unknown Artist'}</span>
-                      </p>
+                    {job.status === 'in_progress' && (
+                      <button 
+                        onClick={() => setReviewJob(job)}
+                        className="bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 rounded-full font-bold shadow-sm transition-all whitespace-nowrap"
+                      >
+                        Complete & Review
+                      </button>
+                    )}
+                    {job.status === 'completed' && (
+                      <span className="text-green-600 font-bold flex items-center gap-1">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                        Completed
+                      </span>
                     )}
                   </div>
-                  
-                  {job.status === 'in_progress' && (
-                    <button 
-                      onClick={() => setReviewJob(job)}
-                      className="bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 rounded-full font-bold shadow-sm transition-all whitespace-nowrap"
-                    >
-                      Complete & Review
-                    </button>
+
+                  {/* ADDED: Incoming Offers Section */}
+                  {job.status === 'open' && job.offers && job.offers.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-gray-100">
+                      <h4 className="text-sm font-bold text-gray-900 mb-3">Incoming Offers</h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {job.offers.map((offer: any) => (
+                          <div key={offer.offer_id} className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                            <div className="flex justify-between items-start mb-2">
+                              <div>
+                                <p className="font-bold text-[#1C4A5C] text-sm">{offer.artist?.name || 'Artist'}</p>
+                                <p className="text-xs text-gray-500">Offered: <span className="font-bold text-[#C87941]">₱{offer.offer_amount}</span></p>
+                              </div>
+                            </div>
+                            <p className="text-sm text-gray-700 mb-4 bg-white p-2 border border-gray-100 rounded-lg">{offer.message}</p>
+                            <button 
+                              onClick={() => handleAcceptOffer(job.request_id, offer.offer_id, offer.artist_id)}
+                              disabled={isAccepting}
+                              className="w-full bg-[#1C4A5C] text-white py-2 rounded-lg font-bold text-sm hover:bg-[#143745] disabled:opacity-50"
+                            >
+                              {isAccepting ? 'Accepting...' : 'Hire this Artist'}
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   )}
-                  {job.status === 'completed' && (
-                    <span className="text-green-600 font-bold flex items-center gap-1">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                      Completed
-                    </span>
+                  {job.status === 'open' && (!job.offers || job.offers.length === 0) && (
+                    <div className="mt-4 pt-4 border-t border-gray-100">
+                      <p className="text-sm text-gray-400 italic">No offers received yet. Artists will see this on the job board!</p>
+                    </div>
                   )}
+
                 </div>
               ))
             )}

@@ -91,7 +91,6 @@ export async function createCommissionRequest(formData: FormData) {
   const cookieStore = cookies()
   const supabase = await createClient(cookieStore);
   
-  // Get the logged-in user (the client)
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("You must be logged in to post a request.");
 
@@ -104,21 +103,18 @@ export async function createCommissionRequest(formData: FormData) {
     .from('commission_requests')
     .insert({
       client_id: user.id,
-      description: `${title}\n\n${description}`, 
+      title: title,              
+      description: description,  
       budget: budget,
       deadline: deadline,
       status: 'open' 
-
     });
-
   if (error) {
     console.error('Error posting request:', error);
     throw new Error('Failed to post commission request.');
   }
-
   revalidatePath('/homepage');
 }
-
 
 // 2. Artist submits an offer/bid on an open job
 export async function submitCommissionOffer(requestId: number, offerAmount: number, message: string) {
@@ -382,3 +378,4 @@ export async function completeCommissionAndReview(
 
   revalidatePath('/homepage');
 }
+
