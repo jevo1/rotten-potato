@@ -28,7 +28,7 @@ export async function updateProfile(formData: FormData) {
 
     if (uploadError) {
       console.error('Avatar upload error:', uploadError)
-      throw new Error('Failed to upload profile picture')
+      throw new Error(`Failed to upload profile picture: ${uploadError.message}`)
     }
 
     const { data: { publicUrl } } = supabase
@@ -54,7 +54,10 @@ export async function updateProfile(formData: FormData) {
     .update(userUpdateData)
     .eq('user_id', user.id)
 
-  if (userError) throw new Error('Failed to update user profile')
+  if (userError) {
+    console.error('Database error:', userError);
+    throw new Error(`Failed to update user profile: ${userError.message}`);
+  }
 
   const { data: profile } = await supabase
     .from('users')
