@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react';
 import { NavBar } from '../src/components/NavBar';
 import { createClient } from '@/utils/supabase/client';
-import PageTab from '../src/components/PageTab';
 import Browse from './BrowsePage';
 import Commissions from './CommissionsPage';
 import Messages from './MessagesPage';
@@ -44,12 +43,15 @@ export default function Homepage() {
   return (
     <div className="bg-[#FCFAF8] min-h-screen w-full flex flex-col">
       
-      <div className="sticky top-0 z-50 flex flex-col w-full">
-        <NavBar logoText="GamâLokal" userName={userName} profileImage={profileImage} />
-        <PageTab activeTab={activeTab} setActiveTab={setActiveTab} />
-      </div>
+      <NavBar 
+        logoText="GamâLokal" 
+        userName={userName} 
+        profileImage={profileImage} 
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+      />
       
-      <div className="flex-1">
+      <div className="flex-1 pb-20 lg:pb-0">
         {activeTab === 0 && <Home />}
         {activeTab === 1 && <Browse />}
         {activeTab === 2 && <Commissions />}
