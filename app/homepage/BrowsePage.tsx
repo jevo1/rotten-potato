@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
-import { getArtworks } from '@/app/actions';
+import { getArtworks, addToCart } from '@/app/actions';
 
 interface Artwork {
   artwork_id: number;
@@ -12,6 +12,7 @@ interface Artwork {
   file_url: string;
   category: string;
   status: string;
+  stock_quantity: number;
   created_at: string;
   users: { name: string } | null;
 }
@@ -186,14 +187,15 @@ export default function BrowsePage() {
                   <div className="flex justify-between items-center mt-4">
                     <span className="font-extrabold text-lg text-[#C87941]">₱{art.price?.toLocaleString()}</span>
                     <button 
-                      disabled={art.status === 'sold'}
+                      onClick={() => addToCart(art.artwork_id)}
+                      disabled={art.status === 'sold' || (art.stock_quantity !== undefined && art.stock_quantity <= 0)}
                       className={`px-5 py-1.5 rounded-full text-xs font-bold transition-all ${
-                        art.status === 'sold' 
+                        art.status === 'sold' || (art.stock_quantity !== undefined && art.stock_quantity <= 0)
                           ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
                           : 'bg-[#1C4A5C] hover:bg-[#143745] text-white shadow-sm hover:shadow'
                       }`}
                     >
-                      Buy
+                      Add to Cart
                     </button>
                   </div>
 
