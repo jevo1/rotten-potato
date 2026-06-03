@@ -773,7 +773,7 @@ export async function updateCartQuantity(cartItemId: number, quantity: number) {
   revalidatePath('/cart');
 }
 
-export async function processCheckout(paymentMethod: string) {
+export async function processCheckout(paymentMethod: string, selectedItemIds?: number[]) {
   const cookieStore = cookies();
   const supabase = createClient(cookieStore);
 
@@ -782,9 +782,15 @@ export async function processCheckout(paymentMethod: string) {
   if (!user) throw new Error("You must be logged in to checkout.");
 
   // 2. Fetch current cart items
-  const cartItems = await getCartItems();
+  let cartItems = await getCartItems();
+  
+  // If specific items are selected, filter the cart list
+  if (selectedItemIds && selectedItemIds.length > 0) {
+    cartItems = cartItems.filter(item => selectedItemIds.includes(item.cart_item_id));
+  }
+
   if (!cartItems || cartItems.length === 0) {
-    throw new Error("Your cart is empty.");
+    throw new Error("No items selected for checkout.");
   }
 
   let totalAmount = 0;
@@ -875,10 +881,12 @@ export async function processCheckout(paymentMethod: string) {
     }
   }
 
-  // 6. Delete all items from cart_items for this user
+  // 6. Delete ONLY the selected items from cart_items for this user
+  const idsToDelete = cartItems.map(item => item.cart_item_id);
   const { error: clearCartError } = await supabase
     .from('cart_items')
     .delete()
+    .in('cart_item_id', idsToDelete)
     .eq('user_id', user.id);
 
   if (clearCartError) {
