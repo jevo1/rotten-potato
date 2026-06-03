@@ -584,11 +584,11 @@ export default function HomePage() {
                           <div className="flex gap-2">
                             <Link href={`/profile/${comment.user_id}`} className="shrink-0">
                               <div className="w-8 h-8 bg-gray-100 rounded-full flex-none overflow-hidden relative border border-gray-100">
-                                {comment.users.avatar_url ? (
-                                  <Image src={comment.users.avatar_url} alt={comment.users.name} fill className="object-cover" />
+                                {comment.users?.avatar_url ? (
+                                  <Image src={comment.users.avatar_url} alt={comment.users?.name || 'User'} fill className="object-cover" />
                                 ) : (
                                   <div className="w-full h-full bg-[#1C4A5C] text-white text-[10px] flex items-center justify-center font-bold">
-                                    {comment.users.name.charAt(0)}
+                                    {comment.users?.name?.charAt(0) || '?'}
                                   </div>
                                 )}
                               </div>

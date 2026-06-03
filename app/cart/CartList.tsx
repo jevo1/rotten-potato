@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { removeFromCart, updateCartQuantity, processCheckout } from "@/app/actions";
 import { Trash2, Minus, Plus, ShoppingBag, ArrowRight, Loader2 } from "lucide-react";
 
@@ -24,8 +25,25 @@ interface CartListProps {
 
 export default function CartList({ initialItems }: CartListProps) {
     const [items, setItems] = useState<CartItem[]>(initialItems);
+    const [selectedIds, setSelectedIds] = useState<number[]>(initialItems.map(item => item.cart_item_id));
     const [isUpdating, setIsUpdating] = useState<number | null>(null);
     const [isCheckingOut, setIsCheckingOut] = useState(false);
+
+    const toggleSelectAll = () => {
+        if (selectedIds.length === items.length) {
+            setSelectedIds([]);
+        } else {
+            setSelectedIds(items.map(item => item.cart_item_id));
+        }
+    };
+
+    const toggleSelect = (id: number) => {
+        if (selectedIds.includes(id)) {
+            setSelectedIds(selectedIds.filter(i => i !== id));
+        } else {
+            setSelectedIds([...selectedIds, id]);
+        }
+    };
 
     const handleUpdateQuantity = async (cartItemId: number, newQuantity: number) => {
         if (newQuantity < 1) return;
@@ -48,6 +66,7 @@ export default function CartList({ initialItems }: CartListProps) {
         try {
             await removeFromCart(cartItemId);
             setItems(items.filter(item => item.cart_item_id !== cartItemId));
+            setSelectedIds(selectedIds.filter(id => id !== cartItemId));
         } catch (error) {
             console.error("Failed to remove item:", error);
         } finally {
@@ -55,18 +74,30 @@ export default function CartList({ initialItems }: CartListProps) {
         }
     };
 
+    const router = useRouter();
+
     const handleCheckout = async () => {
+        if (selectedIds.length === 0) {
+            window.alert("Please select at least one item to checkout.");
+            return;
+        }
+
         setIsCheckingOut(true);
         try {
-            await processCheckout('Mock GCash');
-        } catch (error: any) {
+            const result = await processCheckout('Mock GCash', selectedIds);
+            if (result?.success) {
+                router.push('/homepage?message=Purchase successful!');
+            }
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "An error occurred during checkout. Please try again.";
             console.error("Checkout failed:", error);
-            window.alert(error.message || "An error occurred during checkout. Please try again.");
+            window.alert(message);
             setIsCheckingOut(false);
         }
     };
 
-    const subtotal = items.reduce((total, item) => total + (Number(item.artworks.price || 0) * item.quantity), 0);
+    const selectedItems = items.filter(item => selectedIds.includes(item.cart_item_id));
+    const subtotal = selectedItems.reduce((total, item) => total + (Number(item.artworks.price || 0) * item.quantity), 0);
     const shipping = 0; // For now
     const total = subtotal + shipping;
 
@@ -91,6 +122,19 @@ export default function CartList({ initialItems }: CartListProps) {
         <div className="flex flex-col lg:flex-row gap-8">
             {/* Items List */}
             <div className="flex-1 space-y-4">
+                {/* Select All Toggle */}
+                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-3 mb-2">
+                    <input 
+                        type="checkbox" 
+                        checked={selectedIds.length === items.length && items.length > 0}
+                        onChange={toggleSelectAll}
+                        className="w-5 h-5 rounded border-gray-300 text-[#1C4A5C] focus:ring-[#1C4A5C] cursor-pointer"
+                    />
+                    <span className="font-bold text-gray-700 text-sm">
+                        Select All ({items.length} items)
+                    </span>
+                </div>
+
                 {items.map((item) => {
                     if (!item.artworks) return null;
                     
@@ -99,6 +143,14 @@ export default function CartList({ initialItems }: CartListProps) {
                             key={item.cart_item_id} 
                             className={`bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex gap-4 items-center transition-opacity ${isUpdating === item.cart_item_id ? 'opacity-50 pointer-events-none' : ''}`}
                         >
+                            {/* Selection Checkbox */}
+                            <input 
+                                type="checkbox" 
+                                checked={selectedIds.includes(item.cart_item_id)}
+                                onChange={() => toggleSelect(item.cart_item_id)}
+                                className="w-5 h-5 rounded border-gray-300 text-[#1C4A5C] focus:ring-[#1C4A5C] cursor-pointer"
+                            />
+
                             <div className="relative w-24 h-24 rounded-xl overflow-hidden flex-shrink-0 border border-gray-50 bg-gray-100">
                                 <Image 
                                     src={item.artworks.file_url} 
@@ -160,7 +212,7 @@ export default function CartList({ initialItems }: CartListProps) {
                     
                     <div className="space-y-4 mb-10">
                         <div className="flex justify-between text-gray-600 font-medium">
-                            <span>Subtotal ({items.length} items)</span>
+                            <span>Subtotal ({selectedIds.length} items)</span>
                             <span>₱{subtotal.toLocaleString()}</span>
                         </div>
                         <div className="flex justify-between text-gray-600 font-medium">
@@ -175,7 +227,7 @@ export default function CartList({ initialItems }: CartListProps) {
 
                     <button 
                         onClick={handleCheckout}
-                        disabled={isCheckingOut}
+                        disabled={isCheckingOut || selectedIds.length === 0}
                         className="w-full bg-[#f2a83b] text-slate-900 py-4 rounded-2xl font-black text-lg hover:bg-[#e09b36] hover:scale-[1.02] transition-all shadow-md active:scale-95 mb-4 flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                     >
                         {isCheckingOut ? (
@@ -185,7 +237,7 @@ export default function CartList({ initialItems }: CartListProps) {
                             </>
                         ) : (
                             <>
-                                Proceed to Checkout
+                                Proceed to Checkout ({selectedIds.length})
                                 <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
                             </>
                         )}
@@ -193,7 +245,7 @@ export default function CartList({ initialItems }: CartListProps) {
                     
                     <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 mb-6">
                         <p className="text-[11px] text-[#1C4A5C] leading-relaxed">
-                            <span className="font-bold">Secure Checkout:</span> Your transaction is protected by GamâLokal's artist protection guarantee.
+                            <span className="font-bold">Selective Checkout:</span> Only the selected items will be purchased. Others will remain in your cart.
                         </p>
                     </div>
 

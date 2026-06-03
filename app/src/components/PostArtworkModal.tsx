@@ -46,7 +46,7 @@ export default function PostArtworkModal({ isOpen, onClose }: PostArtworkModalPr
         {/* Header - Fixed */}
         <div className="bg-[#1C4A5C] p-6 text-white flex items-center justify-between flex-none">
           <div>
-            <h1 className="text-2xl font-black">Post an Artwork</h1>
+            <h1 className="text-2xl font-black">List an Artwork</h1>
             <p className="text-sm text-blue-50/80 font-medium mt-0.5">Share your creation with the community</p>
           </div>
           <button 
@@ -139,6 +139,18 @@ export default function PostArtworkModal({ isOpen, onClose }: PostArtworkModalPr
                   className="w-full px-5 py-4 rounded-2xl bg-gray-50 border-none text-sm text-gray-900 font-bold focus:ring-2 focus:ring-[#1C4A5C]/10 outline-none transition-all"
                 />
               </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-black text-gray-700 uppercase tracking-wider">Stock Quantity *</label>
+                <input 
+                  type="number" 
+                  name="stock_quantity" 
+                  required 
+                  min="1"
+                  defaultValue="1"
+                  placeholder="e.g. 5"
+                  className="w-full px-5 py-4 rounded-2xl bg-gray-50 border-none text-sm text-gray-900 font-bold focus:ring-2 focus:ring-[#1C4A5C]/10 outline-none transition-all"
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -168,10 +180,10 @@ export default function PostArtworkModal({ isOpen, onClose }: PostArtworkModalPr
                 {isSubmitting ? (
                   <>
                     <div className="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>Posting...</span>
+                    <span>Listing...</span>
                   </>
                 ) : (
-                  'Post Artwork'
+                  'List Artwork'
                 )}
               </button>
             </div>

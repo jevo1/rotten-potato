@@ -6,7 +6,8 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import { updateProfile } from '@/app/profile/actions'; 
-import Cropper from 'react-easy-crop';
+import Cropper, { Area, Point } from 'react-easy-crop';
+import 'react-easy-crop/react-easy-crop.css';
 
 // --- Utility Function to physically crop the image via HTML Canvas ---
 const createImage = (url: string): Promise<HTMLImageElement> =>
@@ -18,7 +19,7 @@ const createImage = (url: string): Promise<HTMLImageElement> =>
     image.src = url;
   });
 
-async function getCroppedImg(imageSrc: string, pixelCrop: any): Promise<Blob> {
+async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<Blob> {
   const image = await createImage(imageSrc);
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
@@ -52,21 +53,20 @@ async function getCroppedImg(imageSrc: string, pixelCrop: any): Promise<Blob> {
 export default function EditProfilePage() {
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
   const [name, setName] = useState('');
   const [specialty, setSpecialty] = useState('');
   const [location, setLocation] = useState('');
   const [priceRange, setPriceRange] = useState('');
-  
+
   // Image Cropping States
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null); 
   const [rawImageSrc, setRawImageSrc] = useState<string | null>(null); 
   const [croppedImageBlob, setCroppedImageBlob] = useState<Blob | null>(null); 
-  
+
   const [isCropping, setIsCropping] = useState(false);
-  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
 
   const supabase = createClient();
   const router = useRouter(); // Initialize the router
@@ -81,7 +81,7 @@ export default function EditProfilePage() {
         .select('name, avatar_url')
         .eq('user_id', user.id)
         .single();
-        
+
       if (userData) {
         if (userData.name) setName(userData.name);
         if (userData.avatar_url) setAvatarUrl(userData.avatar_url);
@@ -98,7 +98,6 @@ export default function EditProfilePage() {
         setLocation(profileData.location || '');
         setPriceRange(profileData.price_range || '');
       }
-      
       setLoading(false);
     };
 
@@ -119,7 +118,7 @@ export default function EditProfilePage() {
   };
 
   // 2. User drags and zooms
-  const onCropComplete = useCallback((croppedArea: any, croppedAreaPixels: any) => {
+  const onCropComplete = useCallback((_croppedArea: Area, croppedAreaPixels: Area) => {
     setCroppedAreaPixels(croppedAreaPixels);
   }, []);
 

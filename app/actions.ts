@@ -256,6 +256,7 @@ export async function postArtwork(formData: FormData) {
   const description = formData.get('description') as string;
   const category = formData.get('category') as string;
   const price = parseFloat(formData.get('price') as string);
+  const stockQuantity = parseInt(formData.get('stock_quantity') as string) || 1;
   const file = formData.get('image') as File;
 
   if (!file || file.size === 0) throw new Error("Please upload an image.");
@@ -284,6 +285,7 @@ export async function postArtwork(formData: FormData) {
       description: description,
       category: category,
       price: price,
+      stock_quantity: stockQuantity,
       file_url: publicUrlData.publicUrl,
       status: 'available'
     });
@@ -371,7 +373,7 @@ export async function sendMessage(receiverId: string, content: string) {
   revalidatePath('/homepage');
 }
 
-// --- USER & ARTIST PROFILE PROFILE ---
+// --- USER & ARTIST PROFILE PROFILES ---
 
 export async function updateArtistProfile(formData: FormData) {
   const cookieStore = cookies();
@@ -544,7 +546,7 @@ export async function addComment(postId: number, content: string, parentId?: num
 
 export async function deleteComment(commentId: number) {
   const cookieStore = cookies();
-  const supabase = await createClient(cookieStore);
+  const supabase = createClient(cookieStore);
   
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Not authenticated");
@@ -562,7 +564,7 @@ export async function deleteComment(commentId: number) {
 
   if (error) {
     console.error('Supabase error deleting comment:', error);
-    throw new Error(`Failed to delete comment: ${error.message}`);
+    throw new Error(`Failed to delete comment: ${error.message || 'Unknown error'}`);
   }
   
   revalidatePath('/homepage');
@@ -624,13 +626,17 @@ export async function addToCart(artworkId: number, quantity: number = 1) {
 
   const { data: artwork, error: artworkError } = await supabase
     .from('artworks')
-    .select('stock_quantity')
+    .select('stock_quantity, user_id')
     .eq('artwork_id', artworkId)
     .single();
 
   if (artworkError || !artwork) {
     console.error("Error fetching artwork stock:", artworkError);
     throw new Error("Artwork not found.");
+  }
+
+  if (artwork.user_id === user.id) {
+    throw new Error("You cannot add your own artwork to the cart.");
   }
 
   const { data: existingItem } = await supabase
@@ -742,9 +748,9 @@ export async function updateCartQuantity(cartItemId: number, quantity: number) {
   revalidatePath('/cart');
 }
 
-// --- PAYMONGO CHECKOUT GATEWAY WORKFLOW ---
+// --- SECURE PAYMONGO CHECKOUT WITH TARGETED DELETIONS ---
 
-export async function processCheckout() {
+export async function processCheckout(paymentMethod: string, selectedItemIds?: number[]) {
   const cookieStore = cookies();
   const supabase = createClient(cookieStore);
 
@@ -753,18 +759,25 @@ export async function processCheckout() {
   if (!user) throw new Error("You must be logged in to checkout.");
 
   // 2. Fetch current cart items
-  const cartItems = await getCartItems();
+  let cartItems = await getCartItems();
+  
+  // Apply targeted checkbox filtering if individual items were checked
+  if (selectedItemIds && selectedItemIds.length > 0) {
+    cartItems = cartItems.filter(item => selectedItemIds.includes(item.cart_item_id));
+  }
+
   if (!cartItems || cartItems.length === 0) {
-    throw new Error("Your cart is empty.");
+    throw new Error("No items selected for checkout.");
   }
 
   let totalAmount = 0;
   const lineItems = [];
   
+  // Grab standard schema link indexes from the primary active item
   const primaryArtworkId = cartItems[0].artwork_id;
   const primaryArtistId = cartItems[0].artist_id;
 
-  // 3. Re-verify stock and formulate line_items maps
+  // 3. Re-verify available inventory parameters and compute price metrics
   for (const item of cartItems) {
     const { data: artwork, error: artworkError } = await supabase
       .from('artworks')
@@ -783,6 +796,7 @@ export async function processCheckout() {
     const itemPrice = artwork.price || 0;
     totalAmount += itemPrice * item.quantity;
 
+    // Build the dynamic payload rows (amounts parsed in cents)
     lineItems.push({
       amount: Math.round(itemPrice * 100),
       currency: 'PHP',
@@ -791,7 +805,7 @@ export async function processCheckout() {
     });
   }
 
-  // 4. Initialize a tracking instance in your payments schema table
+  // 4. Initialize a record tracking instance inside your payments table schema
   const { data: paymentRecord, error: paymentError } = await supabase
     .from('payments')
     .insert({
@@ -805,7 +819,7 @@ export async function processCheckout() {
     .single();
 
   if (paymentError || !paymentRecord) {
-    console.error("Payment table initialization failure:", paymentError?.message);
+    console.error("Payment registration failure detail:", paymentError?.message);
     throw new Error("Failed to initialize system checkout parameters.");
   }
 
@@ -814,7 +828,7 @@ export async function processCheckout() {
     throw new Error("Internal Configuration Error: Secret API access keys are missing.");
   }
 
-  // 5. Query PayMongo API endpoint parameters
+  // 5. Package session attributes for gateway verification
   const options = {
     method: 'POST',
     headers: {
@@ -825,14 +839,16 @@ export async function processCheckout() {
     body: JSON.stringify({
       data: {
         attributes: {
-          // Fixed parameter key here:
           payment_method_types: ['gcash', 'card'],
           currency: 'PHP',
           description: `GamâLokal Marketplace Checkout`,
           line_items: lineItems,
+          // Pass the specific selected cart item rows to string metadata 
+          // so the webhook clears ONLY the checked options upon authorization completion
           metadata: {
             payment_id: paymentRecord.payment_id.toString(),
-            buyer_id: user.id
+            buyer_id: user.id,
+            selected_item_ids: selectedItemIds && selectedItemIds.length > 0 ? selectedItemIds.join(',') : ''
           },
           success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/homepage?tab=1&payment=success`,
           cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/cart?payment=cancelled`
@@ -847,19 +863,20 @@ export async function processCheckout() {
     const resData = await response.json();
 
     if (resData.errors) {
-      console.error("PayMongo Session Error Response:", resData.errors);
-      throw new Error("Gateway rejected generation parameters.");
+      console.error("PayMongo Session Error Response Log:", resData.errors);
+      throw new Error("Gateway rejected parameter compilation rules.");
     }
 
     checkoutUrl = resData.data.attributes.checkout_url;
 
+    // Bind checkout sequence transaction token back to our record layout
     await supabase
       .from('payments')
       .update({ paymongo_session_id: resData.data.id })
       .eq('payment_id', paymentRecord.payment_id);
 
   } catch (err) {
-    console.error("Failed to connect to gateway infrastructure:", err);
+    console.error("Connection tracking trace exception:", err);
     throw new Error("Payment gateway is temporarily unreachable.");
   }
 
