@@ -1,9 +1,9 @@
 import { createClient } from '@/utils/supabase/server'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { NavBar } from '@/app/src/components/NavBar'
 import Image from 'next/image'
 import Link from 'next/link'
+import ProfileNavBar from './ProfileNavBar' // <-- Importing our new Client Wrapper!
 
 export default async function ProfilePage() {
   const cookieStore = cookies()
@@ -47,12 +47,12 @@ export default async function ProfilePage() {
 
   return (
     <div className="bg-[#FCFAF8] min-h-screen w-full flex flex-col font-sans">
-      {/* Global Navigation */}
+      
+      {/* Global Navigation using the Client Wrapper */}
       <div className="sticky top-0 z-50 w-full">
-        <NavBar 
-          logoText="GamâLokal" 
-          userName={displayName} 
-          profileImage={avatarUrl || '/user-default.svg'} 
+        <ProfileNavBar 
+          displayName={displayName} 
+          avatarUrl={avatarUrl} 
           isArtist={isArtist} 
         />
       </div>
@@ -62,13 +62,13 @@ export default async function ProfilePage() {
         {/* Profile Header Card */}
         <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 mb-8 relative">
           
-          {/* Guaranteed Banner Gradient (Using inline styles to bypass Tailwind compiler issues) */}
+          {/* Guaranteed Banner Gradient */}
           <div className="h-32 w-full" style={{ background: 'linear-gradient(to right, #1C4A5C, #3A6A7C)' }}></div>
           
           <div className="px-8 pb-8 relative">
             
             <div className="relative -mt-12 mb-4 flex justify-between items-end">
-              {/* Avatar Container: Added shrink-0 and z-10 so it never gets crushed */}
+              {/* Avatar Container */}
               <div className="w-24 h-24 bg-white rounded-full p-1 shadow-md shrink-0 z-10">
                 <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 rounded-full overflow-hidden relative flex items-center justify-center">
                   {avatarUrl ? (
