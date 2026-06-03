@@ -409,6 +409,7 @@ export async function getArtworks(options: {
       file_url,
       category,
       status,
+      stock_quantity,
       users ( name )
     `);
 
@@ -635,5 +636,261 @@ export async function deletePost(postId: number) {
   }
   
   revalidatePath('/homepage');
+}
+
+// --- CART ACTIONS ---
+
+export async function addToCart(artworkId: number, quantity: number = 1) {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+  
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("You must be logged in to add to cart.");
+
+  // 1. Check stock_quantity in artworks table
+  const { data: artwork, error: artworkError } = await supabase
+    .from('artworks')
+    .select('stock_quantity')
+    .eq('artwork_id', artworkId)
+    .single();
+
+  if (artworkError || !artwork) {
+    console.error("Error fetching artwork stock:", artworkError);
+    throw new Error("Artwork not found.");
+  }
+
+  // 2. Fetch existing cart item to handle incrementing
+  const { data: existingItem } = await supabase
+    .from('cart_items')
+    .select('quantity')
+    .eq('user_id', user.id)
+    .eq('artwork_id', artworkId)
+    .maybeSingle();
+
+  const currentQuantityInCart = existingItem?.quantity || 0;
+  const newQuantity = currentQuantityInCart + quantity;
+
+  // 3. Verify against stock
+  if (artwork.stock_quantity < newQuantity) {
+    throw new Error(`Cannot add more to cart. Only ${artwork.stock_quantity} available in stock.`);
+  }
+
+  // 4. Upsert into cart_items
+  const { error } = await supabase
+    .from('cart_items')
+    .upsert({ 
+      user_id: user.id, 
+      artwork_id: artworkId, 
+      quantity: newQuantity 
+    }, { onConflict: 'user_id, artwork_id' });
+
+  if (error) {
+    console.error("Cart error:", error);
+    throw new Error('Failed to update cart.');
+  }
+
+  revalidatePath('/homepage');
+}
+
+export async function getCartItems() {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+  
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data, error } = await supabase
+    .from('cart_items')
+    .select(`
+      cart_item_id,
+      quantity,
+      artwork_id,
+      artworks (
+        artwork_id,
+        title,
+        price,
+        file_url,
+        stock_quantity,
+        user_id,
+        users (
+          name
+        )
+      )
+    `)
+    .eq('user_id', user.id);
+
+  if (error) {
+    console.error("Get cart error:", error);
+    throw new Error('Failed to fetch cart items.');
+  }
+
+  return data?.map(item => {
+    const artwork = Array.isArray(item.artworks) ? item.artworks[0] : item.artworks;
+    const artist = Array.isArray(artwork?.users) ? artwork.users[0] : artwork?.users;
+    
+    return {
+      ...item,
+      artworks: artwork,
+      artist_name: artist?.name || 'Unknown Artist',
+      artist_id: artwork?.user_id
+    };
+  });
+}
+
+export async function removeFromCart(cartItemId: number) {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+  
+  const { error } = await supabase
+    .from('cart_items')
+    .delete()
+    .eq('cart_item_id', cartItemId);
+
+  if (error) {
+    console.error("Remove from cart error:", error);
+    throw new Error('Failed to remove item from cart.');
+  }
+
+  revalidatePath('/cart');
+}
+
+export async function updateCartQuantity(cartItemId: number, quantity: number) {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+  
+  const { error } = await supabase
+    .from('cart_items')
+    .update({ quantity })
+    .eq('cart_item_id', cartItemId);
+
+  if (error) {
+    console.error("Update cart quantity error:", error);
+    throw new Error('Failed to update quantity.');
+  }
+
+  revalidatePath('/cart');
+}
+
+export async function processCheckout(paymentMethod: string) {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+
+  // 1. Verify user authentication
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("You must be logged in to checkout.");
+
+  // 2. Fetch current cart items
+  const cartItems = await getCartItems();
+  if (!cartItems || cartItems.length === 0) {
+    throw new Error("Your cart is empty.");
+  }
+
+  let totalAmount = 0;
+
+  // 3. Re-verify stock and calculate total amount
+  for (const item of cartItems) {
+    const { data: artwork, error: artworkError } = await supabase
+      .from('artworks')
+      .select('stock_quantity, price, title')
+      .eq('artwork_id', item.artwork_id)
+      .single();
+
+    if (artworkError || !artwork) {
+      throw new Error(`Artwork "${item.artworks?.title || 'Unknown'}" not found.`);
+    }
+
+    if (artwork.stock_quantity < item.quantity) {
+      throw new Error(`Item "${artwork.title}" is out of stock or requested quantity exceeds availability.`);
+    }
+
+    totalAmount += (artwork.price || 0) * item.quantity;
+  }
+
+  // 4. Insert a new row in the orders table
+  const { data: order, error: orderError } = await supabase
+    .from('orders')
+    .insert({
+      buyer_id: user.id,
+      total_amount: totalAmount,
+      status: 'paid',
+      payment_method: paymentMethod
+    })
+    .select()
+    .single();
+
+  if (orderError) {
+    console.error("Order creation error:", orderError);
+    throw new Error("Failed to create order.");
+  }
+
+  // 5. Process each cart item: order_items, stock deduction, and notifications
+  for (const item of cartItems) {
+    // Insert into order_items
+    const { error: itemError } = await supabase
+      .from('order_items')
+      .insert({
+        order_id: order.order_id,
+        artwork_id: item.artwork_id,
+        quantity: item.quantity,
+        unit_price: item.artworks.price
+      });
+
+    if (itemError) {
+      console.error(`Failed to record order item for artwork ${item.artwork_id}:`, itemError);
+    }
+
+    // Deduct stock from artworks.stock_quantity
+    // We fetch latest stock again to be safe for the decrement
+    const { data: latestArtwork } = await supabase
+      .from('artworks')
+      .select('stock_quantity')
+      .eq('artwork_id', item.artwork_id)
+      .single();
+
+    if (latestArtwork) {
+      const { error: stockUpdateError } = await supabase
+        .from('artworks')
+        .update({ stock_quantity: latestArtwork.stock_quantity - item.quantity })
+        .eq('artwork_id', item.artwork_id);
+
+      if (stockUpdateError) {
+        console.error(`Failed to update stock for artwork ${item.artwork_id}:`, stockUpdateError);
+      }
+    }
+
+    // Notify the artist
+    if (item.artist_id) {
+      const { error: notifError } = await supabase
+        .from('notifications')
+        .insert({
+          user_id: item.artist_id,
+          actor_id: user.id,
+          type: 'purchase',
+          entity_id: order.order_id,
+          entity_type: 'order',
+          content: `Your artwork "${item.artworks.title}" was purchased!`,
+          redirect_url: `/dashboard`
+        });
+
+      if (notifError) {
+        console.error(`Failed to notify artist ${item.artist_id}:`, notifError);
+      }
+    }
+  }
+
+  // 6. Delete all items from cart_items for this user
+  const { error: clearCartError } = await supabase
+    .from('cart_items')
+    .delete()
+    .eq('user_id', user.id);
+
+  if (clearCartError) {
+    console.error("Failed to clear cart:", clearCartError);
+  }
+
+  // 7. Revalidate paths and redirect
+  revalidatePath('/cart');
+  revalidatePath('/homepage');
+  redirect('/homepage?message=Purchase successful!');
 }
 
