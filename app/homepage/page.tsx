@@ -15,13 +15,19 @@ function HomepageContent() {
   
   const [userName, setUserName] = useState('A');
   const [profileImage, setProfileImage] = useState('/user-default.svg');
+  
+  // Initialize from search params
   const [activeTab, setActiveTab] = useState(tabQuery ? parseInt(tabQuery) : 0);
+  
+  // Track previous search param to sync state if it changes externally (e.g., back button)
+  const [prevTabQuery, setPrevTabQuery] = useState(tabQuery);
 
-  useEffect(() => {
+  if (tabQuery !== prevTabQuery) {
+    setPrevTabQuery(tabQuery);
     if (tabQuery) {
       setActiveTab(parseInt(tabQuery));
     }
-  }, [tabQuery]);
+  }
 
   useEffect(() => {
     const fetchUser = async () => {

@@ -117,14 +117,14 @@ export const NavBar: React.FC<NavBarProps> = ({
                 {/* Right Side Icons & Profile */}
                 <div className="flex items-center gap-2 md:gap-3 min-w-fit">
                     
-                    {/* Post Artwork Button */}
-                    <button 
+                    {/* List Artwork Button */}
+                    <button
                         onClick={() => setIsPostModalOpen(true)}
                         className="flex items-center gap-2 bg-[#f2a83b] text-slate-900 px-4 md:px-5 py-2 rounded-full font-bold text-sm hover:bg-[#e09b36] hover:scale-105 transition-all shadow-sm active:scale-95"
                     >
                         <Plus size={16} strokeWidth={3} />
-                        <span className="hidden md:inline">Post Artwork</span>
-                        <span className="md:hidden">Post</span>
+                        <span className="hidden md:inline">List Artwork</span>
+                        <span className="md:hidden">List</span>
                     </button>
 
                     <div className="flex items-center gap-1">
@@ -158,7 +158,7 @@ export const NavBar: React.FC<NavBarProps> = ({
                         >
                             {profileImage === '/user-default.svg' || !profileImage ? (
                                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1C4A5C] to-[#3A6A7C] flex items-center justify-center text-white font-bold text-sm shadow-inner">
-                                    {userName.charAt(0).toUpperCase()}
+                                    {userName?.charAt(0).toUpperCase() || 'A'}
                                 </div>
                             ) : (
                                 <Image src={profileImage} alt="Profile" width={32} height={32} className="rounded-full bg-gray-100 object-cover aspect-square border border-gray-100" />
