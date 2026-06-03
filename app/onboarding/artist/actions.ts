@@ -26,7 +26,10 @@ export async function setupArtistProfile(formData: FormData) {
       price_range: priceRange
     })
 
-  if (profileError) throw new Error('Failed to create artist profile')
+  if (profileError) {
+    console.error('Database error:', profileError);
+    throw new Error(`Failed to create artist profile: ${profileError.message}`);
+  }
 
   // 2. Update the user role to 'artist' to unlock the dashboard
   const { error: roleError } = await supabase
@@ -34,7 +37,10 @@ export async function setupArtistProfile(formData: FormData) {
     .update({ role: 'artist' })
     .eq('user_id', user.id)
 
-  if (roleError) throw new Error('Failed to update user role')
+  if (roleError) {
+    console.error('Database error:', roleError);
+    throw new Error(`Failed to update user role: ${roleError.message}`);
+  }
 
   // 3. Redirect to the newly unlocked studio space
   redirect('/dashboard')

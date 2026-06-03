@@ -110,8 +110,8 @@ export async function createCommissionRequest(formData: FormData) {
       status: 'open' 
     });
   if (error) {
-    console.error('Error posting request:', error);
-    throw new Error('Failed to post commission request.');
+    console.error('Database error:', error);
+    throw new Error(`Failed to create commission request: ${error.message}`);
   }
   revalidatePath('/homepage');
 }
@@ -160,15 +160,14 @@ export async function submitCommissionOffer(requestId: number, offerAmount: numb
     });
 
   if (error) {
-    console.error('Error submitting offer:', error);
-    throw new Error('Failed to submit offer.');
+    console.error('Database error:', error);
+    throw new Error(`Failed to submit offer: ${error.message}`);
   }
 
   revalidatePath('/homepage'); 
 }
 
 
-// 3. Client accepts an offer (The State Machine Trigger)
 export async function acceptCommissionOffer(requestId: number, offerId: number, artistId: string) {
   const cookieStore = cookies()
   const supabase = await createClient(cookieStore);
@@ -179,7 +178,10 @@ export async function acceptCommissionOffer(requestId: number, offerId: number, 
     .update({ status: 'accepted' })
     .eq('offer_id', offerId);
 
-  if (offerError) throw new Error('Failed to accept the offer.');
+  if (offerError) {
+    console.error('Database error:', offerError);
+    throw new Error(`Failed to accept the offer: ${offerError.message}`);
+  }
 
   // B. Update the actual request: Assign the artist and change status to 'in_progress'
   const { error: requestError } = await supabase
@@ -190,7 +192,10 @@ export async function acceptCommissionOffer(requestId: number, offerId: number, 
     })
     .eq('request_id', requestId);
 
-  if (requestError) throw new Error('Failed to update the commission status.');
+  if (requestError) {
+    console.error('Database error:', requestError);
+    throw new Error(`Failed to update the commission status: ${requestError.message}`);
+  }
 
   // C. Mark all other offers for this request as 'rejected'
   await supabase
@@ -359,7 +364,10 @@ export async function completeCommissionAndReview(
     .update({ status: 'completed' })
     .eq('request_id', requestId);
 
-  if (reqError) throw new Error('Failed to update request status.');
+  if (reqError) {
+    console.error('Database error:', reqError);
+    throw new Error(`Failed to update request status: ${reqError.message}`);
+  }
 
   // 2. Insert the review
   const { data: { user } } = await supabase.auth.getUser();
@@ -375,7 +383,10 @@ export async function completeCommissionAndReview(
       comment: comment
     });
 
-  if (reviewError) throw new Error('Failed to post review.');
+  if (reviewError) {
+    console.error('Database error:', reviewError);
+    throw new Error(`Failed to post review: ${reviewError.message}`);
+  }
 
   revalidatePath('/homepage');
 }
@@ -430,5 +441,199 @@ export async function getArtworks(options: {
     ...artwork,
     users: Array.isArray(artwork.users) ? artwork.users[0] : artwork.users
   }));
+}
+
+// --- COMMUNITY FEED ACTIONS ---
+
+export async function createPost(formData: FormData) {
+  const cookieStore = cookies();
+  const supabase = await createClient(cookieStore);
+  
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("You must be logged in to create a post.");
+
+  const content = formData.get('content') as string;
+  const artworkId = formData.get('artwork_id') ? parseInt(formData.get('artwork_id') as string) : null;
+  const file = formData.get('image') as File;
+
+  let imageUrl = null;
+
+  if (file && file.size > 0) {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${user.id}-${Math.random()}.${fileExt}`;
+    
+    // We'll use 'artworks' bucket for now, but usually a 'posts' bucket is better
+    const { error: uploadError } = await supabase.storage
+      .from('artworks')
+      .upload(`posts/${fileName}`, file);
+
+    if (uploadError) {
+      console.error("Upload error:", uploadError);
+      throw new Error('Failed to upload image.');
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from('artworks')
+      .getPublicUrl(`posts/${fileName}`);
+    
+    imageUrl = publicUrlData.publicUrl;
+  }
+
+  const { error } = await supabase
+    .from('posts')
+    .insert({
+      user_id: user.id,
+      content,
+      artwork_id: artworkId,
+      image_url: imageUrl
+    });
+
+  if (error) {
+    console.error("Database error:", error);
+    throw new Error('Failed to create post.');
+  }
+
+  revalidatePath('/homepage');
+}
+
+export async function toggleLike(postId: number) {
+  const cookieStore = cookies();
+  const supabase = await createClient(cookieStore);
+  
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("You must be logged in to like a post.");
+
+  // Check if already liked
+  const { data: existingLike } = await supabase
+    .from('likes')
+    .select('like_id')
+    .eq('post_id', postId)
+    .eq('user_id', user.id)
+    .single();
+
+  if (existingLike) {
+    // Unlike
+    const { error } = await supabase
+      .from('likes')
+      .delete()
+      .eq('like_id', existingLike.like_id);
+    
+    if (error) throw new Error('Failed to unlike post.');
+  } else {
+    // Like
+    const { error } = await supabase
+      .from('likes')
+      .insert({
+        post_id: postId,
+        user_id: user.id
+      });
+    
+    if (error) throw new Error('Failed to like post.');
+  }
+
+  revalidatePath('/homepage');
+}
+
+export async function addComment(postId: number, content: string, parentId?: number) {
+  const cookieStore = cookies();
+  const supabase = await createClient(cookieStore);
+  
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("You must be logged in to comment.");
+
+  const { error } = await supabase
+    .from('comments')
+    .insert({
+      post_id: postId,
+      user_id: user.id,
+      content: content,
+      parent_id: parentId || null
+    });
+
+  if (error) {
+    console.error("Database error:", error);
+    throw new Error('Failed to add comment.');
+  }
+
+  revalidatePath('/homepage');
+}
+
+export async function deleteComment(commentId: number) {
+  const cookieStore = cookies();
+  const supabase = await createClient(cookieStore);
+  
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  // ROOT CAUSE FIX: Explicitly delete replies first. 
+  // Even though the DB has ON DELETE CASCADE, RLS can sometimes block cascading deletes 
+  // if the user doesn't own the replies. Manually attempting to delete them (where possible) 
+  // or at least handling the parent delete more gracefully is safer.
+  await supabase
+    .from('comments')
+    .delete()
+    .eq('parent_id', commentId);
+
+  const { error } = await supabase
+    .from('comments')
+    .delete()
+    .eq('comment_id', commentId)
+    .eq('user_id', user.id); // Security: must be owner
+
+  if (error) {
+    console.error('Supabase error deleting comment:', error);
+    throw new Error(`Failed to delete comment: ${error.message} ${error.details || ''} ${error.hint || ''}`.trim());
+  }
+  
+  revalidatePath('/homepage');
+}
+
+export async function editPost(postId: number, content: string) {
+  const cookieStore = cookies();
+  const supabase = await createClient(cookieStore);
+  
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const { error } = await supabase
+    .from('posts')
+    .update({ content })
+    .eq('post_id', postId)
+    .eq('user_id', user.id); // Security: must be owner
+
+  if (error) {
+    console.error('Database error:', error);
+    throw new Error(`Failed to update post: ${error.message}`);
+  }
+  
+  revalidatePath('/homepage');
+}
+
+export async function deletePost(postId: number) {
+  const cookieStore = cookies();
+  const supabase = await createClient(cookieStore);
+  
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  // ROOT CAUSE FIX: Manually delete comments/likes associated with the post first.
+  // This helps avoid foreign key constraint errors if RLS blocks the automatic 
+  // cascading delete (which it often does in Supabase if the post owner 
+  // doesn't have 'delete' permission on other users' comments).
+  await supabase.from('comments').delete().eq('post_id', postId);
+  await supabase.from('likes').delete().eq('post_id', postId);
+
+  const { error } = await supabase
+    .from('posts')
+    .delete()
+    .eq('post_id', postId)
+    .eq('user_id', user.id); // Security: must be owner
+
+  if (error) {
+    console.error('Database error:', error);
+    throw new Error(`Failed to delete post: ${error.message} ${error.details || ''} ${error.hint || ''}`.trim());
+  }
+  
+  revalidatePath('/homepage');
 }
 
