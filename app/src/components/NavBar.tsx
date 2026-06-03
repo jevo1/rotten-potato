@@ -1,6 +1,7 @@
 "use client";
-import React, { useState } from 'react';
-import { logout } from '@/app/actions';
+import React, { useState, useEffect } from 'react';
+import { logout, getCartItems } from '@/app/actions';
+import { createClient } from '@/utils/supabase/client';
 import Image from 'next/image';
 import Link from 'next/link';
 import PostArtworkModal from './PostArtworkModal';
@@ -40,6 +41,36 @@ export const NavBar: React.FC<NavBarProps> = ({
 }) => {
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const [isPostModalOpen, setIsPostModalOpen] = useState(false);
+    const [cartCount, setCartCount] = useState(0);
+
+    useEffect(() => {
+        const fetchCartCount = async () => {
+            const items = await getCartItems();
+            setCartCount(items.length);
+        };
+
+        fetchCartCount();
+
+        const supabase = createClient();
+        const channel = supabase
+            .channel('cart_items_changes')
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'cart_items',
+                },
+                () => {
+                    fetchCartCount();
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, []);
 
     const tabs = [
         { id: 0, label: 'Home', icon: Home },
@@ -107,10 +138,16 @@ export const NavBar: React.FC<NavBarProps> = ({
                             <span className="absolute top-1 right-1 bg-red-500 text-white text-[8px] font-bold w-4 h-4 flex items-center justify-center rounded-full border-2 border-white">5</span>
                         </button>
 
-                        <button className="relative text-gray-500 hover:text-[#8B5A2B] hover:bg-stone-50 p-2 rounded-full transition-all">
-                            <ShoppingCart size={20} strokeWidth={2} />
-                            <span className="absolute top-1 right-1 bg-red-500 text-white text-[8px] font-bold w-4 h-4 flex items-center justify-center rounded-full border-2 border-white">2</span>
-                        </button>
+                        <Link href="/cart">
+                            <button className="relative text-gray-500 hover:text-[#8B5A2B] hover:bg-stone-50 p-2 rounded-full transition-all">
+                                <ShoppingCart size={20} strokeWidth={2} />
+                                {cartCount > 0 && (
+                                    <span className="absolute top-1 right-1 bg-red-500 text-white text-[8px] font-bold w-4 h-4 flex items-center justify-center rounded-full border-2 border-white animate-pulse">
+                                        {cartCount}
+                                    </span>
+                                )}
+                            </button>
+                        </Link>
                     </div>
 
                     {/* Profile Dropdown */}
