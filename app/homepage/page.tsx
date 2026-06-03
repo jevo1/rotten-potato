@@ -1,6 +1,6 @@
 "use client";
-import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation'; // <-- 1. Import search params
+import { useEffect, useState, Suspense } from 'react'; // Added Suspense
+import { useSearchParams } from 'next/navigation'; 
 import { NavBar } from '../src/components/NavBar';
 import { createClient } from '@/utils/supabase/client';
 import Browse from './BrowsePage';
@@ -8,17 +8,15 @@ import Commissions from './CommissionsPage';
 import Messages from './MessagesPage';
 import Home from './HomePage';
 
-export default function Homepage() {
-  const searchParams = useSearchParams(); // <-- 2. Initialize it
-  const tabQuery = searchParams.get('tab'); // <-- 3. Grab the 'tab' number from the URL
+// 1. Move all the layout and tab logic to an inner content component
+function HomepageContent() {
+  const searchParams = useSearchParams(); 
+  const tabQuery = searchParams.get('tab'); 
   
   const [userName, setUserName] = useState('A');
   const [profileImage, setProfileImage] = useState('/user-default.svg');
-  
-  // 4. If there is a tab in the URL, use it! Otherwise, default to 0.
   const [activeTab, setActiveTab] = useState(tabQuery ? parseInt(tabQuery) : 0);
 
-  // 5. Keep it synced in case the URL changes while they are already on the page
   useEffect(() => {
     if (tabQuery) {
       setActiveTab(parseInt(tabQuery));
@@ -75,5 +73,18 @@ export default function Homepage() {
         {activeTab === 3 && <Messages />}
       </div>
     </div>
+  );
+}
+
+// 2. Export the main component wrapped cleanly in a Suspense boundary
+export default function Homepage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-[#FCFAF8] text-[#1C4A5C] font-bold">
+        Loading GamâLokal...
+      </div>
+    }>
+      <HomepageContent />
+    </Suspense>
   );
 }
