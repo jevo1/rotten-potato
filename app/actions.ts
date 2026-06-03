@@ -884,3 +884,33 @@ export async function processCheckout(paymentMethod: string, selectedItemIds?: n
     redirect(checkoutUrl);
   }
 }
+
+// --- ARTIST PAYOUT WITHDRAWAL ACTIONS ---
+
+export async function createPayoutRequest(amount: number, gcashName: string, gcashNumber: string) {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+
+  // 1. Verify user authentication
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("You must be logged in to request a withdrawal.");
+
+  // 2. Log the withdrawal request into the schema
+  const { error } = await supabase
+    .from('payout_requests')
+    .insert({
+      artist_id: user.id,
+      amount: amount,
+      gcash_name: gcashName,
+      gcash_number: gcashNumber,
+      status: 'pending'
+    });
+
+  if (error) {
+    console.error("Payout table write error:", error);
+    throw new Error(`Failed to submit withdrawal: ${error.message}`);
+  }
+
+  // 3. Refresh dashboard metrics layout
+  revalidatePath('/dashboard');
+}
