@@ -915,3 +915,38 @@ export async function createPayoutRequest(amount: number, gcashName: string, gca
   // 3. Refresh dashboard metrics layout
   revalidatePath('/dashboard');
 }
+
+// --- ADMIN PAYOUT MANAGEMENT ACTIONS ---
+
+export async function approvePayoutRequest(payoutId: number) {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+
+  // 1. Verify that the logged-in user is actually an administrator
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated.");
+
+  const { data: adminProfile } = await supabase
+    .from('users')
+    .select('role')
+    .eq('user_id', user.id)
+    .single();
+
+  if (adminProfile?.role !== 'admin') {
+    throw new Error("Unauthorized. Only platform admins can approve payouts.");
+  }
+
+  // 2. Update the payout request status to approved
+  const { error } = await supabase
+    .from('payout_requests')
+    .update({ status: 'approved' })
+    .eq('payout_id', payoutId);
+
+  if (error) {
+    console.error("Failed to update payout status:", error);
+    throw new Error(`Status update failed: ${error.message}`);
+  }
+
+  // 3. Revalidate dashboard layouts so changes reflect instantly
+  revalidatePath('/dashboard');
+}
