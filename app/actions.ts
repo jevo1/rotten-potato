@@ -770,18 +770,14 @@ export async function processCheckout(paymentMethod: string, selectedItemIds?: n
     throw new Error("No items selected for checkout.");
   }
 
-  let totalAmount = 0;
   const lineItems = [];
-  
-  // Grab standard schema link indexes from the primary active item
-  const primaryArtworkId = cartItems[0].artwork_id;
-  const primaryArtistId = cartItems[0].artist_id;
+  const paymentInserts = [];
 
-  // 3. Re-verify available inventory parameters and compute price metrics
+  // 3. Re-verify inventory parameters and prepare row splittings
   for (const item of cartItems) {
     const { data: artwork, error: artworkError } = await supabase
       .from('artworks')
-      .select('stock_quantity, price, title')
+      .select('stock_quantity, price, title, user_id')
       .eq('artwork_id', item.artwork_id)
       .single();
 
@@ -790,36 +786,38 @@ export async function processCheckout(paymentMethod: string, selectedItemIds?: n
     }
 
     if (artwork.stock_quantity < item.quantity) {
-      throw new Error(`Item "${artwork.title}" is out of stock or requested quantity exceeds availability.`);
+      throw new Error(`Item "${artwork.title}" is out of stock or quantity exceeds availability.`);
     }
 
     const itemPrice = artwork.price || 0;
-    totalAmount += itemPrice * item.quantity;
+    const itemTotalCost = itemPrice * item.quantity;
 
-    // Build the dynamic payload rows (amounts parsed in cents)
+    // Build the line items for PayMongo (amounts parsed in cents)
     lineItems.push({
       amount: Math.round(itemPrice * 100),
       currency: 'PHP',
       name: artwork.title,
       quantity: item.quantity
     });
+
+    // FIX: Generate an isolated payment tracking row item allocation per separate product
+    paymentInserts.push({
+      client_id: user.id,
+      artist_id: artwork.user_id, // Each row gets its respective unique artist account
+      artwork_id: item.artwork_id, // Each row logs its true artwork source link
+      amount: itemTotalCost,
+      status: 'pending'
+    });
   }
 
-  // 4. Initialize a record tracking instance inside your payments table schema
-  const { data: paymentRecord, error: paymentError } = await supabase
+  // 4. Batch insert all pending rows simultaneously into your database layout
+  const { data: paymentRecords, error: paymentError } = await supabase
     .from('payments')
-    .insert({
-      client_id: user.id,
-      artist_id: primaryArtistId,
-      artwork_id: primaryArtworkId,
-      amount: totalAmount,
-      status: 'pending'
-    })
-    .select()
-    .single();
+    .insert(paymentInserts)
+    .select();
 
-  if (paymentError || !paymentRecord) {
-    console.error("Payment registration failure detail:", paymentError?.message);
+  if (paymentError || !paymentRecords || paymentRecords.length === 0) {
+    console.error("Payment split array registration failure:", paymentError?.message);
     throw new Error("Failed to initialize system checkout parameters.");
   }
 
@@ -827,6 +825,9 @@ export async function processCheckout(paymentMethod: string, selectedItemIds?: n
   if (!PAYMONGO_SECRET_KEY) {
     throw new Error("Internal Configuration Error: Secret API access keys are missing.");
   }
+
+  // Map out generated row IDs into a comma-separated string list (e.g. "24,25")
+  const paymentIdsString = paymentRecords.map(r => r.payment_id).join(',');
 
   // 5. Package session attributes for gateway verification
   const options = {
@@ -843,10 +844,8 @@ export async function processCheckout(paymentMethod: string, selectedItemIds?: n
           currency: 'PHP',
           description: `GamâLokal Marketplace Checkout`,
           line_items: lineItems,
-          // Pass the specific selected cart item rows to string metadata 
-          // so the webhook clears ONLY the checked options upon authorization completion
           metadata: {
-            payment_id: paymentRecord.payment_id.toString(),
+            payment_ids: paymentIdsString, // FIX: Send the complete list of matching tracking rows
             buyer_id: user.id,
             selected_item_ids: selectedItemIds && selectedItemIds.length > 0 ? selectedItemIds.join(',') : ''
           },
@@ -869,11 +868,13 @@ export async function processCheckout(paymentMethod: string, selectedItemIds?: n
 
     checkoutUrl = resData.data.attributes.checkout_url;
 
-    // Bind checkout sequence transaction token back to our record layout
+    const completedPaymentIds = paymentRecords.map(r => r.payment_id);
+    
+    // Bind the unique session token back across ALL matching ledger rows
     await supabase
       .from('payments')
       .update({ paymongo_session_id: resData.data.id })
-      .eq('payment_id', paymentRecord.payment_id);
+      .in('payment_id', completedPaymentIds);
 
   } catch (err) {
     console.error("Connection tracking trace exception:", err);

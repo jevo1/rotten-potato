@@ -49,23 +49,30 @@ export async function POST(request: Request) {
       const sessionAttributes = body.data.attributes.data.attributes
       const metadata = sessionAttributes.metadata
       
-      const paymentId = parseInt(metadata.payment_id, 10)
       const buyerId = metadata.buyer_id
-      const selectedItemIdsString = metadata.selected_item_ids // Contains checked row IDs e.g. "2,5"
+      const selectedItemIdsString = metadata.selected_item_ids 
       const itemsPaid = sessionAttributes.line_items
 
-      // A. Core Balance Update: Mark row statement as settled
-      const { data: paymentRecord, error: paymentUpdateError } = await supabaseAdmin
+      // Fetch the multi-id target list (Fall back to singular payment_id for old transactions)
+      const paymentIdsString = metadata.payment_ids || metadata.payment_id;
+      if (!paymentIdsString) throw new Error("No tracking reference hashes located in metadata.");
+      
+      // Parse the comma-separated IDs into a clean numeric array [24, 25]
+      const paymentIds = paymentIdsString.split(',').map((id: string) => parseInt(id, 10));
+
+      // A. Core Balance Update: Settle ALL isolated artist ledger rows in a single batch query
+      const { data: paymentRecords, error: paymentUpdateError } = await supabaseAdmin
         .from('payments')
         .update({ 
           status: 'paid',
           transaction_date: new Date().toISOString()
         })
-        .eq('payment_id', paymentId)
+        .in('payment_id', paymentIds) // Flips all rows at once!
         .select()
-        .single()
 
-      if (paymentUpdateError || !paymentRecord) throw paymentUpdateError
+      if (paymentUpdateError || !paymentRecords || paymentRecords.length === 0) {
+        throw new Error(`Database payment tracking link update dropped: ${paymentUpdateError?.message}`);
+      }
 
       // B. Dynamic Inventory Management and Creators Ledger Credit Notifications
       for (const item of itemsPaid) {
