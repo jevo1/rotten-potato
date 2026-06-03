@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { removeFromCart, updateCartQuantity, processCheckout } from "@/app/actions";
 import { Trash2, Minus, Plus, ShoppingBag, ArrowRight, Loader2 } from "lucide-react";
 
@@ -55,10 +56,15 @@ export default function CartList({ initialItems }: CartListProps) {
         }
     };
 
+    const router = useRouter();
+
     const handleCheckout = async () => {
         setIsCheckingOut(true);
         try {
-            await processCheckout('Mock GCash');
+            const result = await processCheckout('Mock GCash');
+            if (result?.success) {
+                router.push('/homepage?message=Purchase successful!');
+            }
         } catch (error) {
             const message = error instanceof Error ? error.message : "An error occurred during checkout. Please try again.";
             console.error("Checkout failed:", error);
