@@ -117,14 +117,14 @@ export const NavBar: React.FC<NavBarProps> = ({
                 {/* Right Side Icons & Profile */}
                 <div className="flex items-center gap-2 md:gap-3 min-w-fit">
                     
-                    {/* Post Artwork Button */}
-                    <button 
+                    {/* List Artwork Button */}
+                    <button
                         onClick={() => setIsPostModalOpen(true)}
                         className="flex items-center gap-2 bg-[#f2a83b] text-slate-900 px-4 md:px-5 py-2 rounded-full font-bold text-sm hover:bg-[#e09b36] hover:scale-105 transition-all shadow-sm active:scale-95"
                     >
                         <Plus size={16} strokeWidth={3} />
-                        <span className="hidden md:inline">Post Artwork</span>
-                        <span className="md:hidden">Post</span>
+                        <span className="hidden md:inline">List Artwork</span>
+                        <span className="md:hidden">List</span>
                     </button>
 
                     <div className="flex items-center gap-1">

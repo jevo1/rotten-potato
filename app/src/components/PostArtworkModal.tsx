@@ -46,7 +46,7 @@ export default function PostArtworkModal({ isOpen, onClose }: PostArtworkModalPr
         {/* Header - Fixed */}
         <div className="bg-[#1C4A5C] p-6 text-white flex items-center justify-between flex-none">
           <div>
-            <h1 className="text-2xl font-black">Post an Artwork</h1>
+            <h1 className="text-2xl font-black">List an Artwork</h1>
             <p className="text-sm text-blue-50/80 font-medium mt-0.5">Share your creation with the community</p>
           </div>
           <button 
@@ -180,10 +180,10 @@ export default function PostArtworkModal({ isOpen, onClose }: PostArtworkModalPr
                 {isSubmitting ? (
                   <>
                     <div className="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>Posting...</span>
+                    <span>Listing...</span>
                   </>
                 ) : (
-                  'Post Artwork'
+                  'List Artwork'
                 )}
               </button>
             </div>
