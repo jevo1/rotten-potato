@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import crypto from 'crypto'
 
-// Instantiate high-privilege client authorization to process post-payment tasks smoothly
+// Instantiate high-clearance admin client to handle background table mutations smoothly
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -9,18 +10,51 @@ const supabaseAdmin = createClient(
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json()
+    // 1. Grab the cryptographic validation tracking token from headers
+    const signatureHeader = request.headers.get('paymongo-signature')
+    
+    // Read the raw body as text first (Crucial for computing correct hashes in Next.js)
+    const rawBody = await request.text()
+    const webhookSecret = process.env.PAYMONGO_WEBHOOK_SECRET
+
+    // 2. Validate request authenticity if a secret is configured in Vercel
+    if (signatureHeader && webhookSecret) {
+      const parts = signatureHeader.split(',')
+      const timestampPart = parts.find(p => p.trim().startsWith('t='))
+      const signaturePart = parts.find(p => p.trim().startsWith('te=') || p.trim().startsWith('li='))
+
+      if (timestampPart && signaturePart) {
+        const timestamp = timestampPart.split('=')[1]
+        const headerSignature = signaturePart.split('=')[1]
+        
+        const baseString = `${timestamp}.${rawBody}`
+        const localSignature = crypto
+          .createHmac('sha256', webhookSecret)
+          .update(baseString)
+          .digest('hex')
+
+        if (localSignature !== headerSignature) {
+          console.warn("Security Alert: Unauthorized payment notification signature blocked.")
+          return NextResponse.json({ error: 'Signature mismatch' }, { status: 401 })
+        }
+      }
+    }
+
+    // 3. Parse payload structure once verified safely
+    const body = JSON.parse(rawBody)
     const eventType = body.data.attributes.type 
     
-    if (eventType === 'checkout_session.paid') {
+    // FIX: Aligned match directly with your dashboard event configuration string!
+    if (eventType === 'checkout_session.payment.paid') {
       const sessionAttributes = body.data.attributes.data.attributes
       const metadata = sessionAttributes.metadata
       
       const paymentId = parseInt(metadata.payment_id, 10)
       const buyerId = metadata.buyer_id
+      const selectedItemIdsString = metadata.selected_item_ids // Contains checked row IDs e.g. "2,5"
       const itemsPaid = sessionAttributes.line_items
 
-      // 1. Core Update: Flag the corresponding transaction row as paid and update the date
+      // A. Core Balance Update: Mark row statement as settled
       const { data: paymentRecord, error: paymentUpdateError } = await supabaseAdmin
         .from('payments')
         .update({ 
@@ -33,12 +67,11 @@ export async function POST(request: Request) {
 
       if (paymentUpdateError || !paymentRecord) throw paymentUpdateError
 
-      // 2. Cascade Actions: Deduct artwork stock and notify the creators
+      // B. Dynamic Inventory Management and Creators Ledger Credit Notifications
       for (const item of itemsPaid) {
         const itemTitle = item.name
         const quantityBought = item.quantity
 
-        // Pull current artwork details to calculate remaining stock
         const { data: artwork } = await supabaseAdmin
           .from('artworks')
           .select('artwork_id, stock_quantity, user_id')
@@ -46,18 +79,17 @@ export async function POST(request: Request) {
           .maybeSingle()
 
         if (artwork) {
-          // Deduct quantity from stock
-          const newStock = Math.max(0, (artwork.stock_quantity || 0) - quantityBought)
+          const currentStock = artwork.stock_quantity || 0
+          const remainingStock = Math.max(0, currentStock - quantityBought)
           
           await supabaseAdmin
             .from('artworks')
             .update({ 
-              stock_quantity: newStock,
-              status: newStock === 0 ? 'sold' : 'available'
+              stock_quantity: remainingStock,
+              status: remainingStock === 0 ? 'sold' : 'available'
             })
             .eq('artwork_id', artwork.artwork_id)
 
-          // Drop a standard platform notification message to the artist
           if (artwork.user_id) {
             await supabaseAdmin
               .from('notifications')
@@ -74,16 +106,26 @@ export async function POST(request: Request) {
         }
       }
 
-      // 3. Cleanup: Empty out all current cart items associated with the buyer
-      await supabaseAdmin
-        .from('cart_items')
-        .delete()
-        .eq('user_id', buyerId)
+      // C. FIX: Target cleanup rules to remove only the checked items, preserving others
+      if (selectedItemIdsString) {
+        const idsToDelete = selectedItemIdsString.split(',').map((id: string) => parseInt(id, 10))
+        await supabaseAdmin
+          .from('cart_items')
+          .delete()
+          .in('cart_item_id', idsToDelete)
+          .eq('user_id', buyerId)
+      } else {
+        // Fallback catch-all 
+        await supabaseAdmin
+          .from('cart_items')
+          .delete()
+          .eq('user_id', buyerId)
+      }
     }
 
     return NextResponse.json({ received: true }, { status: 200 })
   } catch (err: any) {
     console.error('PayMongo secure webhook processing failure:', err.message)
-    return NextResponse.json({ error: 'Webhook payload processing exception thrown' }, { status: 400 })
+    return NextResponse.json({ error: 'Webhook payload evaluation exception thrown' }, { status: 400 })
   }
 }
