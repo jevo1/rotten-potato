@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { getArtworks, addToCart } from '@/app/actions';
 import { Loader2 } from 'lucide-react';
+import AddToCartModal from '../src/components/AddToCartModal';
 
 interface Artwork {
   artwork_id: number;
@@ -25,6 +26,8 @@ export default function BrowsePage() {
   const [artworks, setArtworks] = useState<Artwork[]>([]);
   const [loading, setLoading] = useState(true);
   const [cartLoadingId, setCartLoadingId] = useState<number | null>(null);
+  const [isCartModalOpen, setIsCartModalOpen] = useState(false);
+  const [lastAddedTitle, setLastAddedTitle] = useState('');
 
   const categories = [
     'All Categories',
@@ -49,6 +52,9 @@ export default function BrowsePage() {
     setCartLoadingId(artworkId);
     try {
       await addToCart(artworkId);
+      const art = artworks.find(a => a.artwork_id === artworkId);
+      if (art) setLastAddedTitle(art.title);
+      setIsCartModalOpen(true);
     } catch (error) {
       console.error("Failed to add to cart:", error);
       alert(error instanceof Error ? error.message : "Failed to add to cart");
@@ -245,6 +251,12 @@ export default function BrowsePage() {
         )}
 
       </div>
+
+      <AddToCartModal 
+        isOpen={isCartModalOpen} 
+        onClose={() => setIsCartModalOpen(false)} 
+        artworkTitle={lastAddedTitle} 
+      />
     </div>
   );
 }
