@@ -158,7 +158,7 @@ export const NavBar: React.FC<NavBarProps> = ({
                         >
                             {profileImage === '/user-default.svg' || !profileImage ? (
                                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1C4A5C] to-[#3A6A7C] flex items-center justify-center text-white font-bold text-sm shadow-inner">
-                                    {userName.charAt(0).toUpperCase()}
+                                    {userName?.charAt(0).toUpperCase() || 'A'}
                                 </div>
                             ) : (
                                 <Image src={profileImage} alt="Profile" width={32} height={32} className="rounded-full bg-gray-100 object-cover aspect-square border border-gray-100" />
