@@ -39,8 +39,9 @@ export default function PayoutModal({ isOpen, onClose, maxBalance, onSuccess }: 
       alert("Withdrawal request submitted successfully! Our team will process your GCash transfer shortly.");
       onSuccess();
       onClose();
-    } catch (error) {
-      alert("Failed to submit request. Please try again.");
+    } catch (error: any) {
+      console.error("Withdrawal error detail:", error);
+      alert(error.message || "Failed to submit request. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -59,17 +60,40 @@ export default function PayoutModal({ isOpen, onClose, maxBalance, onSuccess }: 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="block text-xs font-black text-gray-500 uppercase tracking-wider mb-2">GCash Registered Full Name</label>
-            <input type="text" required value={gcashName} onChange={(e) => setGcashName(e.target.value)} placeholder="e.g. JUAN DELA CRUZ" className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:border-[#1C4A5C] uppercase" />
+            <input 
+              type="text" 
+              required 
+              value={gcashName} 
+              onChange={(e) => setGcashName(e.target.value)} 
+              placeholder="e.g. JUAN DELA CRUZ" 
+              className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-semibold text-slate-900 focus:outline-none focus:border-[#1C4A5C] uppercase placeholder:text-gray-400" 
+            />
           </div>
 
           <div>
             <label className="block text-xs font-black text-gray-500 uppercase tracking-wider mb-2">GCash Phone Number</label>
-            <input type="text" required value={gcashNumber} onChange={(e) => setGcashNumber(e.target.value)} placeholder="e.g. 09123456789" className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:border-[#1C4A5C]" />
+            <input 
+              type="text" 
+              required 
+              value={gcashNumber} 
+              onChange={(e) => setGcashNumber(e.target.value)} 
+              placeholder="e.g. 09123456789" 
+              className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-semibold text-slate-900 focus:outline-none focus:border-[#1C4A5C] placeholder:text-gray-400" 
+            />
           </div>
 
           <div>
             <label className="block text-xs font-black text-gray-500 uppercase tracking-wider mb-2">Withdrawal Amount (₱)</label>
-            <input type="number" required min="1" max={maxBalance} value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={`Max: ₱${maxBalance}`} className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:border-[#1C4A5C]" />
+            <input 
+              type="number" 
+              required 
+              min="1" 
+              max={maxBalance} 
+              value={amount} 
+              onChange={(e) => setAmount(e.target.value)} 
+              placeholder={`Max: ₱${maxBalance}`} 
+              className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-semibold text-slate-900 focus:outline-none focus:border-[#1C4A5C] placeholder:text-gray-400" 
+            />
           </div>
 
           <button type="submit" disabled={isSubmitting || maxBalance <= 0} className="w-full bg-[#C87941] hover:bg-[#a86536] disabled:bg-gray-100 disabled:text-gray-400 text-white py-4 rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-md active:scale-95 flex items-center justify-center gap-2 mt-2">
