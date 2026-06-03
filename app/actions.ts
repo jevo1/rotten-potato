@@ -649,16 +649,21 @@ export async function addToCart(artworkId: number, quantity: number = 1) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("You must be logged in to add to cart.");
 
-  // 1. Check stock_quantity in artworks table
+  // 1. Check stock_quantity and artist user_id in artworks table
   const { data: artwork, error: artworkError } = await supabase
     .from('artworks')
-    .select('stock_quantity')
+    .select('stock_quantity, user_id')
     .eq('artwork_id', artworkId)
     .single();
 
   if (artworkError || !artwork) {
     console.error("Error fetching artwork stock:", artworkError);
     throw new Error("Artwork not found.");
+  }
+
+  // Safeguard: Prevent users from adding their own products to cart
+  if (artwork.user_id === user.id) {
+    throw new Error("You cannot add your own artwork to the cart.");
   }
 
   // 2. Fetch existing cart item to handle incrementing
