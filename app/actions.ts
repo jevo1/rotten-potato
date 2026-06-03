@@ -788,12 +788,13 @@ export async function processCheckout(paymentMethod: string) {
   }
 
   let totalAmount = 0;
+  const artworkDetails = new Map();
 
   // 3. Re-verify stock and calculate total amount
   for (const item of cartItems) {
     const { data: artwork, error: artworkError } = await supabase
       .from('artworks')
-      .select('stock_quantity, price, title')
+      .select('stock_quantity, price, title, user_id')
       .eq('artwork_id', item.artwork_id)
       .single();
 
@@ -805,7 +806,8 @@ export async function processCheckout(paymentMethod: string) {
       throw new Error(`Item "${artwork.title}" is out of stock or requested quantity exceeds availability.`);
     }
 
-    totalAmount += (artwork.price || 0) * item.quantity;
+    totalAmount += (Number(artwork.price) || 0) * item.quantity;
+    artworkDetails.set(item.artwork_id, artwork);
   }
 
   // 4. Insert a new row in the orders table
@@ -822,11 +824,13 @@ export async function processCheckout(paymentMethod: string) {
 
   if (orderError) {
     console.error("Order creation error:", orderError);
-    throw new Error("Failed to create order.");
+    throw new Error(`Failed to create order: ${orderError.message}`);
   }
 
   // 5. Process each cart item: order_items, stock deduction, and notifications
   for (const item of cartItems) {
+    const details = artworkDetails.get(item.artwork_id);
+
     // Insert into order_items
     const { error: itemError } = await supabase
       .from('order_items')
@@ -834,48 +838,39 @@ export async function processCheckout(paymentMethod: string) {
         order_id: order.order_id,
         artwork_id: item.artwork_id,
         quantity: item.quantity,
-        unit_price: item.artworks.price
+        unit_price: details.price
       });
 
     if (itemError) {
       console.error(`Failed to record order item for artwork ${item.artwork_id}:`, itemError);
+      throw new Error(`Failed to record item "${details.title}".`);
     }
 
     // Deduct stock from artworks.stock_quantity
-    // We fetch latest stock again to be safe for the decrement
-    const { data: latestArtwork } = await supabase
+    const { error: stockUpdateError } = await supabase
       .from('artworks')
-      .select('stock_quantity')
-      .eq('artwork_id', item.artwork_id)
-      .single();
+      .update({ stock_quantity: details.stock_quantity - item.quantity })
+      .eq('artwork_id', item.artwork_id);
 
-    if (latestArtwork) {
-      const { error: stockUpdateError } = await supabase
-        .from('artworks')
-        .update({ stock_quantity: latestArtwork.stock_quantity - item.quantity })
-        .eq('artwork_id', item.artwork_id);
-
-      if (stockUpdateError) {
-        console.error(`Failed to update stock for artwork ${item.artwork_id}:`, stockUpdateError);
-      }
+    if (stockUpdateError) {
+      console.error(`Failed to update stock for artwork ${item.artwork_id}:`, stockUpdateError);
     }
 
     // Notify the artist
-    if (item.artist_id) {
+    if (details.user_id) {
       const { error: notifError } = await supabase
         .from('notifications')
         .insert({
-          user_id: item.artist_id,
+          user_id: details.user_id,
           actor_id: user.id,
           type: 'purchase',
           entity_id: order.order_id,
           entity_type: 'order',
-          content: `Your artwork "${item.artworks.title}" was purchased!`,
-          redirect_url: `/dashboard`
+          content: `Your artwork "${details.title}" was purchased!`
         });
 
       if (notifError) {
-        console.error(`Failed to notify artist ${item.artist_id}:`, notifError);
+        console.error(`Failed to notify artist ${details.user_id}:`, notifError);
       }
     }
   }
@@ -890,9 +885,10 @@ export async function processCheckout(paymentMethod: string) {
     console.error("Failed to clear cart:", clearCartError);
   }
 
-  // 7. Revalidate paths and redirect
+  // 7. Revalidate paths
   revalidatePath('/cart');
   revalidatePath('/homepage');
-  redirect('/homepage?message=Purchase successful!');
+  
+  return { success: true };
 }
 
