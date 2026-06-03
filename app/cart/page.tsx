@@ -1,53 +1,41 @@
 import React from "react";
 import { getCartItems } from "@/app/actions";
-import { NavBar } from "@/app/src/components/NavBar";
 import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 import CartList from "./CartList";
+import CartNavBar from "./CartNavBar"; // Swapped to our new client wrapper
 import { redirect } from "next/navigation";
 
 export default async function CartPage() {
     const cookieStore = cookies();
     const supabase = createClient(cookieStore);
     
-    // Fetch user to check if logged in and for NavBar data
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
+    // Authenticate user session
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
         redirect("/login?next=/cart");
     }
 
     const cartItems = await getCartItems();
 
-    // Extract user info for NavBar
-    let userName = 'User';
-    let profileImage = '/user-default.svg';
-    if (user) {
-        if (user.user_metadata && user.user_metadata.name) {
-            userName = user.user_metadata.name.split(' ')[0];
-        } else if (user.email) {
-            userName = user.email.split('@')[0];
-        }
-        if (user.user_metadata && user.user_metadata.avatar_url) {
-            profileImage = user.user_metadata.avatar_url;
-        }
-    }
-
-    // Check if user is artist for NavBar
-    const { data: userData } = await supabase
+    // Pull ALL fresh records from the public database table in a single request
+    const { data: profile } = await supabase
         .from('users')
-        .select('role')
+        .select('name, avatar_url, role')
         .eq('user_id', user.id)
         .single();
     
-    const isArtist = userData?.role === 'artist';
+    // Set explicit database fallbacks
+    const displayName = profile?.name || user.email?.split('@')[0] || 'User';
+    const avatarUrl = profile?.avatar_url || null;
+    const isArtist = profile?.role === 'artist';
 
     return (
         <div className="bg-[#FCFAF8] min-h-screen flex flex-col">
-            <NavBar 
-                logoText="GamâLokal" 
-                userName={userName} 
-                profileImage={profileImage} 
+            {/* Nav containing router integration and synchronized profile caching */}
+            <CartNavBar 
+                displayName={displayName} 
+                avatarUrl={avatarUrl} 
                 isArtist={isArtist}
             />
             
