@@ -546,7 +546,7 @@ export async function addComment(postId: number, content: string, parentId?: num
 
 export async function deleteComment(commentId: number) {
   const cookieStore = cookies();
-  const supabase = await createClient(cookieStore);
+  const supabase = createClient(cookieStore);
   
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Not authenticated");
@@ -564,7 +564,7 @@ export async function deleteComment(commentId: number) {
 
   if (error) {
     console.error('Supabase error deleting comment:', error);
-    throw new Error suicide(`Failed to delete comment: ${error.message}`);
+    throw new Error(`Failed to delete comment: ${error.message || 'Unknown error'}`);
   }
   
   revalidatePath('/homepage');
@@ -646,4 +646,241 @@ export async function addToCart(artworkId: number, quantity: number = 1) {
     .eq('artwork_id', artworkId)
     .maybeSingle();
 
-  const currentQuantityInCart = existingItem?.quantity || 0
+  const currentQuantityInCart = existingItem?.quantity || 0;
+  const newQuantity = currentQuantityInCart + quantity;
+
+  if (artwork.stock_quantity < newQuantity) {
+    throw new Error(`Cannot add more to cart. Only ${artwork.stock_quantity} available in stock.`);
+  }
+
+  const { error } = await supabase
+    .from('cart_items')
+    .upsert({ 
+      user_id: user.id, 
+      artwork_id: artworkId, 
+      quantity: newQuantity 
+    }, { onConflict: 'user_id, artwork_id' });
+
+  if (error) {
+    console.error("Cart error:", error);
+    throw new Error('Failed to update cart.');
+  }
+
+  revalidatePath('/homepage');
+}
+
+export async function getCartItems() {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+  
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data, error } = await supabase
+    .from('cart_items')
+    .select(`
+      cart_item_id,
+      quantity,
+      artwork_id,
+      artworks (
+        artwork_id,
+        title,
+        price,
+        file_url,
+        stock_quantity,
+        user_id,
+        users (
+          name
+        )
+      )
+    `)
+    .eq('user_id', user.id);
+
+  if (error) {
+    console.error("Get cart error:", error);
+    throw new Error('Failed to fetch cart items.');
+  }
+
+  return data?.map(item => {
+    const artwork = Array.isArray(item.artworks) ? item.artworks[0] : item.artworks;
+    const artist = Array.isArray(artwork?.users) ? artwork.users[0] : artwork?.users;
+    
+    return {
+      ...item,
+      artworks: artwork,
+      artist_name: artist?.name || 'Unknown Artist',
+      artist_id: artwork?.user_id
+    };
+  });
+}
+
+export async function removeFromCart(cartItemId: number) {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+  
+  const { error } = await supabase
+    .from('cart_items')
+    .delete()
+    .eq('cart_item_id', cartItemId);
+
+  if (error) {
+    console.error("Remove from cart error:", error);
+    throw new Error('Failed to remove item from cart.');
+  }
+
+  revalidatePath('/cart');
+}
+
+export async function updateCartQuantity(cartItemId: number, quantity: number) {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+  
+  const { error } = await supabase
+    .from('cart_items')
+    .update({ quantity })
+    .eq('cart_item_id', cartItemId);
+
+  if (error) {
+    console.error("Update cart quantity error:", error);
+    throw new Error('Failed to update quantity.');
+  }
+
+  revalidatePath('/cart');
+}
+
+// --- SECURE PAYMONGO CHECKOUT WITH TARGETED DELETIONS ---
+
+export async function processCheckout(paymentMethod: string, selectedItemIds?: number[]) {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+
+  // 1. Verify user authentication
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("You must be logged in to checkout.");
+
+  // 2. Fetch current cart items
+  let cartItems = await getCartItems();
+  
+  // Apply targeted checkbox filtering if individual items were checked
+  if (selectedItemIds && selectedItemIds.length > 0) {
+    cartItems = cartItems.filter(item => selectedItemIds.includes(item.cart_item_id));
+  }
+
+  if (!cartItems || cartItems.length === 0) {
+    throw new Error("No items selected for checkout.");
+  }
+
+  let totalAmount = 0;
+  const lineItems = [];
+  
+  // Grab standard schema link indexes from the primary active item
+  const primaryArtworkId = cartItems[0].artwork_id;
+  const primaryArtistId = cartItems[0].artist_id;
+
+  // 3. Re-verify available inventory parameters and compute price metrics
+  for (const item of cartItems) {
+    const { data: artwork, error: artworkError } = await supabase
+      .from('artworks')
+      .select('stock_quantity, price, title')
+      .eq('artwork_id', item.artwork_id)
+      .single();
+
+    if (artworkError || !artwork) {
+      throw new Error(`Artwork "${item.artworks?.title || 'Unknown'}" not found.`);
+    }
+
+    if (artwork.stock_quantity < item.quantity) {
+      throw new Error(`Item "${artwork.title}" is out of stock or requested quantity exceeds availability.`);
+    }
+
+    const itemPrice = artwork.price || 0;
+    totalAmount += itemPrice * item.quantity;
+
+    // Build the dynamic payload rows (amounts parsed in cents)
+    lineItems.push({
+      amount: Math.round(itemPrice * 100),
+      currency: 'PHP',
+      name: artwork.title,
+      quantity: item.quantity
+    });
+  }
+
+  // 4. Initialize a record tracking instance inside your payments table schema
+  const { data: paymentRecord, error: paymentError } = await supabase
+    .from('payments')
+    .insert({
+      client_id: user.id,
+      artist_id: primaryArtistId,
+      artwork_id: primaryArtworkId,
+      amount: totalAmount,
+      status: 'pending'
+    })
+    .select()
+    .single();
+
+  if (paymentError || !paymentRecord) {
+    console.error("Payment registration failure detail:", paymentError?.message);
+    throw new Error("Failed to initialize system checkout parameters.");
+  }
+
+  const PAYMONGO_SECRET_KEY = process.env.PAYMONGO_SECRET_KEY;
+  if (!PAYMONGO_SECRET_KEY) {
+    throw new Error("Internal Configuration Error: Secret API access keys are missing.");
+  }
+
+  // 5. Package session attributes for gateway verification
+  const options = {
+    method: 'POST',
+    headers: {
+      accept: 'application/json',
+      'Content-Type': 'application/json',
+      authorization: `Basic ${Buffer.from(PAYMONGO_SECRET_KEY + ':').toString('base64')}`
+    },
+    body: JSON.stringify({
+      data: {
+        attributes: {
+          payment_method_types: ['gcash', 'card'],
+          currency: 'PHP',
+          description: `GamâLokal Marketplace Checkout`,
+          line_items: lineItems,
+          // Pass the specific selected cart item rows to string metadata 
+          // so the webhook clears ONLY the checked options upon authorization completion
+          metadata: {
+            payment_id: paymentRecord.payment_id.toString(),
+            buyer_id: user.id,
+            selected_item_ids: selectedItemIds && selectedItemIds.length > 0 ? selectedItemIds.join(',') : ''
+          },
+          success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/homepage?tab=1&payment=success`,
+          cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/cart?payment=cancelled`
+        }
+      }
+    })
+  };
+
+  let checkoutUrl = '';
+  try {
+    const response = await fetch('https://api.paymongo.com/v1/checkout_sessions', options);
+    const resData = await response.json();
+
+    if (resData.errors) {
+      console.error("PayMongo Session Error Response Log:", resData.errors);
+      throw new Error("Gateway rejected parameter compilation rules.");
+    }
+
+    checkoutUrl = resData.data.attributes.checkout_url;
+
+    // Bind checkout sequence transaction token back to our record layout
+    await supabase
+      .from('payments')
+      .update({ paymongo_session_id: resData.data.id })
+      .eq('payment_id', paymentRecord.payment_id);
+
+  } catch (err) {
+    console.error("Connection tracking trace exception:", err);
+    throw new Error("Payment gateway is temporarily unreachable.");
+  }
+
+  if (checkoutUrl) {
+    redirect(checkoutUrl);
+  }
+}
