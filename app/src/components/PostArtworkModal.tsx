@@ -139,6 +139,18 @@ export default function PostArtworkModal({ isOpen, onClose }: PostArtworkModalPr
                   className="w-full px-5 py-4 rounded-2xl bg-gray-50 border-none text-sm text-gray-900 font-bold focus:ring-2 focus:ring-[#1C4A5C]/10 outline-none transition-all"
                 />
               </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-black text-gray-700 uppercase tracking-wider">Stock Quantity *</label>
+                <input 
+                  type="number" 
+                  name="stock_quantity" 
+                  required 
+                  min="1"
+                  defaultValue="1"
+                  placeholder="e.g. 5"
+                  className="w-full px-5 py-4 rounded-2xl bg-gray-50 border-none text-sm text-gray-900 font-bold focus:ring-2 focus:ring-[#1C4A5C]/10 outline-none transition-all"
+                />
+              </div>
             </div>
 
             <div className="space-y-2">

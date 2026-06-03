@@ -218,13 +218,14 @@ export async function postArtwork(formData: FormData) {
   const description = formData.get('description') as string;
   const category = formData.get('category') as string;
   const price = parseFloat(formData.get('price') as string);
+  const stockQuantity = parseInt(formData.get('stock_quantity') as string) || 1;
   const file = formData.get('image') as File;
 
   if (!file || file.size === 0) throw new Error("Please upload an image.");
 
   const fileExt = file.name.split('.').pop();
   const fileName = `${user.id}-${Math.random()}.${fileExt}`;
-  
+
   const { error: uploadError } = await supabase.storage
     .from('artworks')
     .upload(fileName, file);
@@ -246,6 +247,7 @@ export async function postArtwork(formData: FormData) {
       description: description,
       category: category,
       price: price,
+      stock_quantity: stockQuantity,
       file_url: publicUrlData.publicUrl,
       status: 'available'
     });
