@@ -59,9 +59,10 @@ export default function CartList({ initialItems }: CartListProps) {
         setIsCheckingOut(true);
         try {
             await processCheckout('Mock GCash');
-        } catch (error: any) {
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "An error occurred during checkout. Please try again.";
             console.error("Checkout failed:", error);
-            window.alert(error.message || "An error occurred during checkout. Please try again.");
+            window.alert(message);
             setIsCheckingOut(false);
         }
     };
@@ -193,7 +194,7 @@ export default function CartList({ initialItems }: CartListProps) {
                     
                     <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 mb-6">
                         <p className="text-[11px] text-[#1C4A5C] leading-relaxed">
-                            <span className="font-bold">Secure Checkout:</span> Your transaction is protected by GamâLokal's artist protection guarantee.
+                            <span className="font-bold">Secure Checkout:</span> Your transaction is protected by GamâLokal&apos;s artist protection guarantee.
                         </p>
                     </div>
 
