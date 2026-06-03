@@ -84,10 +84,8 @@ export default function CartList({ initialItems }: CartListProps) {
 
         setIsCheckingOut(true);
         try {
-            const result = await processCheckout('Mock GCash', selectedIds);
-            if (result?.success) {
-                router.push('/homepage?message=Purchase successful!');
-            }
+            // Next.js handles the PayMongo redirect on the server, removing 'never' compile blockers!
+            await processCheckout('Mock GCash', selectedIds);
         } catch (error) {
             const message = error instanceof Error ? error.message : "An error occurred during checkout. Please try again.";
             console.error("Checkout failed:", error);
