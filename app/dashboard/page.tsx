@@ -6,7 +6,9 @@ import Image from 'next/image';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 import PostArtworkModal from '../src/components/PostArtworkModal';
+import PayoutModal from '../src/components/PayoutModal';
 import DashboardNavBar from './DashboardNavBar';
+import { ShoppingBag, ArrowUpRight, CheckCircle, Clock } from 'lucide-react';
 
 interface Artwork {
   artwork_id: number;
@@ -16,54 +18,96 @@ interface Artwork {
   status: string;
 }
 
-// Added avatar_url to the local user type interface
 interface UserProfile {
   role: string;
   name: string;
   avatar_url?: string | null;
 }
 
+interface SalesRecord {
+  payment_id: number;
+  amount: number;
+  transaction_date: string;
+  artworks?: { title: string } | null;
+}
+
 export default function DashboardPage() {
   const [userData, setUserData] = useState<UserProfile | null>(null);
   const [myArtworks, setMyArtworks] = useState<Artwork[]>([]);
+  const [salesHistory, setSalesHistory] = useState<SalesRecord[]>([]);
+  const [totalEarnings, setTotalEarnings] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
+  const [isPayoutModalOpen, setIsPayoutModalOpen] = useState(false);
   
   const supabase = createClient();
   const router = useRouter();
 
-  useEffect(() => {
-    async function init() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push('/login');
-        return;
-      }
-
-      // Updated query to pull the real-time avatar_url alongside your profile data
-      const { data: profile } = await supabase
-        .from('users')
-        .select('role, name, avatar_url')
-        .eq('user_id', user.id)
-        .single();
-
-      if (profile?.role !== 'artist') {
-        setUserData(profile);
-        setLoading(false);
-        return;
-      }
-
-      const { data: artworks } = await supabase
-        .from('artworks')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('artwork_id', { ascending: false });
-
-      setUserData(profile);
-      setMyArtworks(artworks || []);
-      setLoading(false);
+  const fetchDashboardData = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      router.push('/login');
+      return;
     }
-    init();
+
+    // 1. Fetch user profile
+    const { data: profile } = await supabase
+      .from('users')
+      .select('role, name, avatar_url')
+      .eq('user_id', user.id)
+      .single();
+
+    if (profile?.role !== 'artist') {
+      setUserData(profile);
+      setLoading(false);
+      return;
+    }
+
+    // 2. Fetch artist's listings
+    const { data: artworks } = await supabase
+      .from('artworks')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('artwork_id', { ascending: false });
+
+    // 3. Fetch all successful marketplace payments credited to this artist
+    const { data: payments } = await supabase
+      .from('payments')
+      .select(`
+        payment_id,
+        amount,
+        transaction_date,
+        artworks ( title )
+      `)
+      .eq('artist_id', user.id)
+      .eq('status', 'paid')
+      .order('transaction_date', { ascending: false });
+
+    // 4. Fetch historical payout requests to deduct from available balance
+    const { data: payouts } = await supabase
+      .from('payout_requests')
+      .select('amount')
+      .eq('artist_id', user.id)
+      .or('status.eq.pending,status.eq.approved');
+
+    // 5. Run Ledger Balancing Calculations
+    const grossSales = payments?.reduce((sum, record) => sum + Number(record.amount), 0) || 0;
+    const totalWithdrawn = payouts?.reduce((sum, record) => sum + Number(record.amount), 0) || 0;
+
+    // Apply GamâLokal split rule: 10% platform commission fee, artist keeps 90%
+    const platformFeePercent = 0.10;
+    const netIntake = grossSales * (1 - platformFeePercent);
+    const netAvailableBalance = Math.max(0, netIntake - totalWithdrawn);
+
+    setUserData(profile);
+    setMyArtworks(artworks || []);
+    setSalesHistory((payments as unknown as SalesRecord[]) || []);
+    setTotalEarnings(netAvailableBalance);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchDashboardData();
   }, [supabase, router]);
 
   if (loading) {
@@ -100,21 +144,19 @@ export default function DashboardPage() {
 
   return (
     <div className="bg-[#FCFAF8] min-h-screen w-full flex flex-col">
-      {/* Universal Global Navigation Bar */}
       <DashboardNavBar 
         displayName={userData?.name || 'User'} 
         avatarUrl={userData?.avatar_url || null} 
       />
 
-      {/* Main Panel Content Container */}
       <main className="flex-1 font-sans text-slate-800 p-6 md:p-10">
         <div className="max-w-6xl mx-auto">
           
-          {/* Header */}
+          {/* Header Dashboard Banner Layout */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
             <div>
               <h1 className="text-4xl font-black text-[#1C4A5C] tracking-tight">Creator Studio</h1>
-              <p className="text-gray-500 font-medium mt-1">Manage your professional art portfolio and sales.</p>
+              <p className="text-gray-500 font-medium mt-1">Manage your professional art portfolio and marketplace ledger.</p>
             </div>
             <div className="flex gap-3">
               <Link href="/profile" className="bg-white border-2 border-gray-100 text-gray-700 px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest shadow-sm hover:border-[#1C4A5C] hover:text-[#1C4A5C] transition-all">
@@ -124,31 +166,54 @@ export default function DashboardPage() {
                 onClick={() => setIsPostModalOpen(true)}
                 className="bg-[#f2a83b] hover:bg-[#e09b36] text-slate-900 px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest shadow-sm hover:shadow-md transition-all flex items-center gap-2 hover:scale-[1.02] active:scale-95"
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <ShoppingBag size={18} />
                 New Artwork
               </button>
             </div>
           </div>
 
-          {/* Dashboard Grid */}
+          {/* Core Analytics Metrics Grid Section */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             
-            {/* Left Sidebar: Quick Stats */}
+            {/* Sidebar Metrics Widget Panel */}
             <div className="md:col-span-1 space-y-6">
+              {/* Box 1: Total Pieces */}
               <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-xl shadow-gray-200/50">
                 <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Total Artworks</h3>
                 <p className="text-5xl font-black text-[#1C4A5C]">{myArtworks?.length || 0}</p>
                 <div className="mt-6 pt-6 border-t border-gray-50">
                    <p className="text-xs font-bold text-green-500 flex items-center gap-1">
-                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 17 8.5 11.5 1 19"/><polyline points="17 6 23 6 23 12"/></svg>
+                     <CheckCircle size={14} />
                      Active Portfolio
                    </p>
                 </div>
               </div>
+
+              {/* Box 2: Secure Real-time Available Cash Ledger balance tracking card */}
+              <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-xl shadow-gray-200/50 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-[#f2a83b]/10 rounded-full blur-2xl pointer-events-none"></div>
+                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Available Balance</h3>
+                <p className="text-4xl font-black text-[#C87941]">₱{totalEarnings.toLocaleString()}</p>
+                <div className="mt-6 pt-6 border-t border-gray-50 flex items-center justify-between">
+                   <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1">
+                     <Clock size={12} />
+                     Net Artist Cut
+                   </span>
+                   <button 
+                     onClick={() => setIsPayoutModalOpen(true)}
+                     disabled={totalEarnings <= 0}
+                     className="bg-[#1C4A5C] hover:bg-[#12303c] disabled:bg-gray-100 disabled:text-gray-400 text-white text-[10px] font-black uppercase tracking-widest px-4 py-2.5 rounded-xl transition-all shadow-sm active:scale-95 disabled:pointer-events-none"
+                   >
+                     Withdraw
+                   </button>
+                </div>
+              </div>
             </div>
 
-            {/* Right Area: Artworks Management */}
-            <div className="md:col-span-3">
+            {/* Main Section Content Pane Layout */}
+            <div className="md:col-span-3 space-y-8">
+              
+              {/* Section A: Active Listings Render Block */}
               <div className="bg-white rounded-3xl border border-gray-100 shadow-xl shadow-gray-200/50 overflow-hidden">
                 <div className="p-8 border-b border-gray-50 bg-[#FCFAF8]/50 flex justify-between items-center">
                   <h2 className="text-xl font-black text-gray-900 tracking-tight">Active Listings</h2>
@@ -185,10 +250,10 @@ export default function DashboardPage() {
                   ) : (
                     <div className="text-center py-20 bg-[#FCFAF8]/50 rounded-2xl border-2 border-dashed border-gray-100">
                       <div className="w-20 h-20 bg-white rounded-3xl shadow-xl shadow-gray-200/50 flex items-center justify-center mx-auto mb-6">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#1C4A5C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        <ShoppingBag className="text-[#1C4A5C]" size={32} />
                       </div>
                       <h3 className="text-xl font-black text-gray-900 mb-2 tracking-tight uppercase">Empty Gallery</h3>
-                      <p className="text-gray-400 text-sm mb-10 font-medium">Your masterpieces are waiting to be seen.</p>
+                      <p className="text-gray-400 text-sm mb-10 font-medium">Your masterpieces are waiting to be listed on the market.</p>
                       <button 
                         onClick={() => setIsPostModalOpen(true)}
                         className="bg-[#1C4A5C] text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-[#1C4A5C]/20 hover:scale-105 active:scale-95 transition-all"
@@ -199,13 +264,59 @@ export default function DashboardPage() {
                   )}
                 </div>
               </div>
+
+              {/* Section B: Dynamic Marketplace Transaction Sales Logs Display Box */}
+              <div className="bg-white rounded-3xl border border-gray-100 shadow-xl shadow-gray-200/50 overflow-hidden">
+                <div className="p-8 border-b border-gray-50 bg-[#FCFAF8]/50">
+                  <h2 className="text-xl font-black text-gray-900 tracking-tight">Sales & Earnings Log</h2>
+                  <p className="text-xs text-gray-400 font-medium mt-1">Comprehensive settlement statements recorded from the payment gateway webhook.</p>
+                </div>
+                <div className="p-8">
+                  {salesHistory.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse">
+                        <thead>
+                          <tr className="border-b border-gray-100 text-gray-400 text-[10px] font-black uppercase tracking-widest">
+                            <th className="pb-4">Transaction ID</th>
+                            <th className="pb-4">Masterpiece Title</th>
+                            <th className="pb-4">Settlement Date</th>
+                            <th className="pb-4 text-right">Net Credited Amount (90%)</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-50 text-sm font-medium text-gray-700">
+                          {salesHistory.map((sale) => (
+                            <tr key={sale.payment_id} className="hover:bg-gray-50/50 transition-colors">
+                              <td className="py-4 font-mono text-xs text-gray-400 flex items-center gap-1">
+                                <ArrowUpRight size={12} className="text-green-500" />
+                                #PAY-{sale.payment_id}
+                              </td>
+                              <td className="py-4 font-bold text-[#1C4A5C]">{sale.artworks?.title || 'Custom Commission Workspace'}</td>
+                              <td className="py-4 text-gray-500">{new Date(sale.transaction_date).toLocaleDateString('en-PH', { dateStyle: 'long' })}</td>
+                              <td className="py-4 text-right font-black text-green-600">
+                                +₱{(parseFloat(sale.amount.toString()) * 0.90).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="text-center py-12 text-gray-400 font-medium text-sm">
+                      No customer transactions have logged into your workspace balance metrics statement index yet.
+                    </div>
+                  )}
+                </div>
+              </div>
+
             </div>
 
           </div>
         </div>
       </main>
       
+      {/* Dynamic Render Modals Controls Layer */}
       <PostArtworkModal isOpen={isPostModalOpen} onClose={() => setIsPostModalOpen(false)} />
+      <PayoutModal isOpen={isPayoutModalOpen} onClose={() => setIsPayoutModalOpen(false)} maxBalance={totalEarnings} onSuccess={fetchDashboardData} />
     </div>
   );
 }

@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import { updateProfile } from '@/app/profile/actions'; 
 import Cropper, { Area, Point } from 'react-easy-crop';
-import 'react-easy-crop/react-easy-crop.css';
+//import 'react-easy-crop/react-easy-crop.css';
 
 // --- Utility Function to physically crop the image via HTML Canvas ---
 const createImage = (url: string): Promise<HTMLImageElement> =>
