@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { getArtworks, addToCart } from '@/app/actions';
+import { Loader2 } from 'lucide-react';
 
 interface Artwork {
   artwork_id: number;
@@ -23,6 +24,7 @@ export default function BrowsePage() {
   const [sortBy, setSortBy] = useState('newest');
   const [artworks, setArtworks] = useState<Artwork[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cartLoadingId, setCartLoadingId] = useState<number | null>(null);
 
   const categories = [
     'All Categories',
@@ -42,6 +44,18 @@ export default function BrowsePage() {
     { label: 'Price: High to Low', value: 'price_desc' },
     { label: 'Newest Arrivals', value: 'newest' },
   ];
+
+  const handleAddToCart = async (artworkId: number) => {
+    setCartLoadingId(artworkId);
+    try {
+      await addToCart(artworkId);
+    } catch (error) {
+      console.error("Failed to add to cart:", error);
+      alert(error instanceof Error ? error.message : "Failed to add to cart");
+    } finally {
+      setCartLoadingId(null);
+    }
+  };
 
   const fetchArtworks = useCallback(async () => {
     setLoading(true);
@@ -187,15 +201,22 @@ export default function BrowsePage() {
                   <div className="flex justify-between items-center mt-4">
                     <span className="font-extrabold text-lg text-[#C87941]">₱{art.price?.toLocaleString()}</span>
                     <button 
-                      onClick={() => addToCart(art.artwork_id)}
-                      disabled={art.status === 'sold' || (art.stock_quantity !== undefined && art.stock_quantity <= 0)}
-                      className={`px-5 py-1.5 rounded-full text-xs font-bold transition-all ${
-                        art.status === 'sold' || (art.stock_quantity !== undefined && art.stock_quantity <= 0)
+                      onClick={() => handleAddToCart(art.artwork_id)}
+                      disabled={art.status === 'sold' || (art.stock_quantity !== undefined && art.stock_quantity <= 0) || cartLoadingId === art.artwork_id}
+                      className={`px-5 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-2 ${
+                        art.status === 'sold' || (art.stock_quantity !== undefined && art.stock_quantity <= 0) || cartLoadingId === art.artwork_id
                           ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
                           : 'bg-[#1C4A5C] hover:bg-[#143745] text-white shadow-sm hover:shadow'
                       }`}
                     >
-                      Add to Cart
+                      {cartLoadingId === art.artwork_id ? (
+                        <>
+                          <Loader2 size={14} className="animate-spin" />
+                          Adding...
+                        </>
+                      ) : (
+                        'Add to Cart'
+                      )}
                     </button>
                   </div>
 
