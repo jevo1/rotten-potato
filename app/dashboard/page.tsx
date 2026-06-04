@@ -82,7 +82,14 @@ export default function DashboardPage() {
       // 3. Fetch successful payments matching this artist's ID
       const { data: payments, error: paymentsError } = await supabase
         .from('payments')
-        .select('payment_id, amount, transaction_date')
+        .select(`
+          payment_id, 
+          amount, 
+          transaction_date,
+          milestone_type,
+          commission_requests ( title ),
+          artworks ( title )
+        `)
         .eq('artist_id', user.id)
         .eq('status', 'paid')
         .order('transaction_date', { ascending: false });
@@ -121,7 +128,11 @@ export default function DashboardPage() {
         payment_id: p.payment_id,
         amount: p.amount,
         transaction_date: p.transaction_date,
-        artworks: { title: "Marketplace Sale Piece" }
+        artworks: { 
+          title: (p as any).commission_requests?.title 
+            ? `${(p as any).milestone_type === 'deposit' ? 'Deposit' : 'Final'}: ${(p as any).commission_requests.title}`
+            : (p as any).artworks?.title || 'Marketplace Piece'
+        }
       }));
 
       setSalesHistory(formattedSales);

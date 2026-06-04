@@ -120,7 +120,7 @@ export async function createCommissionRequest(formData: FormData) {
   revalidatePath('/homepage');
 }
 
-export async function submitCommissionOffer(requestId: number, offerAmount: number, message: string) {
+export async function submitCommissionOffer(requestId: number, offerAmount: number, message: string, depositPercentage: number = 50) {
   const cookieStore = cookies()
   const supabase = await createClient(cookieStore);
   
@@ -156,7 +156,8 @@ export async function submitCommissionOffer(requestId: number, offerAmount: numb
       artist_id: user.id,
       offer_amount: offerAmount,
       message: message,
-      status: 'pending'
+      status: 'pending',
+      deposit_percentage: depositPercentage
     });
 
   if (error) {
@@ -167,10 +168,67 @@ export async function submitCommissionOffer(requestId: number, offerAmount: numb
   revalidatePath('/homepage'); 
 }
 
+export async function updateFulfillmentDetails(requestId: number, method: string, details: any) {
+  const cookieStore = cookies()
+  const supabase = await createClient(cookieStore);
+  
+  const { error } = await supabase
+    .from('commission_requests')
+    .update({ 
+      fulfillment_method: method,
+      fulfillment_details: details
+    })
+    .eq('request_id', requestId);
+
+  if (error) throw new Error(`Failed to update fulfillment: ${error.message}`);
+  revalidatePath(`/commissions/${requestId}`);
+}
+
+export async function markCommissionAsReady(requestId: number) {
+  const cookieStore = cookies()
+  const supabase = await createClient(cookieStore);
+  
+  const { error } = await supabase
+    .from('commission_requests')
+    .update({ status: 'awaiting_final_payment' })
+    .eq('request_id', requestId);
+
+  if (error) throw new Error(`Failed to update status: ${error.message}`);
+  revalidatePath(`/commissions/${requestId}`);
+}
+
+export async function updateShippingStatus(requestId: number, status: string, tracking?: string) {
+  const cookieStore = cookies()
+  const supabase = await createClient(cookieStore);
+  
+  const updateData: any = { shipping_status: status };
+  if (tracking) updateData.tracking_number = tracking;
+
+  const { error } = await supabase
+    .from('commission_requests')
+    .update(updateData)
+    .eq('request_id', requestId);
+
+  if (error) throw new Error(`Failed to update shipping: ${error.message}`);
+  revalidatePath(`/commissions/${requestId}`);
+}
+
 export async function acceptCommissionOffer(requestId: number, offerId: number, artistId: string) {
   const cookieStore = cookies()
   const supabase = await createClient(cookieStore);
   
+  // 1. Fetch offer details to calculate deposit
+  const { data: offer, error: offerFetchError } = await supabase
+    .from('commission_offers')
+    .select('offer_amount, deposit_percentage')
+    .eq('offer_id', offerId)
+    .single();
+
+  if (offerFetchError || !offer) throw new Error("Could not fetch offer details.");
+
+  const depositAmount = (offer.offer_amount * (offer.deposit_percentage || 50)) / 100;
+
+  // 2. Update the offer status
   const { error: offerError } = await supabase
     .from('commission_offers')
     .update({ status: 'accepted' })
@@ -181,11 +239,12 @@ export async function acceptCommissionOffer(requestId: number, offerId: number, 
     throw new Error(`Failed to accept the offer: ${offerError.message}`);
   }
 
+  // 3. Update the commission status to awaiting_deposit
   const { error: requestError } = await supabase
     .from('commission_requests')
     .update({ 
       artist_id: artistId,
-      status: 'in_progress' 
+      status: 'awaiting_deposit' 
     })
     .eq('request_id', requestId);
 
@@ -194,12 +253,17 @@ export async function acceptCommissionOffer(requestId: number, offerId: number, 
     throw new Error(`Failed to update the commission status: ${requestError.message}`);
   }
 
+  // 4. Reject other offers
   await supabase
     .from('commission_offers')
     .update({ status: 'rejected' })
     .eq('request_id', requestId)
     .neq('offer_id', offerId);
 
+  // 5. Initiate PayMongo Checkout for the DEPOSIT
+  // We'll call the checkout logic here (simplified for this action)
+  // In a real scenario, we might redirect from the client after this action returns
+  
   revalidatePath('/homepage'); 
 }
 

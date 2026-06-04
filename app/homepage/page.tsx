@@ -15,6 +15,7 @@ function HomepageContent() {
   
   const [userName, setUserName] = useState('A');
   const [profileImage, setProfileImage] = useState('/user-default.svg');
+  const [isArtist, setIsArtist] = useState(false);
   
   // Initialize from search params
   const [activeTab, setActiveTab] = useState(tabQuery ? parseInt(tabQuery) : 0);
@@ -53,6 +54,7 @@ function HomepageContent() {
             if (userProfile.avatar_url) {
               setProfileImage(userProfile.avatar_url);
             }
+            setIsArtist(userProfile.role === 'artist');
           }
         }
       } catch (err) {
@@ -69,6 +71,7 @@ function HomepageContent() {
         logoText="GamâLokal" 
         userName={userName} 
         profileImage={profileImage} 
+        isArtist={isArtist}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
       />

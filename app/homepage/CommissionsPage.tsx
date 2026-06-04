@@ -2,8 +2,10 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import { submitCommissionOffer, createCommissionRequest, completeCommissionAndReview, acceptCommissionOffer } from '../actions'; 
+import { processCommissionPayment } from '../actions/payments';
 
 interface CommissionOffer {
   offer_id: number;
@@ -11,6 +13,7 @@ interface CommissionOffer {
   offer_amount: number;
   status: string;
   artist_id: string;
+  deposit_percentage: number;
   artist: {
     name: string;
     avatar_url: string;
@@ -37,9 +40,11 @@ interface CommissionRequest {
 }
 
 export default function CommissionsPage() {
+  const router = useRouter();
   const [activeSubTab, setActiveSubTab] = useState('Browse Requests');
   const [openRequests, setOpenRequests] = useState<CommissionRequest[]>([]);
   const [myRequests, setMyRequests] = useState<CommissionRequest[]>([]);
+  const [myJobs, setMyJobs] = useState<CommissionRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
@@ -48,6 +53,7 @@ export default function CommissionsPage() {
   const [activeOfferForm, setActiveOfferForm] = useState<number | null>(null);
   const [offerAmount, setOfferAmount] = useState<string>('');
   const [offerMessage, setOfferMessage] = useState<string>('');
+  const [depositPercentage, setDepositPercentage] = useState<number>(50);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [isPostingModalOpen, setIsPostingModalOpen] = useState(false);
@@ -58,6 +64,13 @@ export default function CommissionsPage() {
   const [comment, setComment] = useState('');
   const [isReviewing, setIsReviewing] = useState(false);
   const [isAccepting, setIsAccepting] = useState(false);
+
+  const [isPaying, setIsPaying] = useState(false);
+  const [successModal, setSuccessModal] = useState<{ isOpen: boolean; title: string; message: string }>({
+    isOpen: false,
+    title: "",
+    message: "",
+  });
 
   const supabase = createClient();
 
@@ -82,7 +95,7 @@ export default function CommissionsPage() {
           *,
           artist:users!artist_id ( name ),
           offers:commission_offers (
-            offer_id, message, offer_amount, status, artist_id,
+            offer_id, message, offer_amount, status, artist_id, deposit_percentage,
             artist:users!artist_id ( name, avatar_url )
           )
         `)
@@ -90,6 +103,19 @@ export default function CommissionsPage() {
         .order('request_id', { ascending: false });
         
       if (myReqData) setMyRequests(myReqData as unknown as CommissionRequest[]);
+
+      // Fetch artist's active jobs
+      const { data: myJobData } = await supabase
+        .from('commission_requests')
+        .select(`
+          *,
+          client:users!client_id ( name, avatar_url )
+        `)
+        .eq('artist_id', user.id)
+        .neq('status', 'open')
+        .order('request_id', { ascending: false });
+
+      if (myJobData) setMyJobs(myJobData as unknown as CommissionRequest[]);
     }
 
     const { data, error } = await supabase
@@ -114,11 +140,16 @@ export default function CommissionsPage() {
     if (!offerAmount || !offerMessage) return alert("Please enter a price and message.");
     setIsSubmitting(true);
     try {
-      await submitCommissionOffer(requestId, parseFloat(offerAmount), offerMessage);
-      alert("Offer submitted!");
+      await submitCommissionOffer(requestId, parseFloat(offerAmount), offerMessage, depositPercentage);
+      setSuccessModal({
+        isOpen: true,
+        title: "Offer Submitted!",
+        message: "Your offer has been sent to the client. You will be notified if they accept.",
+      });
       setActiveOfferForm(null); 
       setOfferAmount('');
       setOfferMessage('');
+      setDepositPercentage(50);
       fetchData(); 
     } catch {
       alert("Failed to submit offer.");
@@ -133,7 +164,11 @@ export default function CommissionsPage() {
     try {
       const formData = new FormData(e.currentTarget);
       await createCommissionRequest(formData);
-      alert("Commission Request Posted Successfully!");
+      setSuccessModal({
+        isOpen: true,
+        title: "Request Posted!",
+        message: "Your commission request is now live on the board. Artists can now submit offers.",
+      });
       setIsPostingModalOpen(false);
     } catch (error) {
       alert("Failed to post request.");
@@ -144,17 +179,47 @@ export default function CommissionsPage() {
   };
 
   const handleAcceptOffer = async (requestId: number, offerId: number, artistId: string) => {
-    if (!confirm("Are you sure you want to hire this artist?")) return;
+    if (!confirm("Are you sure you want to hire this artist? A deposit payment session will be created.")) return;
     setIsAccepting(true);
     try {
       await acceptCommissionOffer(requestId, offerId, artistId);
-      alert("Artist hired successfully!");
+      setSuccessModal({
+        isOpen: true,
+        title: "Artist Hired!",
+        message: "The status has been updated to 'Awaiting Deposit'. You can now proceed with the initial payment.",
+      });
       fetchData(); 
     } catch (error) {
       console.error(error);
       alert("Failed to accept offer.");
     } finally {
       setIsAccepting(false);
+    }
+  };
+
+  const handleCommissionPayment = async (job: CommissionRequest, type: 'deposit' | 'final') => {
+    if (!job.offers || !job.artist_id) return;
+    const acceptedOffer = job.offers.find(o => o.status === 'accepted');
+    if (!acceptedOffer) return;
+
+    setIsPaying(true);
+    try {
+      const amount = type === 'deposit' 
+        ? (acceptedOffer.offer_amount * acceptedOffer.deposit_percentage) / 100
+        : acceptedOffer.offer_amount * (1 - acceptedOffer.deposit_percentage / 100);
+
+      await processCommissionPayment({
+        requestId: job.request_id,
+        artistId: job.artist_id,
+        amount,
+        title: job.title || `Commission #${job.request_id}`,
+        milestoneType: type
+      });
+    } catch (error) {
+      console.error(error);
+      alert("Payment redirection failed.");
+    } finally {
+      setIsPaying(false);
     }
   };
 
@@ -165,7 +230,11 @@ export default function CommissionsPage() {
     
     try {
       await completeCommissionAndReview(reviewJob.request_id, reviewJob.artist_id, rating, comment);
-      alert("Review submitted successfully!");
+      setSuccessModal({
+        isOpen: true,
+        title: "Review Submitted!",
+        message: "Thank you for your feedback! The commission is now officially closed.",
+      });
       setReviewJob(null);
       setRating(5);
       setComment('');
@@ -181,6 +250,27 @@ export default function CommissionsPage() {
   return (
     <div className="bg-[#FCFAF8] min-h-screen w-full text-slate-800 font-sans pb-20 relative">
       
+      {/* Success Modal */}
+      {successModal.isOpen && (
+        <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-[2rem] p-8 w-full max-w-sm shadow-2xl text-center flex flex-col items-center gap-6">
+            <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center text-green-600 animate-pulse">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div>
+              <h2 className="text-2xl font-black text-[#1C4A5C] mb-2">{successModal.title}</h2>
+              <p className="text-gray-500 text-sm font-medium leading-relaxed">{successModal.message}</p>
+            </div>
+            <button 
+              onClick={() => setSuccessModal({ ...successModal, isOpen: false })}
+              className="w-full bg-[#1C4A5C] text-white py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-lg shadow-[#1C4A5C]/20 transition-transform active:scale-95"
+            >
+              Great, thanks!
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Post Commission Modal */}
       {isPostingModalOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -315,6 +405,16 @@ export default function CommissionsPage() {
           >
             My Requests
           </button>
+          {currentUserRole === 'artist' && (
+            <button 
+              onClick={() => setActiveSubTab('My Jobs')}
+              className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all ${
+                activeSubTab === 'My Jobs' ? 'bg-white text-[#1C4A5C] shadow-sm border border-gray-200' : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              My Jobs
+            </button>
+          )}
         </div>
 
         {/* Browse Requests Tab */}
@@ -362,6 +462,25 @@ export default function CommissionsPage() {
                         <h4 className="font-bold text-[#1C4A5C] mb-3">Submit Your Offer</h4>
                         <div className="flex flex-col gap-3">
                           <input type="number" placeholder="Your Price (₱)" className="p-2 border border-gray-200 rounded-md outline-none" value={offerAmount} onChange={(e) => setOfferAmount(e.target.value)} disabled={isSubmitting} />
+                          
+                          <div className="bg-white p-3 rounded-lg border border-gray-100">
+                            <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-tight">Required Deposit: {depositPercentage}% (₱{(parseFloat(offerAmount) || 0) * (depositPercentage / 100)})</label>
+                            <input 
+                              type="range" 
+                              min="10" 
+                              max="100" 
+                              step="5"
+                              value={depositPercentage} 
+                              onChange={(e) => setDepositPercentage(parseInt(e.target.value))}
+                              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#C87941]"
+                            />
+                            <div className="flex justify-between text-[10px] text-gray-400 mt-1 font-bold">
+                              <span>10%</span>
+                              <span>50%</span>
+                              <span>100%</span>
+                            </div>
+                          </div>
+
                           <textarea placeholder="Pitch your ideas to the client..." className="p-2 border border-gray-200 rounded-md min-h-[80px] outline-none" value={offerMessage} onChange={(e) => setOfferMessage(e.target.value)} disabled={isSubmitting} />
                           <div className="flex gap-2 mt-2">
                             <button onClick={() => handleSendOffer(job.request_id)} disabled={isSubmitting} className="bg-[#C87941] text-white px-4 py-2 rounded-md font-bold text-sm hover:bg-[#b06a39]">{isSubmitting ? 'Sending...' : 'Confirm Offer'}</button>
@@ -380,89 +499,57 @@ export default function CommissionsPage() {
         )}
 
         {/* My Requests Tab */}
-        {activeSubTab === 'My Requests' && (
+...
+        {/* My Jobs Tab */}
+        {activeSubTab === 'My Jobs' && (
           <div className="flex flex-col gap-5">
             {isLoading ? (
-              <p className="text-center py-10 text-gray-500 font-medium">Loading your requests...</p>
-            ) : myRequests.length === 0 ? (
+              <p className="text-center py-10 text-gray-500 font-medium">Loading your jobs...</p>
+            ) : myJobs.length === 0 ? (
               <div className="text-center py-16 bg-white rounded-3xl border border-gray-100 border-dashed">
-                <div className="text-4xl mb-3">📝</div>
-                <h3 className="text-lg font-bold text-gray-900">You haven&apos;t posted any requests</h3>
-                <p className="text-gray-500 text-sm mt-1 mb-4">Need custom art? Post a request for artists to bid on.</p>
-                <button onClick={() => setIsPostingModalOpen(true)} className="text-[#C87941] font-bold hover:underline">Post your first request</button>
+                <div className="text-4xl mb-3">🎨</div>
+                <h3 className="text-lg font-bold text-gray-900">No active jobs yet</h3>
+                <p className="text-gray-500 text-sm mt-1 mb-4">Submit offers to clients on the job board to find work.</p>
+                <button onClick={() => setActiveSubTab('Browse Requests')} className="text-[#C87941] font-bold hover:underline">Browse job board</button>
               </div>
             ) : (
-              myRequests.map((job) => (
+              myJobs.map((job) => (
                 <div key={job.request_id} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-4">
                     <div>
                       <div className="flex items-center gap-3 mb-1">
-                        <h3 className="text-xl font-bold text-[#1C4A5C]">{job.title || `Request #${job.request_id}`}</h3>
+                        <h3 className="text-xl font-bold text-[#1C4A5C]">{job.title || `Job #${job.request_id}`}</h3>
                         <span className={`px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider ${
-                          job.status === 'open' ? 'bg-blue-50 text-blue-600' :
+                          job.status === 'awaiting_deposit' ? 'bg-yellow-50 text-yellow-600' :
                           job.status === 'in_progress' ? 'bg-orange-50 text-orange-600' :
+                          job.status === 'awaiting_final_payment' ? 'bg-purple-50 text-purple-600' :
                           'bg-green-50 text-green-600'
                         }`}>
-                          {job.status.replace('_', ' ')}
+                          {job.status.replace(/_/g, ' ')}
                         </span>
                       </div>
                       <p className="text-gray-500 text-sm mb-3">Budget: ₱{job.budget} • Deadline: {new Date(job.deadline).toLocaleDateString()}</p>
                       
-                      {job.artist_id && (
-                        <p className="text-sm font-medium text-gray-700 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100 inline-block">
-                          🎨 Working with: <span className="font-bold text-[#1C4A5C]">{job.artist?.name || 'Unknown Artist'}</span>
-                        </p>
-                      )}
+                      <p className="text-sm font-medium text-gray-700 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100 inline-block">
+                        👤 Client: <span className="font-bold text-[#1C4A5C]">{job.client?.name || 'Unknown Client'}</span>
+                      </p>
                     </div>
                     
-                    {job.status === 'in_progress' && (
-                      <button 
-                        onClick={() => setReviewJob(job)}
-                        className="bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 rounded-full font-bold shadow-sm transition-all whitespace-nowrap"
-                      >
-                        Complete & Review
-                      </button>
-                    )}
-                    {job.status === 'completed' && (
-                      <span className="text-green-600 font-bold flex items-center gap-1">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                        Completed
-                      </span>
-                    )}
+                    <div className="flex gap-2">
+                      {job.status === 'awaiting_deposit' && (
+                        <span className="text-yellow-600 font-bold text-sm italic">Awaiting client deposit...</span>
+                      )}
+                      
+                      {(job.status === 'in_progress' || job.status === 'awaiting_final_payment' || job.status === 'completed') && (
+                        <button 
+                          className="bg-[#1C4A5C] hover:bg-[#143745] text-white px-6 py-2.5 rounded-full font-bold shadow-sm transition-all whitespace-nowrap"
+                          onClick={() => router.push(`/commissions/${job.request_id}`)}
+                        >
+                          Workspace
+                        </button>
+                      )}
+                    </div>
                   </div>
-
-                  {/* Incoming Offers Section */}
-                  {job.status === 'open' && job.offers && job.offers.length > 0 && (
-                    <div className="mt-4 pt-4 border-t border-gray-100">
-                      <h4 className="text-sm font-bold text-gray-900 mb-3">Incoming Offers</h4>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {job.offers.map((offer: CommissionOffer) => (
-                          <div key={offer.offer_id} className="bg-gray-50 p-4 rounded-xl border border-gray-200">
-                            <div className="flex justify-between items-start mb-2">
-                              <div>
-                                <p className="font-bold text-[#1C4A5C] text-sm">{offer.artist?.name || 'Artist'}</p>
-                                <p className="text-xs text-gray-500">Offered: <span className="font-bold text-[#C87941]">₱{offer.offer_amount}</span></p>
-                              </div>
-                            </div>
-                            <p className="text-sm text-gray-700 mb-4 bg-white p-2 border border-gray-100 rounded-lg">{offer.message}</p>
-                            <button 
-                              onClick={() => handleAcceptOffer(job.request_id, offer.offer_id, offer.artist_id)}
-                              disabled={isAccepting}
-                              className="w-full bg-[#1C4A5C] text-white py-2 rounded-lg font-bold text-sm hover:bg-[#143745] disabled:opacity-50"
-                            >
-                              {isAccepting ? 'Accepting...' : 'Hire this Artist'}
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {job.status === 'open' && (!job.offers || job.offers.length === 0) && (
-                    <div className="mt-4 pt-4 border-t border-gray-100">
-                      <p className="text-sm text-gray-400 italic">No offers received yet. Artists will see this on the job board!</p>
-                    </div>
-                  )}
-
                 </div>
               ))
             )}
