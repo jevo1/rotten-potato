@@ -12,7 +12,6 @@ interface ProfileNavBarProps {
 export default function ProfileNavBar({ displayName, avatarUrl, isArtist }: ProfileNavBarProps) {
   const router = useRouter();
 
-  // Route to the homepage, but attach the requested tab to the URL!
   const handleNavigation = (tabIndex: number) => {
     router.push(`/homepage?tab=${tabIndex}`); 
   };
@@ -23,7 +22,7 @@ export default function ProfileNavBar({ displayName, avatarUrl, isArtist }: Prof
       userName={displayName} 
       profileImage={avatarUrl || '/user-default.svg'} 
       isArtist={isArtist}
-      activeTab={-1} // Keeps tabs unhighlighted while on the Profile page
+      activeTab={-1}
       setActiveTab={handleNavigation}
     />
   );
