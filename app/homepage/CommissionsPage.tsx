@@ -499,7 +499,130 @@ export default function CommissionsPage() {
         )}
 
         {/* My Requests Tab */}
-...
+        {activeSubTab === 'My Requests' && (
+          <div className="flex flex-col gap-5">
+            {isLoading ? (
+              <p className="text-center py-10 text-gray-500 font-medium">Loading your requests...</p>
+            ) : myRequests.length === 0 ? (
+              <div className="text-center py-16 bg-white rounded-3xl border border-gray-100 border-dashed">
+                <div className="text-4xl mb-3">📝</div>
+                <h3 className="text-lg font-bold text-gray-900">You haven&apos;t posted any requests</h3>
+                <p className="text-gray-500 text-sm mt-1 mb-4">Need custom art? Post a request for artists to bid on.</p>
+                <button onClick={() => setIsPostingModalOpen(true)} className="text-[#C87941] font-bold hover:underline">Post your first request</button>
+              </div>
+            ) : (
+              myRequests.map((job) => (
+                <div key={job.request_id} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-4">
+                    <div>
+                      <div className="flex items-center gap-3 mb-1">
+                        <h3 className="text-xl font-bold text-[#1C4A5C]">{job.title || `Request #${job.request_id}`}</h3>
+                        <span className={`px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider ${
+                          job.status === 'open' ? 'bg-blue-50 text-blue-600' :
+                          job.status === 'awaiting_deposit' ? 'bg-yellow-50 text-yellow-600' :
+                          job.status === 'in_progress' ? 'bg-orange-50 text-orange-600' :
+                          job.status === 'awaiting_final_payment' ? 'bg-purple-50 text-purple-600' :
+                          'bg-green-50 text-green-600'
+                        }`}>
+                          {job.status.replace(/_/g, ' ')}
+                        </span>
+                      </div>
+                      <p className="text-gray-500 text-sm mb-3">Budget: ₱{job.budget} • Deadline: {new Date(job.deadline).toLocaleDateString()}</p>
+                      
+                      {job.artist_id && (
+                        <p className="text-sm font-medium text-gray-700 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100 inline-block">
+                          🎨 Working with: <span className="font-bold text-[#1C4A5C]">{job.artist?.name || 'Unknown Artist'}</span>
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex gap-2">
+                      {job.status === 'awaiting_deposit' && (
+                        <button 
+                          disabled={isPaying}
+                          className="bg-[#C87941] hover:bg-[#b06a39] text-white px-6 py-2.5 rounded-full font-bold shadow-sm transition-all whitespace-nowrap disabled:opacity-50"
+                          onClick={() => handleCommissionPayment(job, 'deposit')}
+                        >
+                          {isPaying ? 'Redirecting...' : 'Pay Deposit'}
+                        </button>
+                      )}
+
+                      {job.status === 'in_progress' && (
+                        <>
+                          <button 
+                            className="bg-[#1C4A5C] hover:bg-[#143745] text-white px-6 py-2.5 rounded-full font-bold shadow-sm transition-all whitespace-nowrap"
+                            onClick={() => router.push(`/commissions/${job.request_id}`)}
+                          >
+                            Workspace
+                          </button>
+                          <button 
+                            onClick={() => setReviewJob(job)}
+                            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 rounded-full font-bold shadow-sm transition-all whitespace-nowrap"
+                          >
+                            Complete & Review
+                          </button>
+                        </>
+                      )}
+
+                      {job.status === 'awaiting_final_payment' && (
+                        <button 
+                          disabled={isPaying}
+                          className="bg-[#C87941] hover:bg-[#b06a39] text-white px-6 py-2.5 rounded-full font-bold shadow-sm transition-all whitespace-nowrap disabled:opacity-50"
+                          onClick={() => handleCommissionPayment(job, 'final')}
+                        >
+                          {isPaying ? 'Redirecting...' : 'Pay Balance'}
+                        </button>
+                      )}
+
+                      {job.status === 'completed' && (
+                        <button 
+                          className="bg-[#1C4A5C] hover:bg-[#143745] text-white px-6 py-2.5 rounded-full font-bold shadow-sm transition-all whitespace-nowrap"
+                          onClick={() => router.push(`/commissions/${job.request_id}`)}
+                        >
+                          Workspace
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Offers Section for Client */}
+                  {job.status === 'open' && job.offers && job.offers.length > 0 && (
+                    <div className="mt-6 pt-6 border-t border-gray-100">
+                      <h4 className="text-sm font-bold text-gray-900 mb-4">Offers from Artists ({job.offers.length})</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {job.offers.map((offer) => (
+                          <div key={offer.offer_id} className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                            <div className="flex items-center gap-3 mb-3">
+                              {offer.artist?.avatar_url ? (
+                                <img src={offer.artist.avatar_url} alt="avatar" className="w-8 h-8 rounded-full border border-gray-200" />
+                              ) : (
+                                <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold">
+                                  {offer.artist?.name?.charAt(0) || '?'}
+                                </div>
+                              )}
+                              <div>
+                                <p className="text-sm font-bold text-gray-900">{offer.artist?.name || 'Unknown Artist'}</p>
+                                <p className="text-[10px] text-gray-500">Proposed Price: ₱{offer.offer_amount} • Deposit: {offer.deposit_percentage}%</p>
+                              </div>
+                            </div>
+                            <p className="text-xs text-gray-600 mb-4 line-clamp-3 italic">"{offer.message}"</p>
+                            <button 
+                              onClick={() => handleAcceptOffer(job.request_id, offer.offer_id, offer.artist_id)}
+                              disabled={isAccepting}
+                              className="w-full bg-[#1C4A5C] hover:bg-[#143745] text-white py-2 rounded-lg text-xs font-bold transition-colors disabled:opacity-50"
+                            >
+                              {isAccepting ? 'Accepting...' : 'Accept Offer'}
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        )}
         {/* My Jobs Tab */}
         {activeSubTab === 'My Jobs' && (
           <div className="flex flex-col gap-5">
