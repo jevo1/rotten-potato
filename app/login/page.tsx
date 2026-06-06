@@ -1,8 +1,11 @@
-import { login, signInWithGoogle } from '../actions'
+import { login, signInWithGoogle } from '@/app/actions/index'
 import Link from 'next/link'
 import Image from 'next/image'
 
-export default function LoginPage() {
+export default function LoginPage({ searchParams }: { searchParams: { error?: string; message?: string } }) {
+  const error = searchParams.error;
+  const message = searchParams.message;
+
   return (
     <div className="relative min-h-screen w-full bg-black font-sans text-white">
       {/* Background Image */}
@@ -49,6 +52,24 @@ export default function LoginPage() {
             </div>
 
             <h2 className="mb-8 text-3xl font-bold tracking-tight">Log in</h2>
+
+            {error && (
+              <div className="mb-6 rounded-xl bg-red-500/20 border border-red-500/50 p-4 text-sm text-red-200">
+                <p className="flex items-center gap-2">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  {error}
+                </p>
+              </div>
+            )}
+
+            {message && (
+              <div className="mb-6 rounded-xl bg-green-500/20 border border-green-500/50 p-4 text-sm text-green-200">
+                <p className="flex items-center gap-2">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  {message}
+                </p>
+              </div>
+            )}
 
             <form className="space-y-5">
               <div>

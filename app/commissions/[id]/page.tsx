@@ -8,7 +8,7 @@ import {
   updateFulfillmentDetails, 
   markCommissionAsReady, 
   updateShippingStatus
-} from '@/app/actions';
+} from '@/app/actions/index';
 import { processCommissionPayment } from '@/app/actions/payments';
 
 export default function CommissionWorkspace() {

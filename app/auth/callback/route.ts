@@ -16,6 +16,17 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     
     if (!error) {
+      // 1. Check if the user has a role assigned in their profile
+      const { data: profile } = await supabase
+        .from('users')
+        .select('role')
+        .maybeSingle();
+
+      // 2. If no role is found, redirect to role selection onboarding
+      if (!profile || !profile.role) {
+        return NextResponse.redirect(`${origin}/onboarding/role-selection`)
+      }
+
       // Successfully logged in! Redirect to the home page.
       return NextResponse.redirect(`${origin}${next}`)
     }

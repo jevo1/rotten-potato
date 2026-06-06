@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { postArtwork } from '@/app/actions';
+import { postArtwork } from '@/app/actions/index';
 import Image from 'next/image';
 
 interface PostArtworkModalProps {

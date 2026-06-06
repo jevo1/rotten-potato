@@ -1,8 +1,10 @@
-import { signup, signInWithGoogle } from '../actions'
+import { signup, signInWithGoogle } from '@/app/actions/index'
 import Link from 'next/link'
 import Image from 'next/image'
 
-export default function SignupPage() {
+export default function SignupPage({ searchParams }: { searchParams: { error?: string } }) {
+  const error = searchParams.error;
+
   return (
     <div className="relative min-h-screen w-full bg-black font-sans text-white">
       {/* Background Image */}
@@ -49,6 +51,15 @@ export default function SignupPage() {
             </div>
 
             <h2 className="mb-8 text-3xl font-bold tracking-tight">Sign up</h2>
+
+            {error && (
+              <div className="mb-6 rounded-xl bg-red-500/20 border border-red-500/50 p-4 text-sm text-red-200">
+                <p className="flex items-center gap-2">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  {error}
+                </p>
+              </div>
+            )}
 
             <form className="space-y-5">
               <div>

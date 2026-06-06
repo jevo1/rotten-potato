@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from 'react';
-import { sendMessage } from '@/app/actions';
+import { sendMessage } from '@/app/actions/index';
 
 interface SendMessageModalProps {
   isOpen: boolean;

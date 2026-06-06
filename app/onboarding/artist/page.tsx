@@ -14,15 +14,15 @@ export default async function ArtistOnboardingPage() {
         redirect('/login')
     }
 
-    // 2. Fetch their real-time profile role from the database
-    const { data: profile } = await supabase
-        .from('users')
-        .select('role')
+    // 2. Fetch their artist profile to see if they've already completed onboarding
+    const { data: artistProfile } = await supabase
+        .from('artist_profiles')
+        .select('profile_id')
         .eq('user_id', user.id)
-        .single()
+        .maybeSingle()
 
-    // 3. GUARD CLAUSE: If they are already an artist, skip onboarding completely!
-    if (profile?.role === 'artist') {
+    // 3. GUARD CLAUSE: If they already have an artist profile, skip onboarding completely!
+    if (artistProfile) {
         redirect('/dashboard')
     }
 

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createPost } from '@/app/actions';
+import { createPost } from '@/app/actions/index';
 import Image from 'next/image';
 import { X, Image as ImageIcon, Send } from 'lucide-react';
 

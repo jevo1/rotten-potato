@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { createClient } from '@/utils/supabase/client';
-import { sendMessage } from '@/app/actions';
+import { sendMessage } from '@/app/actions/index';
 
 type MessageUser = {
   name: string;

@@ -16,6 +16,17 @@ export async function signup(formData: FormData) {
   const name = formData.get('name') as string
   const role = formData.get('role') as string 
 
+  // Basic validation
+  if (!name || name.trim().length < 2) {
+    redirect('/signup?error=Please enter your full name')
+  }
+  if (!email || !email.includes('@')) {
+    redirect('/signup?error=Please enter a valid email address')
+  }
+  if (!password || password.length < 6) {
+    redirect('/signup?error=Password must be at least 6 characters long')
+  }
+
   const { error } = await supabase.auth.signUp({
     email,
     password,
@@ -29,7 +40,7 @@ export async function signup(formData: FormData) {
 
   if (error) {
     console.error('Signup error:', error.message)
-    redirect('/signup?error=Could not authenticate user')
+    redirect(`/signup?error=${encodeURIComponent(error.message)}`)
   }
   
   redirect('/login?message=Account created successfully. Please log in.')
@@ -86,6 +97,30 @@ export async function logout() {
   await supabase.auth.signOut()
   
   redirect('/login')
+}
+
+export async function setAccountRole(role: 'client' | 'artist') {
+  const cookieStore = cookies()
+  const supabase = await createClient(cookieStore)
+  
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const { error } = await supabase
+    .from('users')
+    .update({ role })
+    .eq('user_id', user.id)
+
+  if (error) {
+    console.error('Error setting role:', error.message)
+    throw new Error('Failed to set account role')
+  }
+
+  if (role === 'artist') {
+    redirect('/onboarding/artist')
+  } else {
+    redirect('/homepage')
+  }
 }
 
 // --- COMMISSION ACTIONS ---
