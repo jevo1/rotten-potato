@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
-import { submitCommissionOffer, createCommissionRequest, completeCommissionAndReview, acceptCommissionOffer } from '../actions'; 
+import { submitCommissionOffer, createCommissionRequest, completeCommissionAndReview, acceptCommissionOffer } from '@/app/actions/index'; 
 import { processCommissionPayment } from '../actions/payments';
 
 interface CommissionOffer {

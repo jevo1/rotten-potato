@@ -6,7 +6,7 @@ import { createClient } from '@/utils/supabase/client';
 import SendMessageModal from '../src/components/SendMessageModal'; 
 import CreatePostModal from '../src/components/CreatePostModal';
 import { Star, MessageSquare, ExternalLink, Share2, Heart, MessageCircle, Plus, Send, MoreVertical, Trash2, Edit3, Check } from 'lucide-react';
-import { toggleLike, addComment, deleteComment, editPost, deletePost } from '../actions';
+import { toggleLike, addComment, deleteComment, editPost, deletePost } from '@/app/actions/index';
 
 interface Artwork {
   artwork_id: number;

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
-import { getArtworks, addToCart } from '@/app/actions';
+import { getArtworks, addToCart } from '@/app/actions/index';
 import { Loader2 } from 'lucide-react';
 import AddToCartModal from '../src/components/AddToCartModal';
 
