@@ -624,18 +624,20 @@ export async function toggleLike(postId: number) {
 export async function addComment(postId: number, content: string, parentId?: number) {
   const cookieStore = cookies();
   const supabase = await createClient(cookieStore);
-  
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("You must be logged in to comment.");
 
-  const { error } = await supabase
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) throw new Error("You must be logged in to comment.");
+
+  const { data, error } = await supabase
     .from('comments')
     .insert({
       post_id: postId,
       user_id: user.id,
       content: content,
       parent_id: parentId || null
-    });
+    })
+    .select()
+    .single();
 
   if (error) {
     console.error("Database error:", error);
@@ -643,6 +645,7 @@ export async function addComment(postId: number, content: string, parentId?: num
   }
 
   revalidatePath('/homepage');
+  return data;
 }
 
 export async function deleteComment(commentId: number) {
