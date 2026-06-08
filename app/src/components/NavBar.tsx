@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { logout, getCartItems } from '@/app/actions/index';
+import { logout, getCartItems, markAllNotificationsAsRead } from '@/app/actions/index';
 import { createClient } from '@/utils/supabase/client';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -19,10 +19,28 @@ import {
     Home,
     Store,
     ClipboardList,
-    MessageSquare
+    MessageSquare,
+    Check
 } from 'lucide-react';
 
+interface UserActor {
+    name: string;
+    avatar_url: string | null;
+}
+
+interface Notification {
+    id: number;
+    user_id: string;
+    actor_id: string;
+    type: string;
+    content: string;
+    is_read: boolean;
+    created_at: string;
+    actor: UserActor | null;
+}
+
 interface NavBarProps {
+    userId?: string;
     logoText?: string;
     userName?: string;
     profileImage?: string;
@@ -32,16 +50,46 @@ interface NavBarProps {
 }
 
 export const NavBar: React.FC<NavBarProps> = ({
+    userId,
     logoText = 'GamâLokal',
     userName = 'A',
     profileImage = '/user-default.svg',
     isArtist = false,
     activeTab = 0,
-    setActiveTab = (_tab: number) => {},
+    setActiveTab = () => {},
 }) => {
     const [isProfileOpen, setIsProfileOpen] = useState(false);
+    const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
     const [isPostModalOpen, setIsPostModalOpen] = useState(false);
     const [cartCount, setCartCount] = useState(0);
+    const [notificationCount, setNotificationCount] = useState(0);
+    const unreadMessageCount = 0; // Placeholder until DB supports is_read
+    const [notifications, setNotifications] = useState<Notification[]>([]);
+
+    const formatRelativeTime = (dateString: string) => {
+        const now = new Date();
+        const past = new Date(dateString);
+        const diffInSeconds = Math.floor((now.getTime() - past.getTime()) / 1000);
+
+        if (diffInSeconds < 60) return 'just now';
+        const diffInMinutes = Math.floor(diffInSeconds / 60);
+        if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+        const diffInHours = Math.floor(diffInMinutes / 60);
+        if (diffInHours < 24) return `${diffInHours}h ago`;
+        const diffInDays = Math.floor(diffInHours / 24);
+        if (diffInDays < 7) return `${diffInDays}d ago`;
+        return past.toLocaleDateString();
+    };
+
+    const handleMarkAllRead = async () => {
+        try {
+            await markAllNotificationsAsRead();
+            setNotificationCount(0);
+            setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+        } catch (error) {
+            console.error("Failed to mark notifications as read:", error);
+        }
+    };
 
     useEffect(() => {
         const fetchCartCount = async () => {
@@ -49,10 +97,44 @@ export const NavBar: React.FC<NavBarProps> = ({
             setCartCount(items.length);
         };
 
+        const fetchNotificationData = async () => {
+            if (!userId) return;
+            const supabase = createClient();
+            
+            // Fetch unread count
+            const { count, error: countError } = await supabase
+                .from('notifications')
+                .select('*', { count: 'exact', head: true })
+                .eq('user_id', userId)
+                .eq('is_read', false);
+            
+            if (!countError && count !== null) {
+                setNotificationCount(count);
+            }
+
+            // Fetch latest 10 notifications
+            const { data, error: dataError } = await supabase
+                .from('notifications')
+                .select(`
+                    id, user_id, actor_id, type, content, is_read, created_at,
+                    actor:users!actor_id ( name, avatar_url )
+                `)
+                .eq('user_id', userId)
+                .order('created_at', { ascending: false })
+                .limit(10);
+
+            if (!dataError && data) {
+                setNotifications(data as unknown as Notification[]);
+            }
+        };
+
         fetchCartCount();
+        fetchNotificationData();
 
         const supabase = createClient();
-        const channel = supabase
+        
+        // Cart Subscription
+        const cartChannel = supabase
             .channel('cart_items_changes')
             .on(
                 'postgres_changes',
@@ -67,10 +149,31 @@ export const NavBar: React.FC<NavBarProps> = ({
             )
             .subscribe();
 
+        // Notification Subscription
+        let notificationChannel: ReturnType<typeof supabase.channel> | null = null;
+        if (userId) {
+            notificationChannel = supabase
+                .channel('notifications_changes')
+                .on(
+                    'postgres_changes',
+                    {
+                        event: '*',
+                        schema: 'public',
+                        table: 'notifications',
+                        filter: `user_id=eq.${userId}`,
+                    },
+                    () => {
+                        fetchNotificationData();
+                    }
+                )
+                .subscribe();
+        }
+
         return () => {
-            supabase.removeChannel(channel);
+            supabase.removeChannel(cartChannel);
+            if (notificationChannel) supabase.removeChannel(notificationChannel);
         };
-    }, []);
+    }, [userId]);
 
     const tabs = [
         { id: 0, label: 'Home', icon: Home },
@@ -115,7 +218,7 @@ export const NavBar: React.FC<NavBarProps> = ({
                 </div>
 
                 {/* Right Side Icons & Profile */}
-                <div className="flex items-center gap-2 md:gap-3 min-w-fit">
+                <div className="flex items-center gap-2 md:gap-3 min-w-fit relative">
                     
                     {/* List Artwork Button */}
                     <button
@@ -128,15 +231,91 @@ export const NavBar: React.FC<NavBarProps> = ({
                     </button>
 
                     <div className="flex items-center gap-1">
-                        <button className="relative text-gray-500 hover:text-[#C87941] hover:bg-orange-50 p-2 rounded-full transition-all">
+                        <button 
+                            onClick={() => setActiveTab(3)}
+                            className="relative text-gray-500 hover:text-[#C87941] hover:bg-orange-50 p-2 rounded-full transition-all"
+                        >
                             <MessageCircle size={20} strokeWidth={2} />
-                            <span className="absolute top-1 right-1 bg-red-500 text-white text-[8px] font-bold w-4 h-4 flex items-center justify-center rounded-full border-2 border-white">3</span>
+                            {unreadMessageCount > 0 && (
+                                <span className="absolute top-1 right-1 bg-red-500 text-white text-[8px] font-bold w-4 h-4 flex items-center justify-center rounded-full border-2 border-white">{unreadMessageCount}</span>
+                            )}
                         </button>
 
-                        <button className="relative text-gray-500 hover:text-[#1C4A5C] hover:bg-slate-50 p-2 rounded-full transition-all hidden sm:block">
-                            <Bell size={20} strokeWidth={2} />
-                            <span className="absolute top-1 right-1 bg-red-500 text-white text-[8px] font-bold w-4 h-4 flex items-center justify-center rounded-full border-2 border-white">5</span>
-                        </button>
+                        <div className="relative">
+                            <button 
+                                onClick={() => {
+                                    setIsNotificationsOpen(!isNotificationsOpen);
+                                    setIsProfileOpen(false);
+                                }}
+                                className={`relative text-gray-500 hover:text-[#1C4A5C] hover:bg-slate-50 p-2 rounded-full transition-all ${isNotificationsOpen ? 'bg-slate-50 text-[#1C4A5C]' : ''}`}
+                            >
+                                <Bell size={20} strokeWidth={2} />
+                                {notificationCount > 0 && (
+                                    <span className="absolute top-1 right-1 bg-red-500 text-white text-[8px] font-bold w-4 h-4 flex items-center justify-center rounded-full border-2 border-white">{notificationCount}</span>
+                                )}
+                            </button>
+
+                            {isNotificationsOpen && (
+                                <div className="absolute right-0 mt-2 w-80 md:w-96 bg-white border border-gray-100 rounded-2xl shadow-2xl z-[60] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                                    <div className="px-5 py-4 border-b border-gray-50 flex items-center justify-between bg-gray-50/50">
+                                        <h3 className="text-sm font-black text-[#1C4A5C] uppercase tracking-wider">Notifications</h3>
+                                        {notificationCount > 0 && (
+                                            <button 
+                                                onClick={handleMarkAllRead}
+                                                className="text-[10px] font-bold text-[#C87941] hover:underline flex items-center gap-1"
+                                            >
+                                                <Check size={12} /> Mark all read
+                                            </button>
+                                        )}
+                                    </div>
+                                    
+                                    <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
+                                        {notifications.length > 0 ? (
+                                            notifications.map((n) => (
+                                                <div 
+                                                    key={n.id} 
+                                                    className={`px-5 py-4 border-b border-gray-50 hover:bg-gray-50 transition-colors flex gap-3 ${!n.is_read ? 'bg-blue-50/30' : ''}`}
+                                                >
+                                                    <div className="w-10 h-10 rounded-full bg-gray-100 overflow-hidden shrink-0 relative border border-gray-100">
+                                                        {n.actor?.avatar_url ? (
+                                                            <Image src={n.actor.avatar_url} alt="Actor" fill className="object-cover" />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold text-xs bg-gradient-to-br from-gray-100 to-gray-200">
+                                                                {n.actor?.name?.charAt(0) || '?'}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-xs text-gray-800 leading-normal">
+                                                            <span className="font-bold">{n.actor?.name || 'System'}</span> {n.content}
+                                                        </p>
+                                                        <p className="text-[10px] text-gray-400 font-medium mt-1">
+                                                            {formatRelativeTime(n.created_at)}
+                                                        </p>
+                                                    </div>
+                                                    {!n.is_read && (
+                                                        <div className="w-2 h-2 rounded-full bg-[#C87941] mt-2 shrink-0"></div>
+                                                    )}
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="py-12 px-8 text-center">
+                                                <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                                                    <Bell size={20} className="text-gray-300" />
+                                                </div>
+                                                <p className="text-xs text-gray-400 font-medium">No notifications to show yet.</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                    
+                                    <div className="p-3 bg-gray-50/50 border-t border-gray-50 text-center">
+                                        <button className="text-[10px] font-black text-[#1C4A5C] uppercase tracking-widest hover:underline">
+                                            View All Activity
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
 
                         <Link href="/cart">
                             <button className="relative text-gray-500 hover:text-[#8B5A2B] hover:bg-stone-50 p-2 rounded-full transition-all">
@@ -153,7 +332,10 @@ export const NavBar: React.FC<NavBarProps> = ({
                     {/* Profile Dropdown */}
                     <div className="relative ml-1 pl-2 border-l border-gray-200">
                         <button 
-                            onClick={() => setIsProfileOpen(!isProfileOpen)}
+                            onClick={() => {
+                                setIsProfileOpen(!isProfileOpen);
+                                setIsNotificationsOpen(false);
+                            }}
                             className="flex items-center gap-2 p-1 rounded-full hover:bg-gray-50 transition-colors"
                         >
                             {profileImage === '/user-default.svg' || !profileImage ? (
@@ -242,6 +424,10 @@ export const NavBar: React.FC<NavBarProps> = ({
             <PostArtworkModal 
                 isOpen={isPostModalOpen} 
                 onClose={() => setIsPostModalOpen(false)} 
+                currentUser={{
+                    name: userName,
+                    avatar_url: profileImage,
+                }}
             />
         </>
     );

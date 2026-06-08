@@ -1,10 +1,12 @@
 "use client";
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { createClient } from '@/utils/supabase/client';
 import SendMessageModal from '../src/components/SendMessageModal'; 
 import CreatePostModal from '../src/components/CreatePostModal';
+import PostDetailModal from '../src/components/PostDetailModal';
+import ArtworkDetailModal from '../src/components/ArtworkDetailModal';
 import { Star, MessageSquare, ExternalLink, Share2, Heart, MessageCircle, Plus, Send, MoreVertical, Trash2, Edit3, Check } from 'lucide-react';
 import { toggleLike, addComment, deleteComment, editPost, deletePost } from '@/app/actions/index';
 
@@ -13,6 +15,7 @@ interface Artwork {
   title: string;
   price: number;
   file_url: string;
+  created_at?: string;
   users: {
     name: string;
   } | null;
@@ -112,11 +115,50 @@ export default function HomePage() {
   const [editContent, setEditContent] = useState('');
   const [activeMenu, setActiveMenu] = useState<{type: 'post' | 'comment', id: number} | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{type: 'post' | 'comment', id: number, postId?: number} | null>(null);
+  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+  const [selectedArtwork, setSelectedArtwork] = useState<Artwork | null>(null);
+
+  // Infinite Scroll State
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const POSTS_PER_PAGE = 5;
+  const observer = useRef<IntersectionObserver | null>(null);
+
+  const lastPostElementRef = useCallback((node: HTMLDivElement) => {
+    if (loadingPosts || isFetchingMore) return;
+    if (observer.current) observer.current.disconnect();
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore) {
+        setPage(prevPage => prevPage + 1);
+      }
+    });
+    if (node) observer.current.observe(node);
+  }, [loadingPosts, isFetchingMore, hasMore]);
+
+  const handleOpenPostDetail = (post: Post) => {
+    setSelectedPost(post);
+  };
 
   useEffect(() => {
     const fetchUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      setCurrentUser(user as User);
+      if (user) {
+        const { data: profile } = await supabase
+          .from('users')
+          .select('name, avatar_url, role')
+          .eq('user_id', user.id)
+          .single();
+        
+        setCurrentUser({
+          ...user,
+          user_metadata: {
+            ...user.user_metadata,
+            name: profile?.name || user.user_metadata?.name,
+            avatar_url: profile?.avatar_url || user.user_metadata?.avatar_url
+          }
+        } as User);
+      }
     };
     fetchUser();
     
@@ -133,9 +175,53 @@ export default function HomePage() {
   const [selectedArtistId, setSelectedArtistId] = useState('');
   const [selectedArtistName, setSelectedArtistName] = useState('');
 
-  const fetchPosts = async () => {
-    setLoadingPosts(true);
+  const fetchSinglePost = async (postId: number) => {
     const { data: { user } } = await supabase.auth.getUser();
+    const { data, error } = await supabase
+      .from('posts')
+      .select(`
+        post_id,
+        user_id,
+        content,
+        image_url,
+        created_at,
+        users ( name, avatar_url ),
+        likes ( user_id ),
+        comments ( 
+          comment_id,
+          user_id,
+          content,
+          created_at,
+          parent_id,
+          users ( name, avatar_url )
+        )
+      `)
+      .eq('post_id', postId)
+      .single();
+
+    if (!error && data) {
+      const post = data as any;
+      return {
+        ...post,
+        likes_count: post.likes?.length || 0,
+        comments_count: post.comments?.length || 0,
+        user_has_liked: post.likes?.some((l: { user_id: string }) => l.user_id === user?.id) || false,
+        comments: (post.comments as Comment[])?.sort((a, b) => 
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        ) || []
+      } as Post;
+    }
+    return null;
+  };
+
+  const fetchPosts = async (pageNumber: number, isInitial: boolean = false) => {
+    if (isInitial) setLoadingPosts(true);
+    else setIsFetchingMore(true);
+
+    const { data: { user } } = await supabase.auth.getUser();
+
+    const from = pageNumber * POSTS_PER_PAGE;
+    const to = from + POSTS_PER_PAGE - 1;
 
     const { data, error } = await supabase
       .from('posts')
@@ -156,7 +242,8 @@ export default function HomePage() {
           users ( name, avatar_url )
         )
       `)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .range(from, to);
 
     if (!error && data) {
       const formattedPosts = (data as unknown[]).map((post: any) => ({
@@ -168,10 +255,57 @@ export default function HomePage() {
           new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
         ) || []
       }));
-      setPosts(formattedPosts as Post[]);
+      
+      setPosts(prev => isInitial ? formattedPosts : [...prev, ...formattedPosts]);
+      setHasMore(data.length === POSTS_PER_PAGE);
     }
+    
     setLoadingPosts(false);
+    setIsFetchingMore(false);
   };
+
+  useEffect(() => {
+    if (page > 0) {
+      fetchPosts(page);
+    }
+  }, [page]);
+
+  useEffect(() => {
+    const postsChannel = supabase
+      .channel('public:posts')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'posts' },
+        async (payload) => {
+          const newPost = await fetchSinglePost(payload.new.post_id);
+          if (newPost) {
+            setPosts(prev => [newPost, ...prev]);
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'posts' },
+        async (payload) => {
+          const updatedPost = await fetchSinglePost(payload.new.post_id);
+          if (updatedPost) {
+            setPosts(prev => prev.map(p => p.post_id === payload.new.post_id ? updatedPost : p));
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'posts' },
+        (payload) => {
+          setPosts(prev => prev.filter(p => p.post_id !== payload.old.post_id));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(postsChannel);
+    };
+  }, []);
 
   const handleEditPost = async (postId: number) => {
     if (!editContent.trim()) return;
@@ -180,7 +314,7 @@ export default function HomePage() {
     try {
       await editPost(postId, editContent);
     } catch {
-      fetchPosts();
+      fetchPosts(0, true);
     }
   };
 
@@ -190,7 +324,7 @@ export default function HomePage() {
     try {
       await deletePost(postId);
     } catch {
-      fetchPosts();
+      fetchPosts(0, true);
     }
   };
 
@@ -210,7 +344,7 @@ export default function HomePage() {
     try {
       await deleteComment(commentId);
     } catch {
-      fetchPosts();
+      fetchPosts(0, true);
     }
   };
 
@@ -236,7 +370,7 @@ export default function HomePage() {
     };
 
     fetchArtworks();
-    fetchPosts();
+    fetchPosts(0, true);
   }, []);
 
   const handleLike = async (postId: number) => {
@@ -256,7 +390,7 @@ export default function HomePage() {
     try {
       await toggleLike(postId);
     } catch (error) {
-      fetchPosts();
+      fetchPosts(0, true);
     }
   };
 
@@ -265,8 +399,11 @@ export default function HomePage() {
     const content = commentInputs[key];
     if (!content || !currentUser) return;
 
+    // Use a unique ID that doesn't rely on Date.now() in a way that causes hydration/pure errors
+    const tempCommentId = Math.floor(Math.random() * 1000000);
+
     const tempComment: Comment = {
-      comment_id: Date.now(),
+      comment_id: tempCommentId,
       user_id: currentUser.id, 
       content: content,
       created_at: new Date().toISOString(),
@@ -295,7 +432,7 @@ export default function HomePage() {
       await addComment(postId, content, parentId);
     } catch (error) {
       console.error(error);
-      fetchPosts();
+      fetchPosts(0, true);
     }
   };
 
@@ -355,6 +492,16 @@ export default function HomePage() {
     fetchArtists();
   }, []); 
 
+  useEffect(() => {
+    if (artworks.length <= 1) return;
+    
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % artworks.length);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [artworks.length]);
+
   const openMessageModal = (id: string, name: string) => {
     setSelectedArtistId(id);
     setSelectedArtistName(name);
@@ -393,7 +540,10 @@ export default function HomePage() {
                          by <span className="text-[#f2a83b] font-bold">{art.users?.name}</span>
                       </p>
                       <div className="flex items-center gap-4">
-                          <button className="bg-[#f2a83b] text-slate-900 px-10 py-4 rounded-full font-black hover:bg-[#ffbd59] transition-all hover:scale-105 active:scale-95 shadow-lg flex items-center gap-2">
+                          <button 
+                            onClick={() => setSelectedArtwork(art)}
+                            className="bg-[#f2a83b] text-slate-900 px-10 py-4 rounded-full font-black hover:bg-[#ffbd59] transition-all hover:scale-105 active:scale-95 shadow-lg flex items-center gap-2"
+                          >
                               View Artwork
                               <ExternalLink size={18} />
                           </button>
@@ -458,8 +608,12 @@ export default function HomePage() {
             </div>
           ) : posts.length > 0 ? (
             <div className="space-y-6">
-              {posts.map((post) => (
-                <div key={post.post_id} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+              {posts.map((post, index) => (
+                <div 
+                  key={post.post_id} 
+                  ref={index === posts.length - 1 ? lastPostElementRef : null}
+                  className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+                >
                   <div className="flex items-center gap-3 mb-4">
                     <Link href={`/profile/${post.user_id}`} className="shrink-0">
                       {post.users?.avatar_url ? (
@@ -539,17 +693,27 @@ export default function HomePage() {
                       </div>
                     </div>
                   ) : (
-                    post.content && <p className="text-sm text-gray-700 mb-4 leading-relaxed">{post.content}</p>
+                    post.content && (
+                      <p 
+                        onClick={() => handleOpenPostDetail(post)}
+                        className="text-sm text-gray-700 mb-4 leading-relaxed cursor-pointer hover:text-gray-900 transition-colors"
+                      >
+                        {post.content}
+                      </p>
+                    )
                   )}
                   
                   {post.image_url && (
-                    <div className="relative w-full overflow-hidden rounded-xl mb-5 bg-gray-50 border border-gray-100 flex items-center justify-center">
+                    <div 
+                      onClick={() => handleOpenPostDetail(post)}
+                      className="relative w-full overflow-hidden rounded-xl mb-5 bg-gray-50 border border-gray-100 flex items-center justify-center cursor-pointer group/image"
+                    >
                       <Image 
                         src={post.image_url} 
                         alt="Post content"
                         width={800}
                         height={1000}
-                        className="w-full h-auto max-h-[550px] object-contain"
+                        className="w-full h-auto max-h-[550px] object-contain group-hover/image:scale-[1.01] transition-transform duration-500"
                       />
                     </div>
                   )}
@@ -562,7 +726,10 @@ export default function HomePage() {
                       <Heart size={18} strokeWidth={2} fill={post.user_has_liked ? "currentColor" : "none"} /> 
                       {post.likes_count}
                     </button>
-                    <button className="flex items-center gap-2 hover:text-[#1C4A5C] font-medium transition-colors">
+                    <button 
+                      onClick={() => handleOpenPostDetail(post)}
+                      className="flex items-center gap-2 hover:text-[#1C4A5C] font-medium transition-colors"
+                    >
                       <MessageCircle size={18} strokeWidth={2} /> {post.comments_count}
                     </button>
                     <button 
@@ -573,145 +740,24 @@ export default function HomePage() {
                       {copiedId === post.post_id ? 'Copied!' : 'Share'}
                     </button>
                   </div>
-
-                  {/* Comments List */}
-                  {post.comments.length > 0 && (
-                    <div className="mt-4 space-y-4 pl-4 border-l-2 border-gray-50">
-                      {post.comments
-                        .filter(c => !c.parent_id)
-                        .map((comment) => (
-                        <div key={comment.comment_id} className="space-y-3">
-                          <div className="flex gap-2">
-                            <Link href={`/profile/${comment.user_id}`} className="shrink-0">
-                              <div className="w-8 h-8 bg-gray-100 rounded-full flex-none overflow-hidden relative border border-gray-100">
-                                {comment.users?.avatar_url ? (
-                                  <Image src={comment.users.avatar_url} alt={comment.users?.name || 'User'} fill className="object-cover" />
-                                ) : (
-                                  <div className="w-full h-full bg-[#1C4A5C] text-white text-[10px] flex items-center justify-center font-bold">
-                                    {comment.users?.name?.charAt(0) || '?'}
-                                  </div>
-                                )}
-                              </div>
-                            </Link>
-                            <div className="flex-1">
-                              <div className="group/comment flex items-start gap-2 max-w-full">
-                                <div className="bg-gray-100 rounded-2xl px-4 py-2 inline-block max-w-full shadow-sm">
-                                  <Link href={`/profile/${comment.user_id}`} className="text-[10px] font-bold text-[#1C4A5C] mb-0.5 hover:underline">{comment.users?.name || 'User'}</Link>
-                                  <p className="text-sm text-gray-800 leading-snug">{comment.content}</p>
-                                </div>
-                                {currentUser?.id === comment.user_id && (
-                                  <button 
-                                    onClick={() => setDeleteConfirm({type: 'comment', id: comment.comment_id, postId: post.post_id})}
-                                    className="p-1.5 text-gray-400 hover:text-red-600 opacity-0 group-hover/comment:opacity-100 transition-all rounded-full hover:bg-red-50"
-                                  >
-                                    <Trash2 size={12} />
-                                  </button>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-3 mt-1 ml-2">
-                                <button 
-                                  onClick={() => setReplyingTo(replyingTo === comment.comment_id ? null : comment.comment_id)}
-                                  className="text-[10px] font-black text-gray-600 hover:text-[#1C4A5C] transition-colors uppercase tracking-wider"
-                                >
-                                  Reply
-                                </button>
-                                <span className="text-[10px] text-gray-500 font-medium">
-                                  {formatRelativeTime(comment.created_at)}
-                                </span>
-                              </div>
-
-                              {/* Replies */}
-                              <div className="mt-3 space-y-3 pl-4 border-l-2 border-gray-100">
-                                {post.comments
-                                  .filter(reply => reply.parent_id === comment.comment_id)
-                                  .map(reply => (
-                                    <div key={reply.comment_id} className="flex gap-2 group/reply">
-                                      <Link href={`/profile/${reply.user_id}`} className="shrink-0">
-                                        <div className="w-6 h-6 bg-gray-100 rounded-full flex-none overflow-hidden relative">
-                                          {reply.users?.avatar_url ? (
-                                            <Image src={reply.users.avatar_url} alt={reply.users.name || 'User'} fill className="object-cover" />
-                                          ) : (
-                                            <div className="w-full h-full bg-[#3A6A7C] text-white text-[8px] flex items-center justify-center font-bold">
-                                              {reply.users?.name?.charAt(0) || '?'}
-                                            </div>
-                                          )}
-                                        </div>
-                                      </Link>
-                                      <div className="flex-1 flex items-start gap-2 max-w-full">
-                                        <div className="bg-gray-200/70 rounded-2xl px-3 py-1.5 inline-block max-w-[90%] shadow-sm">
-                                          <Link href={`/profile/${reply.user_id}`} className="text-[9px] font-bold text-[#1C4A5C] mb-0.5 hover:underline">{reply.users?.name || 'User'}</Link>
-                                          <p className="text-xs text-gray-800">{reply.content}</p>
-                                        </div>
-                                        {currentUser?.id === reply.user_id && (
-                                          <button 
-                                            onClick={() => setDeleteConfirm({type: 'comment', id: reply.comment_id, postId: post.post_id})}
-                                            className="p-1 text-gray-400 hover:text-red-600 opacity-0 group-hover/reply:opacity-100 transition-all rounded-full hover:bg-red-50"
-                                          >
-                                            <Trash2 size={10} />
-                                          </button>
-                                        )}
-                                      </div>
-                                    </div>
-                                  ))}
-                                
-                                {/* Reply Input */}
-                                {replyingTo === comment.comment_id && (
-                                  <div className="flex gap-2 mt-2 animate-in fade-in slide-in-from-top-1 duration-200">
-                                    <input 
-                                      type="text" 
-                                      autoFocus
-                                      placeholder={`Reply to ${comment.users?.name || 'User'}...`}
-                                      className="flex-1 bg-white border border-gray-200 rounded-full px-4 py-1.5 text-xs text-gray-900 focus:outline-none focus:border-[#1C4A5C]"
-                                      value={commentInputs[`reply-${comment.comment_id}`] || ''}
-                                      onChange={(e) => setCommentInputs(prev => ({ ...prev, [`reply-${comment.comment_id}`]: e.target.value }))}
-                                      onKeyDown={(e) => e.key === 'Enter' && handleComment(post.post_id, comment.comment_id)}
-                                    />
-                                    <button 
-                                      onClick={() => handleComment(post.post_id, comment.comment_id)}
-                                      className="p-1.5 text-[#1C4A5C] hover:bg-gray-100 rounded-full transition-colors"
-                                    >
-                                      <Send size={14} />
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Top-level Comment Input */}
-                  <div className="mt-6 flex gap-3 items-center border-t border-gray-50 pt-4">
-                    <div className="w-8 h-8 rounded-full bg-gray-100 flex-none overflow-hidden relative border border-gray-100">
-                      {currentUser?.user_metadata?.avatar_url ? (
-                        <Image src={currentUser.user_metadata.avatar_url} alt="Me" fill className="object-cover" />
-                      ) : (
-                        <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400">
-                          <Plus size={14} />
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 relative">
-                      <input 
-                        type="text" 
-                        placeholder="Write a comment..."
-                        className="w-full bg-gray-50 border border-transparent rounded-full px-5 py-2.5 text-sm text-gray-900 focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#1C4A5C]/10 transition-all placeholder:text-gray-400"
-                        value={commentInputs[`post-${post.post_id}`] || ''}
-                        onChange={(e) => setCommentInputs(prev => ({ ...prev, [`post-${post.post_id}`]: e.target.value }))}
-                        onKeyDown={(e) => e.key === 'Enter' && handleComment(post.post_id)}
-                      />
-                      <button 
-                        onClick={() => handleComment(post.post_id)}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-[#1C4A5C] hover:bg-gray-100 rounded-full transition-colors"
-                      >
-                        <Send size={18} />
-                      </button>
-                    </div>
-                  </div>
                 </div>
               ))}
+              
+              {/* Infinite Scroll Loader */}
+              {isFetchingMore && (
+                <div className="py-8 flex justify-center">
+                  <div className="flex items-center gap-2 text-[#1C4A5C] font-bold text-sm animate-pulse">
+                    <div className="w-5 h-5 border-2 border-[#1C4A5C] border-t-transparent rounded-full animate-spin"></div>
+                    Loading more stories...
+                  </div>
+                </div>
+              )}
+
+              {!hasMore && posts.length > 0 && (
+                <div className="py-12 text-center">
+                  <p className="text-gray-400 text-sm font-medium italic">You&apos;ve caught up with everyone! 🎉</p>
+                </div>
+              )}
             </div>
           ) : (
             <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
@@ -734,7 +780,7 @@ export default function HomePage() {
             ) : topArtists && topArtists.length > 0 ? (
               topArtists.map((artist) => (
                 <div key={artist.id} className="bg-white p-2.5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
-                  <div className="flex items-center gap-2.5">
+                  <Link href={`/profile/${artist.id}`} className="flex items-center gap-2.5 min-w-0 group">
                     {artist.avatar ? (
                       <div className="w-8 h-8 relative flex-none">
                         <Image src={artist.avatar} alt={artist.name} fill className="bg-gray-200 rounded-full object-cover aspect-square" />
@@ -745,7 +791,7 @@ export default function HomePage() {
                       </div>
                     )}
                     <div className="min-w-0">
-                      <h4 className="font-bold text-[11px] text-gray-900 flex items-center gap-1 truncate">
+                      <h4 className="font-bold text-[11px] text-gray-900 flex items-center gap-1 truncate group-hover:text-[#1C4A5C] transition-colors">
                         {artist.name} 
                         {artist.rating >= 4.5 && (
                           <Star size={10} fill="#3b82f6" stroke="white" strokeWidth={2} className="text-blue-500 flex-none" />
@@ -757,7 +803,7 @@ export default function HomePage() {
                         {artist.rating > 0 ? artist.rating : "New"} 
                       </p>
                     </div>
-                  </div>
+                  </Link>
                   <button 
                     onClick={() => openMessageModal(artist.id, artist.name)}
                     className="px-2.5 py-1 border border-gray-100 rounded-full text-[9px] font-bold text-gray-600 hover:border-[#1C4A5C] hover:text-[#1C4A5C] transition-colors flex-none flex items-center gap-1"
@@ -801,6 +847,28 @@ export default function HomePage() {
         onClose={() => setIsModalOpen(false)}
         receiverId={selectedArtistId}
         receiverName={selectedArtistName}
+      />
+
+      <PostDetailModal 
+        isOpen={!!selectedPost}
+        onClose={() => setSelectedPost(null)}
+        post={selectedPost ? {
+          ...selectedPost,
+          post_id: selectedPost.post_id.toString()
+        } : null}
+        userName={selectedPost?.users?.name || 'User'}
+        userAvatar={selectedPost?.users?.avatar_url || null}
+        currentUser={currentUser}
+      />
+
+      <ArtworkDetailModal 
+        isOpen={!!selectedArtwork}
+        onClose={() => setSelectedArtwork(null)}
+        artwork={selectedArtwork ? {
+          ...selectedArtwork,
+          artwork_id: selectedArtwork.artwork_id.toString(),
+          description: null // We don't fetch description in the list, so we set to null or fetch it
+        } : null}
       />
 
       {/* Delete Confirmation Modal */}

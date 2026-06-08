@@ -136,16 +136,18 @@ export async function createCommissionRequest(formData: FormData) {
   const description = formData.get('description') as string;
   const budget = parseFloat(formData.get('budget') as string);
   const deadline = formData.get('deadline') as string;
+  const artistId = formData.get('artist_id') as string | null;
 
   const { error } = await supabase
     .from('commission_requests')
     .insert({
       client_id: user.id,
+      artist_id: artistId,
       title: title,              
       description: description,  
       budget: budget,
       deadline: deadline,
-      status: 'open' 
+      status: artistId ? 'awaiting_offer' : 'open' 
     });
 
   if (error) {
@@ -622,18 +624,20 @@ export async function toggleLike(postId: number) {
 export async function addComment(postId: number, content: string, parentId?: number) {
   const cookieStore = cookies();
   const supabase = await createClient(cookieStore);
-  
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("You must be logged in to comment.");
 
-  const { error } = await supabase
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) throw new Error("You must be logged in to comment.");
+
+  const { data, error } = await supabase
     .from('comments')
     .insert({
       post_id: postId,
       user_id: user.id,
       content: content,
       parent_id: parentId || null
-    });
+    })
+    .select()
+    .single();
 
   if (error) {
     console.error("Database error:", error);
@@ -641,6 +645,7 @@ export async function addComment(postId: number, content: string, parentId?: num
   }
 
   revalidatePath('/homepage');
+  return data;
 }
 
 export async function deleteComment(commentId: number) {
@@ -1048,4 +1053,26 @@ export async function approvePayoutRequest(payoutId: number) {
 
   // 3. Revalidate dashboard layouts so changes reflect instantly
   revalidatePath('/dashboard');
+}
+
+// --- NOTIFICATION ACTIONS ---
+
+export async function markAllNotificationsAsRead() {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) throw new Error("User not authenticated");
+
+  const { error } = await supabase
+    .from('notifications')
+    .update({ is_read: true })
+    .eq('user_id', user.id);
+
+  if (error) {
+    console.error("Failed to mark notifications as read:", error);
+    throw new Error("Update failed");
+  }
+
+  revalidatePath('/');
 }
