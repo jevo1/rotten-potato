@@ -26,17 +26,24 @@ export default async function ProfilePage() {
     .eq('user_id', user.id)
     .single()
 
-  // Fetch follower count
-  const { count: followerCount } = await supabase
-    .from('follows')
-    .select('*', { count: 'exact', head: true })
-    .eq('following_id', user.id)
-
-  // Fetch artworks and posts for the gallery
-  const [{ data: artworks }, { data: posts }] = await Promise.all([
-    supabase.from('artworks').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
-    supabase.from('posts').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
+  // Fetch follows stats
+  const [{ count: followerCount }, { count: followingCount }] = await Promise.all([
+    supabase.from('follows').select('*', { count: 'exact', head: true }).eq('following_id', user.id),
+    supabase.from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', user.id)
   ])
+
+  // Fetch artworks, posts, and reviews for the gallery
+  const [{ data: artworks }, { data: posts }, { data: reviews }] = await Promise.all([
+    supabase.from('artworks').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+    supabase.from('posts').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+    supabase.from('rating_reviews').select('*, users!client_id(name, avatar_url)').eq('artist_id', user.id).order('created_at', { ascending: false })
+  ])
+
+  // Calculate rating stats
+  const totalReviews = reviews?.length || 0
+  const avgRating = totalReviews > 0 
+    ? reviews!.reduce((acc, r) => acc + r.rating, 0) / totalReviews 
+    : 0
 
   const displayName = profile?.name || user.email?.split('@')[0] || 'User'
   const isArtist = profile?.role === 'artist'
@@ -58,12 +65,18 @@ export default async function ProfilePage() {
           isOwner={true}
           isFollowingInitial={false}
           followerCount={followerCount || 0}
+          followingCount={followingCount || 0}
+          avgRating={avgRating}
+          reviewCount={totalReviews}
         />
 
         <div className="mt-12">
           <ProfileGallery 
             artworks={artworks || []} 
             posts={posts || []} 
+            reviews={reviews || []}
+            profileName={displayName}
+            profileAvatar={profile?.avatar_url}
           />
         </div>
       </main>

@@ -4,6 +4,8 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useState, useOptimistic } from 'react'
 import { followUser, unfollowUser } from '@/app/profile/actions'
+import SendMessageModal from './SendMessageModal'
+import DirectCommissionModal from './DirectCommissionModal'
 
 interface ProfileHeaderProps {
   profile: {
@@ -28,6 +30,9 @@ interface ProfileHeaderProps {
   isOwner: boolean
   isFollowingInitial: boolean
   followerCount: number
+  followingCount: number
+  avgRating?: number
+  reviewCount?: number
 }
 
 export default function ProfileHeader({ 
@@ -35,9 +40,14 @@ export default function ProfileHeader({
   artistDetails, 
   isOwner, 
   isFollowingInitial,
-  followerCount 
+  followerCount,
+  followingCount,
+  avgRating = 0,
+  reviewCount = 0
 }: ProfileHeaderProps) {
   const [isFollowing, setIsFollowing] = useState(isFollowingInitial)
+  const [isMessageModalOpen, setIsMessageModalOpen] = useState(false)
+  const [isCommissionModalOpen, setIsCommissionModalOpen] = useState(false)
   const [optimisticFollowing, addOptimisticFollowing] = useOptimistic(
     isFollowing,
     (state, newState: boolean) => newState
@@ -105,9 +115,21 @@ export default function ProfileHeader({
               </Link>
             ) : (
               <>
-                <button className="p-2.5 bg-white hover:bg-gray-50 text-gray-700 rounded-full border border-gray-200 shadow-sm transition-all">
+                <button 
+                  onClick={() => setIsMessageModalOpen(true)}
+                  title="Send Message"
+                  className="p-2.5 bg-white hover:bg-gray-50 text-gray-700 rounded-full border border-gray-200 shadow-sm transition-all"
+                >
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                 </button>
+                {profile.role === 'artist' && (
+                  <button 
+                    onClick={() => setIsCommissionModalOpen(true)}
+                    className="px-6 py-2.5 bg-[#1C4A5C] text-white text-sm font-bold rounded-full hover:bg-[#143745] transition-all shadow-md shadow-[#1C4A5C]/20"
+                  >
+                    Commission Me
+                  </button>
+                )}
                 <button 
                   onClick={handleFollowToggle}
                   className={`px-8 py-2.5 rounded-full text-sm font-bold transition-all shadow-md ${
@@ -150,6 +172,16 @@ export default function ProfileHeader({
               <div className="flex items-center gap-1.5">
                 <span className="text-gray-900 font-bold">{followerCount}</span> Followers
               </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-gray-900 font-bold">{followingCount}</span> Following
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-0.5 text-[#f2a83b]">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  <span className="text-gray-900 font-bold">{avgRating.toFixed(1)}</span>
+                </div>
+                <span className="text-gray-400">({reviewCount} reviews)</span>
+              </div>
               {artistDetails?.location && (
                 <div className="flex items-center gap-1.5">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
@@ -190,6 +222,20 @@ export default function ProfileHeader({
           </div>
         </div>
       </div>
+
+      <SendMessageModal 
+        isOpen={isMessageModalOpen} 
+        onClose={() => setIsMessageModalOpen(false)} 
+        receiverId={profile.user_id} 
+        receiverName={profile.name} 
+      />
+
+      <DirectCommissionModal 
+        isOpen={isCommissionModalOpen} 
+        onClose={() => setIsCommissionModalOpen(false)} 
+        artistId={profile.user_id} 
+        artistName={profile.name} 
+      />
     </div>
   )
 }
