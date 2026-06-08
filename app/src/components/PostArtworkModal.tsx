@@ -8,9 +8,14 @@ import Image from 'next/image';
 interface PostArtworkModalProps {
   isOpen: boolean;
   onClose: () => void;
+  currentUser?: {
+    name?: string;
+    avatar_url?: string;
+    email?: string;
+  } | null;
 }
 
-export default function PostArtworkModal({ isOpen, onClose }: PostArtworkModalProps) {
+export default function PostArtworkModal({ isOpen, onClose, currentUser }: PostArtworkModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const router = useRouter();
@@ -45,9 +50,20 @@ export default function PostArtworkModal({ isOpen, onClose }: PostArtworkModalPr
         
         {/* Header - Fixed */}
         <div className="bg-[#1C4A5C] p-6 text-white flex items-center justify-between flex-none">
-          <div>
-            <h1 className="text-2xl font-black">List an Artwork</h1>
-            <p className="text-sm text-blue-50/80 font-medium mt-0.5">Share your creation with the community</p>
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-white/20 rounded-full overflow-hidden relative shrink-0 border-2 border-white/20">
+              {currentUser?.avatar_url ? (
+                <Image src={currentUser.avatar_url} alt="Me" fill className="object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center font-bold text-lg">
+                  {currentUser?.name?.charAt(0) || '?'}
+                </div>
+              )}
+            </div>
+            <div>
+              <h1 className="text-xl font-black leading-tight">List an Artwork</h1>
+              <p className="text-xs text-blue-50/70 font-medium mt-0.5">Posting as <span className="text-white font-bold">{currentUser?.name || 'Artist'}</span></p>
+            </div>
           </div>
           <button 
             onClick={onClose}
@@ -68,6 +84,10 @@ export default function PostArtworkModal({ isOpen, onClose }: PostArtworkModalPr
                 {previewUrl ? (
                   <div className="relative w-full h-full">
                     <Image src={previewUrl} alt="Preview" fill className="object-contain" />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="mb-2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                      <span className="text-xs font-black uppercase tracking-widest">Change Image</span>
+                    </div>
                   </div>
                 ) : (
                   <div className="text-center p-4">

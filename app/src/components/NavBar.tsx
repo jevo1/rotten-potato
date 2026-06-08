@@ -424,6 +424,10 @@ export const NavBar: React.FC<NavBarProps> = ({
             <PostArtworkModal 
                 isOpen={isPostModalOpen} 
                 onClose={() => setIsPostModalOpen(false)} 
+                currentUser={{
+                    name: userName,
+                    avatar_url: profileImage,
+                }}
             />
         </>
     );
