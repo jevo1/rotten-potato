@@ -4,11 +4,12 @@ import { useRouter } from 'next/navigation';
 import { NavBar } from '@/app/src/components/NavBar';
 
 interface DashboardNavBarProps {
+  userId: string;
   displayName: string;
   avatarUrl: string | null;
 }
 
-export default function DashboardNavBar({ displayName, avatarUrl }: DashboardNavBarProps) {
+export default function DashboardNavBar({ userId, displayName, avatarUrl }: DashboardNavBarProps) {
   const router = useRouter();
 
   // Route back to the home tabs smoothly using your search query params
@@ -18,6 +19,7 @@ export default function DashboardNavBar({ displayName, avatarUrl }: DashboardNav
 
   return (
     <NavBar 
+      userId={userId}
       logoText="GamâLokal" 
       userName={displayName.split(' ')[0] || 'User'} 
       profileImage={avatarUrl || '/user-default.svg'} 

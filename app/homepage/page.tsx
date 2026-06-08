@@ -16,6 +16,7 @@ function HomepageContent() {
   const [userName, setUserName] = useState('A');
   const [profileImage, setProfileImage] = useState('/user-default.svg');
   const [isArtist, setIsArtist] = useState(false);
+  const [userId, setUserId] = useState<string | undefined>(undefined);
   
   // Initialize from search params
   const [activeTab, setActiveTab] = useState(tabQuery ? parseInt(tabQuery) : 0);
@@ -39,6 +40,7 @@ function HomepageContent() {
         if (authError) return;
 
         if (user) {
+          setUserId(user.id);
           const { data: userProfile } = await supabase
             .from('users')
             .select('name, avatar_url, role')
@@ -68,6 +70,7 @@ function HomepageContent() {
   return (
     <div className="bg-[#FCFAF8] min-h-screen w-full flex flex-col">
       <NavBar 
+        userId={userId}
         logoText="GamâLokal" 
         userName={userName} 
         profileImage={profileImage} 

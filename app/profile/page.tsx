@@ -52,6 +52,7 @@ export default async function ProfilePage() {
     <div className="bg-[#FCFAF8] min-h-screen w-full flex flex-col font-sans">
       <div className="sticky top-0 z-50 w-full">
         <ProfileNavBar 
+          userId={user.id}
           displayName={displayName} 
           avatarUrl={profile?.avatar_url} 
           isArtist={isArtist} 
