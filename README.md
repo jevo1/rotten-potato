@@ -3,10 +3,20 @@ GamâLokal: An online commerce platform connecting clients with local artists fo
 
 | Internal Release Code | Date Released |
 | :--- | :--- |
+| RP.010.005 | 2026-06-09 |
 | RP.010.004 | 2026-06-06 |
 | RP.010.003 | 2026-06-04 |
 | RP.010.002 | 2026-06-02 |
 | RP.010.001 | 2026-02-29 |
+
+## RP.010.005 Release Notes
+* feat(notifications): implement real-time dynamic notifications with unread counts and dropdown UI in NavBar
+* feat(feed): implement paginated infinite scroll and real-time post/deletion synchronization for the Community Feed
+* feat(social): enhance Post Detail Modal with threaded replies, optimistic interactions, and deep linking
+* feat(commissions): implement direct commission proposal system with "Commission Me" functionality on artist profiles
+* feat(profile): integrate client reviews, star ratings, and following statistics into public profile pages
+* feat(ux): add auto-advancing featured carousel and functional artist discovery links in the homepage sidebar
+* refactor(core): resolve Rules of Hooks violations and implement robust unique ID generation for optimistic state
 
 ## RP.010.004 Release Notes
 * feat(onboarding): add role selection page to allow users to choose between Artist and Client roles
