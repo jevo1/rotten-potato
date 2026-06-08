@@ -15,7 +15,7 @@ interface ArtworkDetailModalProps {
     description: string | null;
     file_url: string;
     price: number;
-    created_at: string;
+    created_at?: string;
     category?: string;
   } | null;
 }
@@ -107,7 +107,7 @@ export default function ArtworkDetailModal({ isOpen, onClose, artwork }: Artwork
                 <Clock size={10} /> Listed on
               </span>
               <span className="text-sm font-bold text-gray-700">
-                {new Date(artwork.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                {artwork.created_at ? new Date(artwork.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'N/A'}
               </span>
             </div>
           </div>
