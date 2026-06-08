@@ -34,6 +34,7 @@ export default async function CartPage() {
         <div className="bg-[#FCFAF8] min-h-screen flex flex-col">
             {/* Nav containing router integration and synchronized profile caching */}
             <CartNavBar 
+                userId={user.id}
                 displayName={displayName} 
                 avatarUrl={avatarUrl} 
                 isArtist={isArtist}

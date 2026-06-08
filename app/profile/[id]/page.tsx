@@ -90,6 +90,7 @@ export default async function PublicProfilePage({ params }: PageProps) {
     <div className="bg-[#FCFAF8] min-h-screen w-full flex flex-col font-sans">
       <div className="sticky top-0 z-50 w-full">
         <NavBar 
+          userId={viewer?.id}
           logoText="GamâLokal" 
           userName={viewerName} 
           profileImage={viewerAvatar} 

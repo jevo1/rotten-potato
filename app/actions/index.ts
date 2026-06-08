@@ -1051,3 +1051,25 @@ export async function approvePayoutRequest(payoutId: number) {
   // 3. Revalidate dashboard layouts so changes reflect instantly
   revalidatePath('/dashboard');
 }
+
+// --- NOTIFICATION ACTIONS ---
+
+export async function markAllNotificationsAsRead() {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) throw new Error("User not authenticated");
+
+  const { error } = await supabase
+    .from('notifications')
+    .update({ is_read: true })
+    .eq('user_id', user.id);
+
+  if (error) {
+    console.error("Failed to mark notifications as read:", error);
+    throw new Error("Update failed");
+  }
+
+  revalidatePath('/');
+}

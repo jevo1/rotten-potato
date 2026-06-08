@@ -33,6 +33,7 @@ interface SalesRecord {
 
 export default function DashboardPage() {
   const [userData, setUserData] = useState<UserProfile | null>(null);
+  const [userId, setUserId] = useState<string>('');
   const [myArtworks, setMyArtworks] = useState<Artwork[]>([]);
   const [salesHistory, setSalesHistory] = useState<SalesRecord[]>([]);
   const [totalEarnings, setTotalEarnings] = useState<number>(0);
@@ -51,10 +52,11 @@ export default function DashboardPage() {
         return;
       }
 
+      setUserId(user.id);
+
       console.log("--- GAMALOKAL DEBUG LOGS ---");
       console.log("1. Currently Logged In User UUID:", user.id);
 
-      // 1. Fetch user profile
       const { data: profile, error: profileError } = await supabase
         .from('users')
         .select('role, name, avatar_url')
@@ -70,7 +72,6 @@ export default function DashboardPage() {
         return;
       }
 
-      // 2. Fetch artist's listings
       const { data: artworks, error: artworksError } = await supabase
         .from('artworks')
         .select('*')
@@ -79,7 +80,6 @@ export default function DashboardPage() {
 
       if (artworksError) console.error("Artworks Fetch Error:", artworksError.message);
 
-      // 3. Fetch successful payments matching this artist's ID
       const { data: payments, error: paymentsError } = await supabase
         .from('payments')
         .select(`
@@ -100,7 +100,6 @@ export default function DashboardPage() {
         console.log("2. Raw Payments Found for this Artist:", payments);
       }
 
-      // 4. Fetch payout requests matching this artist's ID
       const { data: payouts, error: payoutsError } = await supabase
         .from('payout_requests')
         .select('amount')
@@ -109,11 +108,9 @@ export default function DashboardPage() {
 
       if (payoutsError) console.error("Payouts Fetch Error:", payoutsError.message);
 
-      // 5. Ledger Calculations
       const grossSales = payments?.reduce((sum, record) => sum + Number(record.amount), 0) || 0;
       const totalWithdrawn = payouts?.reduce((sum, record) => sum + Number(record.amount), 0) || 0;
 
-      // 10% platform fee commission rule
       const platformFeePercent = 0.10;
       const netIntake = grossSales * (1 - platformFeePercent);
       const netAvailableBalance = Math.max(0, netIntake - totalWithdrawn);
@@ -163,6 +160,7 @@ export default function DashboardPage() {
     return (
       <div className="min-h-screen bg-[#FCFAF8] flex flex-col">
         <DashboardNavBar
+          userId={userId}
           displayName={userData?.name || 'User'}
           avatarUrl={userData?.avatar_url || null}
         />
@@ -183,6 +181,7 @@ export default function DashboardPage() {
   return (
     <div className="bg-[#FCFAF8] min-h-screen w-full flex flex-col">
       <DashboardNavBar
+        userId={userId}
         displayName={userData?.name || 'User'}
         avatarUrl={userData?.avatar_url || null}
       />

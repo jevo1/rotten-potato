@@ -4,12 +4,13 @@ import { useRouter } from 'next/navigation';
 import { NavBar } from '@/app/src/components/NavBar';
 
 interface ProfileNavBarProps {
+  userId: string;
   displayName: string;
   avatarUrl: string | null;
   isArtist: boolean;
 }
 
-export default function ProfileNavBar({ displayName, avatarUrl, isArtist }: ProfileNavBarProps) {
+export default function ProfileNavBar({ userId, displayName, avatarUrl, isArtist }: ProfileNavBarProps) {
   const router = useRouter();
 
   const handleNavigation = (tabIndex: number) => {
@@ -18,6 +19,7 @@ export default function ProfileNavBar({ displayName, avatarUrl, isArtist }: Prof
 
   return (
     <NavBar 
+      userId={userId}
       logoText="GamâLokal" 
       userName={displayName} 
       profileImage={avatarUrl || '/user-default.svg'} 
