@@ -136,16 +136,18 @@ export async function createCommissionRequest(formData: FormData) {
   const description = formData.get('description') as string;
   const budget = parseFloat(formData.get('budget') as string);
   const deadline = formData.get('deadline') as string;
+  const artistId = formData.get('artist_id') as string | null;
 
   const { error } = await supabase
     .from('commission_requests')
     .insert({
       client_id: user.id,
+      artist_id: artistId,
       title: title,              
       description: description,  
       budget: budget,
       deadline: deadline,
-      status: 'open' 
+      status: artistId ? 'awaiting_offer' : 'open' 
     });
 
   if (error) {
