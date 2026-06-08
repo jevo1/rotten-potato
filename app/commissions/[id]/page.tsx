@@ -284,7 +284,7 @@ export default function CommissionWorkspace() {
                  <span className="font-bold text-[#1C4A5C]">{acceptedOffer?.deposit_percentage || 50}%</span>
                </div>
                <div className="pt-5 border-t border-gray-50">
-                  <p className="text-xs text-gray-500 font-medium leading-relaxed italic">"{commission.description}"</p>
+                  <p className="text-xs text-gray-500 font-medium leading-relaxed italic">&quot;{commission.description}&quot;</p>
                </div>
                
                <div className="flex items-center gap-4 pt-4">

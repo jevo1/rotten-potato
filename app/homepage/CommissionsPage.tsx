@@ -605,7 +605,7 @@ export default function CommissionsPage() {
                                 <p className="text-[10px] text-gray-500">Proposed Price: ₱{offer.offer_amount} • Deposit: {offer.deposit_percentage}%</p>
                               </div>
                             </div>
-                            <p className="text-xs text-gray-600 mb-4 line-clamp-3 italic">"{offer.message}"</p>
+                            <p className="text-xs text-gray-600 mb-4 line-clamp-3 italic">&quot;{offer.message}&quot;</p>
                             <button 
                               onClick={() => handleAcceptOffer(job.request_id, offer.offer_id, offer.artist_id)}
                               disabled={isAccepting}
