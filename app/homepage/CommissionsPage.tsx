@@ -104,7 +104,7 @@ export default function CommissionsPage() {
         
       if (myReqData) setMyRequests(myReqData as unknown as CommissionRequest[]);
 
-      // Fetch artist's active jobs
+      // Fetch artist's active jobs (including direct requests in 'open' status)
       const { data: myJobData } = await supabase
         .from('commission_requests')
         .select(`
@@ -112,7 +112,6 @@ export default function CommissionsPage() {
           client:users!client_id ( name, avatar_url )
         `)
         .eq('artist_id', user.id)
-        .neq('status', 'open')
         .order('request_id', { ascending: false });
 
       if (myJobData) setMyJobs(myJobData as unknown as CommissionRequest[]);
@@ -125,6 +124,7 @@ export default function CommissionsPage() {
         client:users!client_id ( name, avatar_url )
       `)
       .eq('status', 'open')
+      .is('artist_id', null)
       .order('request_id', { ascending: false });
 
     if (!error && data) setOpenRequests(data as unknown as CommissionRequest[]);
@@ -659,6 +659,15 @@ export default function CommissionsPage() {
                     </div>
                     
                     <div className="flex gap-2">
+                      {job.status === 'open' && (
+                        <button 
+                          onClick={() => setActiveOfferForm(job.request_id)}
+                          className="bg-[#C87941] hover:bg-[#b06a39] text-white px-6 py-2.5 rounded-full font-bold shadow-sm transition-all whitespace-nowrap"
+                        >
+                          Send Offer
+                        </button>
+                      )}
+
                       {job.status === 'awaiting_deposit' && (
                         <span className="text-yellow-600 font-bold text-sm italic">Awaiting client deposit...</span>
                       )}
@@ -673,6 +682,40 @@ export default function CommissionsPage() {
                       )}
                     </div>
                   </div>
+
+                  {/* Direct Request Offer Form */}
+                  {activeOfferForm === job.request_id && (
+                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 mt-4">
+                      <h4 className="font-bold text-[#1C4A5C] mb-3">Submit Your Offer</h4>
+                      <div className="flex flex-col gap-3">
+                        <input type="number" placeholder="Your Price (₱)" className="p-2 border border-gray-200 rounded-md outline-none" value={offerAmount} onChange={(e) => setOfferAmount(e.target.value)} disabled={isSubmitting} />
+                        
+                        <div className="bg-white p-3 rounded-lg border border-gray-100">
+                          <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-tight">Required Deposit: {depositPercentage}% (₱{(parseFloat(offerAmount) || 0) * (depositPercentage / 100)})</label>
+                          <input 
+                            type="range" 
+                            min="10" 
+                            max="100" 
+                            step="5"
+                            value={depositPercentage} 
+                            onChange={(e) => setDepositPercentage(parseInt(e.target.value))}
+                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#C87941]"
+                          />
+                          <div className="flex justify-between text-[10px] text-gray-400 mt-1 font-bold">
+                            <span>10%</span>
+                            <span>50%</span>
+                            <span>100%</span>
+                          </div>
+                        </div>
+
+                        <textarea placeholder="Pitch your ideas to the client..." className="p-2 border border-gray-200 rounded-md min-h-[80px] outline-none" value={offerMessage} onChange={(e) => setOfferMessage(e.target.value)} disabled={isSubmitting} />
+                        <div className="flex gap-2 mt-2">
+                          <button onClick={() => handleSendOffer(job.request_id)} disabled={isSubmitting} className="bg-[#C87941] text-white px-4 py-2 rounded-md font-bold text-sm hover:bg-[#b06a39]">{isSubmitting ? 'Sending...' : 'Confirm Offer'}</button>
+                          <button onClick={() => setActiveOfferForm(null)} disabled={isSubmitting} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md font-bold text-sm hover:bg-gray-300">Cancel</button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))
             )}
