@@ -154,7 +154,7 @@ export default function ProfileGallery({ artworks, posts, reviews, profileName, 
                 >
                   <div className="aspect-square relative overflow-hidden bg-gray-50">
                     <Image 
-                      src={'file_url' in item ? item.file_url : item.image_url} 
+                      src={('file_url' in item ? item.file_url : item.image_url) || '/background.png'} 
                       alt={'title' in item ? item.title : 'Post Image'} 
                       fill 
                       className="object-cover group-hover:scale-105 transition-transform duration-500"
