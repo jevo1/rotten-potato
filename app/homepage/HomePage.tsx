@@ -119,7 +119,7 @@ export default function HomePage() {
   const [selectedArtwork, setSelectedArtwork] = useState<Artwork | null>(null);
 
   // Infinite Scroll State
-  const [page, setPage] = useState(0);
+  const [lastCursor, setLastCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const POSTS_PER_PAGE = 5;
@@ -129,12 +129,13 @@ export default function HomePage() {
     if (loadingPosts || isFetchingMore) return;
     if (observer.current) observer.current.disconnect();
     observer.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasMore) {
-        setPage(prevPage => prevPage + 1);
+      if (entries[0].isIntersecting && hasMore && posts.length > 0) {
+        const lastPost = posts[posts.length - 1];
+        setLastCursor(lastPost.created_at);
       }
     });
     if (node) observer.current.observe(node);
-  }, [loadingPosts, isFetchingMore, hasMore]);
+  }, [loadingPosts, isFetchingMore, hasMore, posts]);
 
   const handleOpenPostDetail = (post: Post) => {
     setSelectedPost(post);
@@ -214,72 +215,101 @@ export default function HomePage() {
     return null;
   };
 
-  const fetchPosts = async (pageNumber: number, isInitial: boolean = false) => {
+  const fetchPosts = async (cursor: string | null = null, isInitial: boolean = false) => {
     if (isInitial) setLoadingPosts(true);
     else setIsFetchingMore(true);
 
-    const { data: { user } } = await supabase.auth.getUser();
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
 
-    const from = pageNumber * POSTS_PER_PAGE;
-    const to = from + POSTS_PER_PAGE - 1;
-
-    const { data, error } = await supabase
-      .from('posts')
-      .select(`
-        post_id,
-        user_id,
-        content,
-        image_url,
-        created_at,
-        users ( name, avatar_url ),
-        likes ( user_id ),
-        comments ( 
-          comment_id,
+      let query = supabase
+        .from('posts')
+        .select(`
+          post_id,
           user_id,
           content,
+          image_url,
           created_at,
-          parent_id,
-          users ( name, avatar_url )
-        )
-      `)
-      .order('created_at', { ascending: false })
-      .range(from, to);
+          users ( name, avatar_url ),
+          likes ( user_id ),
+          comments ( 
+            comment_id,
+            user_id,
+            content,
+            created_at,
+            parent_id,
+            users ( name, avatar_url )
+          )
+        `)
+        .order('created_at', { ascending: false })
+        .limit(POSTS_PER_PAGE);
 
-    if (!error && data) {
-      const formattedPosts = (data as unknown[]).map((post: any) => ({
-        ...post,
-        likes_count: post.likes?.length || 0,
-        comments_count: post.comments?.length || 0,
-        user_has_liked: post.likes?.some((l: { user_id: string }) => l.user_id === user?.id) || false,
-        comments: (post.comments as Comment[])?.sort((a, b) => 
-          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-        ) || []
-      }));
-      
-      setPosts(prev => isInitial ? formattedPosts : [...prev, ...formattedPosts]);
-      setHasMore(data.length === POSTS_PER_PAGE);
+      if (cursor && !isInitial) {
+        query = query.lt('created_at', cursor);
+      }
+
+      const { data, error } = await query;
+
+      if (!error && data) {
+        const formattedPosts = (data as unknown[]).map((post: any) => {
+          const rawUsers = post.users;
+          const users = Array.isArray(rawUsers) ? rawUsers[0] : rawUsers;
+          
+          return {
+            ...post,
+            users,
+            likes_count: post.likes?.length || 0,
+            comments_count: post.comments?.length || 0,
+            user_has_liked: post.likes?.some((l: { user_id: string }) => l.user_id === user?.id) || false,
+            comments: (post.comments as Comment[])?.map(c => ({
+              ...c,
+              users: Array.isArray(c.users) ? c.users[0] : c.users
+            })).sort((a, b) => 
+              new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+            ) || []
+          };
+        });
+        
+        setPosts(prev => {
+          const combined = isInitial ? [...formattedPosts] : [...prev, ...formattedPosts];
+          const seen = new Set();
+          return combined.filter(p => {
+            const id = String(p.post_id);
+            if (seen.has(id)) return false;
+            seen.add(id);
+            return true;
+          });
+        });
+        setHasMore(data.length === POSTS_PER_PAGE);
+      }
+    } catch (err) {
+      console.error("Error fetching posts:", err);
+    } finally {
+      setLoadingPosts(false);
+      setIsFetchingMore(false);
     }
-    
-    setLoadingPosts(false);
-    setIsFetchingMore(false);
   };
 
   useEffect(() => {
-    if (page > 0) {
-      fetchPosts(page);
+    if (lastCursor) {
+      fetchPosts(lastCursor);
     }
-  }, [page]);
+  }, [lastCursor]);
 
   useEffect(() => {
     const postsChannel = supabase
-      .channel('public:posts')
+      .channel('homepage_posts_sync')
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'posts' },
         async (payload) => {
           const newPost = await fetchSinglePost(payload.new.post_id);
           if (newPost) {
-            setPosts(prev => [newPost, ...prev]);
+            setPosts(prev => {
+              const id = String(newPost.post_id);
+              if (prev.some(p => String(p.post_id) === id)) return prev;
+              return [newPost, ...prev];
+            });
           }
         }
       )
@@ -289,7 +319,8 @@ export default function HomePage() {
         async (payload) => {
           const updatedPost = await fetchSinglePost(payload.new.post_id);
           if (updatedPost) {
-            setPosts(prev => prev.map(p => p.post_id === payload.new.post_id ? updatedPost : p));
+            const id = String(payload.new.post_id);
+            setPosts(prev => prev.map(p => String(p.post_id) === id ? updatedPost : p));
           }
         }
       )
@@ -297,7 +328,8 @@ export default function HomePage() {
         'postgres_changes',
         { event: 'DELETE', schema: 'public', table: 'posts' },
         (payload) => {
-          setPosts(prev => prev.filter(p => p.post_id !== payload.old.post_id));
+          const id = String(payload.old.post_id);
+          setPosts(prev => prev.filter(p => String(p.post_id) !== id));
         }
       )
       .subscribe();
@@ -314,7 +346,7 @@ export default function HomePage() {
     try {
       await editPost(postId, editContent);
     } catch {
-      fetchPosts(0, true);
+      fetchPosts(null, true);
     }
   };
 
@@ -324,7 +356,7 @@ export default function HomePage() {
     try {
       await deletePost(postId);
     } catch {
-      fetchPosts(0, true);
+      fetchPosts(null, true);
     }
   };
 
@@ -344,7 +376,7 @@ export default function HomePage() {
     try {
       await deleteComment(commentId);
     } catch {
-      fetchPosts(0, true);
+      fetchPosts(null, true);
     }
   };
 
@@ -370,7 +402,7 @@ export default function HomePage() {
     };
 
     fetchArtworks();
-    fetchPosts(0, true);
+    fetchPosts(null, true);
   }, []);
 
   const handleLike = async (postId: number) => {
@@ -390,7 +422,7 @@ export default function HomePage() {
     try {
       await toggleLike(postId);
     } catch (error) {
-      fetchPosts(0, true);
+      fetchPosts(null, true);
     }
   };
 
@@ -432,7 +464,7 @@ export default function HomePage() {
       await addComment(postId, content, parentId);
     } catch (error) {
       console.error(error);
-      fetchPosts(0, true);
+      fetchPosts(null, true);
     }
   };
 
@@ -469,20 +501,27 @@ export default function HomePage() {
       }
 
       if (!artistsError && artistsData) {
-        const ranked = (artistsData as unknown as ArtistData[]).map((artist) => {
-          const reviews = artist.rating_reviews || [];
-          const totalStars = reviews.reduce((sum: number, r: { rating: number }) => sum + r.rating, 0);
-          const avg = reviews.length > 0 ? (totalStars / reviews.length).toFixed(1) : "0";
-          
-          return {
-            id: artist.user_id,
-            name: artist.name,
-            avatar: artist.avatar_url,
-            specialty: artist.artist_profiles?.[0]?.specialty || 'Creator',
-            rating: parseFloat(avg),
-            reviewCount: reviews.length
-          };
-        }).sort((a, b) => b.rating - a.rating).slice(0, 5);
+        const seenIds = new Set();
+        const ranked = (artistsData as unknown as ArtistData[])
+          .filter(a => {
+            if (seenIds.has(a.user_id)) return false;
+            seenIds.add(a.user_id);
+            return true;
+          })
+          .map((artist) => {
+            const reviews = artist.rating_reviews || [];
+            const totalStars = reviews.reduce((sum: number, r: { rating: number }) => sum + r.rating, 0);
+            const avg = reviews.length > 0 ? (totalStars / reviews.length).toFixed(1) : "0";
+            
+            return {
+              id: artist.user_id,
+              name: artist.name,
+              avatar: artist.avatar_url,
+              specialty: artist.artist_profiles?.[0]?.specialty || 'Creator',
+              rating: parseFloat(avg),
+              reviewCount: reviews.length
+            };
+          }).sort((a, b) => b.rating - a.rating).slice(0, 5);
         
         setTopArtists(ranked);
       }
@@ -523,7 +562,7 @@ export default function HomePage() {
               <>
                 {artworks.map((art, index) => (
                   <div 
-                    key={art.artwork_id}
+                    key={`artwork-${art.artwork_id}`}
                     className={`absolute inset-0 transition-all duration-1000 ease-in-out ${index === currentSlide ? 'opacity-100 scale-100' : 'opacity-0 scale-105 pointer-events-none'}`}
                   >
                     <Image 
@@ -556,7 +595,7 @@ export default function HomePage() {
                 <div className="absolute bottom-8 right-12 flex gap-3">
                   {artworks.map((_, i) => (
                     <button 
-                      key={i} 
+                      key={`indicator-${i}`} 
                       onClick={() => setCurrentSlide(i)}
                       className={`h-1.5 rounded-full transition-all duration-500 ${i === currentSlide ? 'bg-[#f2a83b] w-12' : 'bg-white/30 w-6 hover:bg-white/60'}`}
                     />
@@ -593,8 +632,8 @@ export default function HomePage() {
           
           {loadingPosts ? (
             <div className="space-y-4">
-              {[1, 2].map(i => (
-                <div key={i} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 animate-pulse">
+              {['s1', 's2'].map(i => (
+                <div key={`skeleton-${i}`} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 animate-pulse">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
                     <div className="space-y-2">
@@ -610,7 +649,7 @@ export default function HomePage() {
             <div className="space-y-6">
               {posts.map((post, index) => (
                 <div 
-                  key={post.post_id} 
+                  key={`post-${post.post_id}`} 
                   ref={index === posts.length - 1 ? lastPostElementRef : null}
                   className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
                 >
@@ -779,7 +818,7 @@ export default function HomePage() {
               <p className="text-gray-500 text-[10px] text-center py-4">Loading top creators...</p>
             ) : topArtists && topArtists.length > 0 ? (
               topArtists.map((artist) => (
-                <div key={artist.id} className="bg-white p-2.5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
+                <div key={`artist-${artist.id}`} className="bg-white p-2.5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
                   <Link href={`/profile/${artist.id}`} className="flex items-center gap-2.5 min-w-0 group">
                     {artist.avatar ? (
                       <div className="w-8 h-8 relative flex-none">
