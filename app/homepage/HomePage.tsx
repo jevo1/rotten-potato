@@ -551,9 +551,9 @@ export default function HomePage() {
     <div className="bg-[#FCFAF8] h-[calc(100vh-116px)] overflow-hidden">
       <div className="w-full h-full grid grid-cols-12 pl-0 lg:pl-6">
         {/* Left Column (9 units) */}
-        <div className="col-span-12 lg:col-span-9 overflow-y-auto custom-scrollbar h-full px-6 pt-8 pb-20">
+        <div className="col-span-12 lg:col-span-9 overflow-y-auto custom-scrollbar h-full px-4 md:px-6 pt-6 md:pt-8 pb-32">
           {/* Artwork Carousel */}
-          <div className="relative h-[450px] rounded-3xl overflow-hidden mb-10 shadow-xl group">
+          <div className="relative h-[300px] md:h-[450px] rounded-2xl md:rounded-3xl overflow-hidden mb-6 md:mb-10 shadow-xl group">
             {loading ? (
               <div className="w-full h-full bg-gray-100 animate-pulse flex items-center justify-center">
                 <p className="text-gray-400 font-medium">Loading featured artworks...</p>
@@ -572,32 +572,32 @@ export default function HomePage() {
                       className="object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
-                    <div className="absolute bottom-12 left-12 text-white max-w-xl">
-                      <span className="inline-block bg-[#f2a83b] text-slate-900 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full mb-4">Featured Artwork</span>
-                      <h2 className="text-5xl font-black mb-3 leading-tight">{art.title}</h2>
-                      <p className="text-lg font-medium opacity-90 mb-8 flex items-center gap-2">
+                    <div className="absolute bottom-6 left-6 md:bottom-12 md:left-12 text-white max-w-xl">
+                      <span className="inline-block bg-[#f2a83b] text-slate-900 text-[8px] md:text-[10px] font-black uppercase tracking-widest px-2 md:px-3 py-0.5 md:py-1 rounded-full mb-2 md:mb-4">Featured Artwork</span>
+                      <h2 className="text-2xl md:text-5xl font-black mb-2 md:mb-3 leading-tight">{art.title}</h2>
+                      <p className="text-sm md:text-lg font-medium opacity-90 mb-4 md:mb-8 flex items-center gap-2">
                          by <span className="text-[#f2a83b] font-bold">{art.users?.name}</span>
                       </p>
                       <div className="flex items-center gap-4">
                           <button 
                             onClick={() => setSelectedArtwork(art)}
-                            className="bg-[#f2a83b] text-slate-900 px-10 py-4 rounded-full font-black hover:bg-[#ffbd59] transition-all hover:scale-105 active:scale-95 shadow-lg flex items-center gap-2"
+                            className="bg-[#f2a83b] text-slate-900 px-6 md:px-10 py-2.5 md:py-4 rounded-full font-black text-xs md:text-base hover:bg-[#ffbd59] transition-all hover:scale-105 active:scale-95 shadow-lg flex items-center gap-2"
                           >
                               View Artwork
-                              <ExternalLink size={18} />
+                              <ExternalLink size={14} />
                           </button>
-                          <span className="text-2xl font-black text-white">₱{art.price}</span>
+                          <span className="text-lg md:text-2xl font-black text-white">₱{art.price}</span>
                       </div>
                     </div>
                   </div>
                 ))}
                 {/* Slide Indicators */}
-                <div className="absolute bottom-8 right-12 flex gap-3">
+                <div className="absolute bottom-6 right-6 md:bottom-8 md:right-12 flex gap-2 md:gap-3">
                   {artworks.map((_, i) => (
                     <button 
                       key={`indicator-${i}`} 
                       onClick={() => setCurrentSlide(i)}
-                      className={`h-1.5 rounded-full transition-all duration-500 ${i === currentSlide ? 'bg-[#f2a83b] w-12' : 'bg-white/30 w-6 hover:bg-white/60'}`}
+                      className={`h-1.5 rounded-full transition-all duration-500 ${i === currentSlide ? 'bg-[#f2a83b] w-8 md:w-12' : 'bg-white/30 w-4 md:w-6 hover:bg-white/60'}`}
                     />
                   ))}
                 </div>
@@ -607,6 +607,47 @@ export default function HomePage() {
                 <p className="text-gray-400 italic">No featured artworks available.</p>
               </div>
             )}
+          </div>
+
+          {/* Mobile Top Artists (Stories Style) */}
+          <div className="lg:hidden mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-[#1C4A5C]">Top Artists</h2>
+              <button className="text-[#C87941] text-xs font-bold">See All</button>
+            </div>
+            <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide snap-x">
+              {loadingArtists ? (
+                <div className="flex gap-4">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <div key={i} className="flex flex-col items-center gap-2 min-w-[70px] animate-pulse">
+                      <div className="w-16 h-16 rounded-full bg-gray-200"></div>
+                      <div className="h-2 w-10 bg-gray-100 rounded"></div>
+                    </div>
+                  ))}
+                </div>
+              ) : topArtists.length > 0 ? (
+                topArtists.map((artist) => (
+                  <div 
+                    key={`mobile-artist-${artist.id}`} 
+                    className="flex flex-col items-center gap-2 min-w-[70px] snap-center cursor-pointer"
+                    onClick={() => openMessageModal(artist.id, artist.name)}
+                  >
+                    <div className="w-16 h-16 rounded-full p-0.5 border-2 border-[#f2a83b] relative">
+                      {artist.avatar ? (
+                        <Image src={artist.avatar} alt={artist.name} width={64} height={64} className="rounded-full object-cover aspect-square" />
+                      ) : (
+                        <div className="w-full h-full bg-[#1C4A5C] text-white flex items-center justify-center font-bold rounded-full">
+                          {artist.name?.charAt(0)}
+                        </div>
+                      )}
+                    </div>
+                    <span className="text-[10px] font-bold text-gray-700 truncate w-full text-center">{artist.name.split(' ')[0]}</span>
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-400 text-[10px] italic">No top artists yet.</p>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center justify-between mb-6">

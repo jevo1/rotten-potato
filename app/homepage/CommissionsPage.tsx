@@ -371,7 +371,7 @@ export default function CommissionsPage() {
         </div>
       )}
 
-      <div className="max-w-5xl mx-auto px-6 pt-10">
+      <div className="max-w-5xl mx-auto px-4 md:px-6 pt-10">
         
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">

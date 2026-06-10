@@ -89,7 +89,7 @@ export default function BrowsePage() {
 
   return (
     <div className="bg-[#FCFAF8] min-h-screen w-full text-slate-800 font-sans pb-20">
-      <div className="max-w-7xl mx-auto px-6 pt-10">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 pt-10">
         
         {/* --- Header Section --- */}
         <div className="mb-8">
