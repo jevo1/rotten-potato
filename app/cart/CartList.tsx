@@ -139,50 +139,52 @@ export default function CartList({ initialItems }: CartListProps) {
                     return (
                         <div 
                             key={item.cart_item_id} 
-                            className={`bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex gap-4 items-center transition-opacity ${isUpdating === item.cart_item_id ? 'opacity-50 pointer-events-none' : ''}`}
+                            className={`bg-white p-4 md:p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col sm:flex-row gap-4 sm:items-center transition-opacity ${isUpdating === item.cart_item_id ? 'opacity-50 pointer-events-none' : ''}`}
                         >
-                            {/* Selection Checkbox */}
-                            <input 
-                                type="checkbox" 
-                                checked={selectedIds.includes(item.cart_item_id)}
-                                onChange={() => toggleSelect(item.cart_item_id)}
-                                className="w-5 h-5 rounded border-gray-300 text-[#1C4A5C] focus:ring-[#1C4A5C] cursor-pointer"
-                            />
-
-                            <div className="relative w-24 h-24 rounded-xl overflow-hidden flex-shrink-0 border border-gray-50 bg-gray-100">
-                                <Image 
-                                    src={item.artworks.file_url} 
-                                    alt={item.artworks.title} 
-                                    fill 
-                                    className="object-cover"
+                            <div className="flex items-center gap-4 flex-1">
+                                {/* Selection Checkbox */}
+                                <input 
+                                    type="checkbox" 
+                                    checked={selectedIds.includes(item.cart_item_id)}
+                                    onChange={() => toggleSelect(item.cart_item_id)}
+                                    className="w-5 h-5 rounded border-gray-300 text-[#1C4A5C] focus:ring-[#1C4A5C] cursor-pointer"
                                 />
-                            </div>
-                            
-                            <div className="flex-1 min-w-0">
-                                <h3 className="font-bold text-gray-900 truncate text-lg">{item.artworks.title}</h3>
-                                <p className="text-sm text-gray-500 mb-2">by <span className="text-[#1C4A5C] font-medium">{item.artist_name}</span></p>
-                                <p className="font-bold text-[#C87941] text-lg">₱{(Number(item.artworks.price || 0)).toLocaleString()}</p>
+
+                                <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-xl overflow-hidden flex-shrink-0 border border-gray-50 bg-gray-100">
+                                    <Image 
+                                        src={item.artworks.file_url} 
+                                        alt={item.artworks.title} 
+                                        fill 
+                                        className="object-cover"
+                                    />
+                                </div>
+                                
+                                <div className="flex-1 min-w-0">
+                                    <h3 className="font-bold text-gray-900 truncate text-base md:text-lg tracking-tight">{item.artworks.title}</h3>
+                                    <p className="text-xs text-gray-500 mb-1.5 md:mb-2">by <span className="text-[#1C4A5C] font-bold">{item.artist_name}</span></p>
+                                    <p className="font-black text-[#C87941] text-base md:text-lg tracking-tight">₱{(Number(item.artworks.price || 0)).toLocaleString()}</p>
+                                </div>
                             </div>
 
-                            <div className="flex flex-col sm:flex-row items-center gap-4">
+                            <div className="flex items-center justify-between sm:justify-end gap-4 pt-3 sm:pt-0 border-t sm:border-t-0 border-gray-50">
                                 {/* Quantity Adjuster */}
                                 <div className="flex items-center gap-3 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-100">
                                     <button 
                                         onClick={() => handleUpdateQuantity(item.cart_item_id, item.quantity - 1)}
-                                        className="text-gray-400 hover:text-[#1C4A5C] transition-colors disabled:opacity-20"
+                                        className="text-gray-400 hover:text-[#1C4A5C] transition-colors disabled:opacity-20 p-1"
                                         disabled={item.quantity <= 1 || isUpdating === item.cart_item_id}
                                         aria-label="Decrease quantity"
                                     >
-                                        <Minus size={18} />
+                                        <Minus size={16} />
                                     </button>
-                                    <span className="font-bold text-gray-800 w-6 text-center">{item.quantity}</span>
+                                    <span className="font-bold text-gray-800 w-5 text-center text-sm">{item.quantity}</span>
                                     <button 
                                         onClick={() => handleUpdateQuantity(item.cart_item_id, item.quantity + 1)}
-                                        className="text-gray-400 hover:text-[#1C4A5C] transition-colors"
+                                        className="text-gray-400 hover:text-[#1C4A5C] transition-colors p-1"
                                         disabled={isUpdating === item.cart_item_id}
                                         aria-label="Increase quantity"
                                     >
-                                        <Plus size={18} />
+                                        <Plus size={16} />
                                     </button>
                                 </div>
 
@@ -193,7 +195,7 @@ export default function CartList({ initialItems }: CartListProps) {
                                     disabled={isUpdating === item.cart_item_id}
                                     title="Remove item"
                                 >
-                                    <Trash2 size={20} />
+                                    <Trash2 size={18} />
                                 </button>
                             </div>
                         </div>
@@ -202,31 +204,31 @@ export default function CartList({ initialItems }: CartListProps) {
             </div>
 
             {/* Summary Sidebar */}
-            <div className="w-full lg:w-[380px]">
-                <div className="bg-white p-8 rounded-3xl shadow-sm border border-orange-100 sticky top-24">
-                    <h2 className="text-xl font-bold text-[#1C4A5C] mb-8 flex items-center gap-2">
+            <div className="w-full lg:w-[380px] pb-24 md:pb-0">
+                <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-orange-100 sticky top-24">
+                    <h2 className="text-xl font-black text-[#1C4A5C] mb-6 md:mb-8 flex items-center gap-2">
                         Order Summary
                     </h2>
                     
-                    <div className="space-y-4 mb-10">
-                        <div className="flex justify-between text-gray-600 font-medium">
+                    <div className="space-y-4 mb-8 md:mb-10">
+                        <div className="flex justify-between text-gray-600 font-bold text-sm">
                             <span>Subtotal ({selectedIds.length} items)</span>
                             <span>₱{subtotal.toLocaleString()}</span>
                         </div>
-                        <div className="flex justify-between text-gray-600 font-medium">
+                        <div className="flex justify-between text-gray-600 font-bold text-sm">
                             <span>Shipping</span>
-                            <span className="text-green-600 font-semibold">Free</span>
+                            <span className="text-green-600">Free</span>
                         </div>
                         <div className="pt-6 border-t border-gray-100 flex justify-between items-center">
                             <span className="text-lg font-bold text-gray-900">Total</span>
-                            <span className="text-3xl font-black text-[#C87941]">₱{total.toLocaleString()}</span>
+                            <span className="text-2xl md:text-3xl font-black text-[#C87941] tracking-tight">₱{total.toLocaleString()}</span>
                         </div>
                     </div>
 
                     <button 
                         onClick={handleCheckout}
                         disabled={isCheckingOut || selectedIds.length === 0}
-                        className="w-full bg-[#f2a83b] text-slate-900 py-4 rounded-2xl font-black text-lg hover:bg-[#e09b36] hover:scale-[1.02] transition-all shadow-md active:scale-95 mb-4 flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                        className="w-full bg-[#f2a83b] text-slate-900 py-3.5 md:py-4 rounded-2xl font-black text-base md:text-lg hover:bg-[#e09b36] hover:scale-[1.02] transition-all shadow-xl shadow-orange-100 active:scale-95 mb-4 flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                     >
                         {isCheckingOut ? (
                             <>
@@ -235,19 +237,19 @@ export default function CartList({ initialItems }: CartListProps) {
                             </>
                         ) : (
                             <>
-                                Proceed to Checkout ({selectedIds.length})
+                                Checkout ({selectedIds.length})
                                 <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
                             </>
                         )}
                     </button>
                     
                     <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 mb-6">
-                        <p className="text-[11px] text-[#1C4A5C] leading-relaxed">
+                        <p className="text-[10px] md:text-[11px] text-[#1C4A5C] leading-relaxed font-medium">
                             <span className="font-bold">Selective Checkout:</span> Only the selected items will be purchased. Others will remain in your cart.
                         </p>
                     </div>
 
-                    <p className="text-[10px] text-gray-400 text-center uppercase tracking-widest font-bold">
+                    <p className="text-[9px] md:text-[10px] text-gray-400 text-center uppercase tracking-widest font-black">
                         GamâLokal &bull; Support Local Art
                     </p>
                 </div>

@@ -190,18 +190,18 @@ export default function DashboardPage() {
         <div className="max-w-6xl mx-auto">
 
           {/* Header Dashboard Banner Layout */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
-            <div>
-              <h1 className="text-4xl font-black text-[#1C4A5C] tracking-tight">Creator Studio</h1>
-              <p className="text-gray-500 font-medium mt-1">Manage your professional art portfolio and marketplace ledger.</p>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 md:mb-10">
+            <div className="text-center md:text-left">
+              <h1 className="text-3xl md:text-4xl font-black text-[#1C4A5C] tracking-tight">Creator Studio</h1>
+              <p className="text-sm md:text-gray-500 font-medium mt-1">Manage your professional art portfolio and marketplace ledger.</p>
             </div>
-            <div className="flex gap-3">
-              <Link href="/profile" className="bg-white border-2 border-gray-100 text-gray-700 px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest shadow-sm hover:border-[#1C4A5C] hover:text-[#1C4A5C] transition-all">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Link href="/profile" className="w-full sm:w-auto text-center bg-white border-2 border-gray-100 text-gray-700 px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest shadow-sm hover:border-[#1C4A5C] hover:text-[#1C4A5C] transition-all">
                 View Profile
               </Link>
               <button
                 onClick={() => setIsPostModalOpen(true)}
-                className="bg-[#f2a83b] hover:bg-[#e09b36] text-slate-900 px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest shadow-sm hover:shadow-md transition-all flex items-center gap-2 hover:scale-[1.02] active:scale-95"
+                className="w-full sm:w-auto bg-[#f2a83b] hover:bg-[#e09b36] text-slate-900 px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-95"
               >
                 <ShoppingBag size={18} />
                 New Artwork
@@ -210,16 +210,16 @@ export default function DashboardPage() {
           </div>
 
           {/* Core Analytics Metrics Grid Section */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 md:gap-8">
 
             {/* Sidebar Metrics Widget Panel */}
-            <div className="md:col-span-1 space-y-6">
+            <div className="md:col-span-1 flex flex-col gap-6">
               {/* Box 1: Total Pieces */}
-              <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-xl shadow-gray-200/50">
+              <div className="bg-white p-6 md:p-8 rounded-3xl border border-gray-100 shadow-xl shadow-gray-200/50">
                 <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Total Artworks</h3>
-                <p className="text-5xl font-black text-[#1C4A5C]">{myArtworks?.length || 0}</p>
-                <div className="mt-6 pt-6 border-t border-gray-50">
-                  <p className="text-xs font-bold text-green-500 flex items-center gap-1">
+                <p className="text-4xl md:text-5xl font-black text-[#1C4A5C]">{myArtworks?.length || 0}</p>
+                <div className="mt-4 md:mt-6 pt-4 md:pt-6 border-t border-gray-50">
+                  <p className="text-[10px] md:text-xs font-bold text-green-500 flex items-center gap-1">
                     <CheckCircle size={14} />
                     Active Portfolio
                   </p>
@@ -227,11 +227,11 @@ export default function DashboardPage() {
               </div>
 
               {/* Box 2: Secure Real-time Available Cash Ledger balance tracking card */}
-              <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-xl shadow-gray-200/50 relative overflow-hidden">
+              <div className="bg-white p-6 md:p-8 rounded-3xl border border-gray-100 shadow-xl shadow-gray-200/50 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-24 h-24 bg-[#f2a83b]/10 rounded-full blur-2xl pointer-events-none"></div>
                 <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Available Balance</h3>
-                <p className="text-4xl font-black text-[#C87941]">₱{totalEarnings.toLocaleString()}</p>
-                <div className="mt-6 pt-6 border-t border-gray-50 flex items-center justify-between">
+                <p className="text-3xl md:text-4xl font-black text-[#C87941]">₱{totalEarnings.toLocaleString()}</p>
+                <div className="mt-4 md:mt-6 pt-4 md:pt-6 border-t border-gray-50 flex flex-col sm:flex-row items-center justify-between gap-3">
                   <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1">
                     <Clock size={12} />
                     Net Artist Cut
@@ -248,52 +248,52 @@ export default function DashboardPage() {
             </div>
 
             {/* Main Section Content Pane Layout */}
-            <div className="md:col-span-3 space-y-8">
+            <div className="md:col-span-3 space-y-6 md:space-y-8">
 
               {/* Section A: Active Listings Render Block */}
               <div className="bg-white rounded-3xl border border-gray-100 shadow-xl shadow-gray-200/50 overflow-hidden">
-                <div className="p-8 border-b border-gray-50 bg-[#FCFAF8]/50 flex justify-between items-center">
-                  <h2 className="text-xl font-black text-gray-900 tracking-tight">Active Listings</h2>
-                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest bg-white px-3 py-1 rounded-full border border-gray-100">Live on Market</span>
+                <div className="p-6 md:p-8 border-b border-gray-50 bg-[#FCFAF8]/50 flex flex-col sm:flex-row justify-between items-center gap-4">
+                  <h2 className="text-lg md:text-xl font-black text-gray-900 tracking-tight">Active Listings</h2>
+                  <span className="text-[9px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest bg-white px-3 py-1 rounded-full border border-gray-100">Live on Market</span>
                 </div>
 
-                <div className="p-8">
+                <div className="p-6 md:p-8">
                   {myArtworks && myArtworks.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8">
                       {myArtworks.map((art) => (
                         <div key={art.artwork_id} className="bg-[#FCFAF8]/30 border border-gray-100 rounded-2xl overflow-hidden hover:shadow-2xl hover:shadow-gray-200/80 transition-all duration-300 group flex flex-col">
-                          <div className="h-48 bg-gray-100 relative overflow-hidden">
+                          <div className="h-40 md:h-48 bg-gray-100 relative overflow-hidden">
                             <Image
                               src={art.file_url || '/background.png'}
                               alt={art.title}
                               fill
                               className="object-cover group-hover:scale-110 transition-transform duration-700"
                             />
-                            <div className="absolute top-4 left-4 bg-white px-3 py-1 rounded-full text-[10px] font-black shadow-xl uppercase tracking-widest z-10 text-[#1C4A5C]">
+                            <div className="absolute top-3 left-3 bg-white px-2.5 py-1 rounded-full text-[9px] font-black shadow-xl uppercase tracking-widest z-10 text-[#1C4A5C]">
                               {art.status}
                             </div>
                           </div>
-                          <div className="p-6 flex-1 flex flex-col">
-                            <h3 className="font-black text-lg text-gray-900 truncate tracking-tight">{art.title}</h3>
-                            <p className="text-[#C87941] font-black text-xl mt-1 tracking-tight">₱{art.price.toLocaleString()}</p>
-                            <div className="mt-auto pt-6 flex gap-3">
-                              <button className="flex-1 bg-white hover:bg-gray-50 text-gray-700 py-3 rounded-xl text-xs font-black uppercase tracking-widest border border-gray-100 transition-all shadow-sm">Edit</button>
-                              <button className="flex-1 bg-red-50 hover:bg-red-100 text-red-500 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all">Delete</button>
+                          <div className="p-5 md:p-6 flex-1 flex flex-col">
+                            <h3 className="font-black text-base md:text-lg text-gray-900 truncate tracking-tight">{art.title}</h3>
+                            <p className="text-[#C87941] font-black text-lg md:text-xl mt-1 tracking-tight">₱{art.price.toLocaleString()}</p>
+                            <div className="mt-auto pt-5 flex gap-2 md:gap-3">
+                              <button className="flex-1 bg-white hover:bg-gray-50 text-gray-700 py-2.5 md:py-3 rounded-xl text-[10px] md:text-xs font-black uppercase tracking-widest border border-gray-100 transition-all shadow-sm">Edit</button>
+                              <button className="flex-1 bg-red-50 hover:bg-red-100 text-red-500 py-2.5 md:py-3 rounded-xl text-[10px] md:text-xs font-black uppercase tracking-widest transition-all">Delete</button>
                             </div>
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-20 bg-[#FCFAF8]/50 rounded-2xl border-2 border-dashed border-gray-100">
-                      <div className="w-20 h-20 bg-white rounded-3xl shadow-xl shadow-gray-200/50 flex items-center justify-center mx-auto mb-6">
-                        <ShoppingBag className="text-[#1C4A5C]" size={32} />
+                    <div className="text-center py-16 md:py-20 bg-[#FCFAF8]/50 rounded-2xl border-2 border-dashed border-gray-100">
+                      <div className="w-16 h-16 md:w-20 md:h-20 bg-white rounded-3xl shadow-xl shadow-gray-200/50 flex items-center justify-center mx-auto mb-4 md:mb-6">
+                        <ShoppingBag className="text-[#1C4A5C]" size={28} />
                       </div>
-                      <h3 className="text-xl font-black text-gray-900 mb-2 tracking-tight uppercase">Empty Gallery</h3>
-                      <p className="text-gray-400 text-sm mb-10 font-medium">Your masterpieces are waiting to be listed on the market.</p>
+                      <h3 className="text-lg md:text-xl font-black text-gray-900 mb-2 tracking-tight uppercase">Empty Gallery</h3>
+                      <p className="text-gray-400 text-xs md:text-sm mb-8 md:mb-10 font-medium">Your masterpieces are waiting to be listed on the market.</p>
                       <button
                         onClick={() => setIsPostModalOpen(true)}
-                        className="bg-[#1C4A5C] text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-[#1C4A5C]/20 hover:scale-105 active:scale-95 transition-all"
+                        className="bg-[#1C4A5C] text-white px-8 md:px-10 py-3.5 md:py-4 rounded-2xl font-black text-[10px] md:text-xs uppercase tracking-[0.2em] shadow-xl shadow-[#1C4A5C]/20 hover:scale-105 active:scale-95 transition-all"
                       >
                         Post First Artwork
                       </button>
@@ -304,32 +304,32 @@ export default function DashboardPage() {
 
               {/* Section B: Dynamic Marketplace Transaction Sales Logs Display Box */}
               <div className="bg-white rounded-3xl border border-gray-100 shadow-xl shadow-gray-200/50 overflow-hidden">
-                <div className="p-8 border-b border-gray-50 bg-[#FCFAF8]/50">
-                  <h2 className="text-xl font-black text-gray-900 tracking-tight">Sales & Earnings Log</h2>
-                  <p className="text-xs text-gray-400 font-medium mt-1">Comprehensive settlement statements recorded from the payment gateway webhook.</p>
+                <div className="p-6 md:p-8 border-b border-gray-50 bg-[#FCFAF8]/50">
+                  <h2 className="text-lg md:text-xl font-black text-gray-900 tracking-tight">Sales & Earnings Log</h2>
+                  <p className="text-[10px] md:text-xs text-gray-400 font-medium mt-1">Comprehensive settlement statements recorded from the payment gateway webhook.</p>
                 </div>
-                <div className="p-8">
+                <div className="p-4 md:p-8">
                   {salesHistory.length > 0 ? (
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left border-collapse">
+                    <div className="overflow-x-auto -mx-4 md:mx-0 px-4 md:px-0">
+                      <table className="w-full text-left border-collapse min-w-[500px]">
                         <thead>
-                          <tr className="border-b border-gray-100 text-gray-400 text-[10px] font-black uppercase tracking-widest">
+                          <tr className="border-b border-gray-100 text-gray-400 text-[9px] md:text-[10px] font-black uppercase tracking-widest">
                             <th className="pb-4">Transaction ID</th>
                             <th className="pb-4">Masterpiece Title</th>
                             <th className="pb-4">Settlement Date</th>
                             <th className="pb-4 text-right">Net Credited Amount (90%)</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-50 text-sm font-medium text-gray-700">
+                        <tbody className="divide-y divide-gray-50 text-xs md:text-sm font-medium text-gray-700">
                           {salesHistory.map((sale) => (
                             <tr key={sale.payment_id} className="hover:bg-gray-50/50 transition-colors">
-                              <td className="py-4 font-mono text-xs text-gray-400 flex items-center gap-1">
+                              <td className="py-4 font-mono text-[10px] md:text-xs text-gray-400 flex items-center gap-1">
                                 <ArrowUpRight size={12} className="text-green-500" />
                                 #PAY-{sale.payment_id}
                               </td>
-                              <td className="py-4 font-bold text-[#1C4A5C]">{sale.artworks?.title || 'Custom Commission Workspace'}</td>
-                              <td className="py-4 text-gray-500">{new Date(sale.transaction_date).toLocaleDateString('en-PH', { dateStyle: 'long' })}</td>
-                              <td className="py-4 text-right font-black text-green-600">
+                              <td className="py-4 font-bold text-[#1C4A5C] truncate max-w-[150px]">{sale.artworks?.title || 'Custom Piece'}</td>
+                              <td className="py-4 text-gray-500 whitespace-nowrap">{new Date(sale.transaction_date).toLocaleDateString('en-PH', { dateStyle: 'medium' })}</td>
+                              <td className="py-4 text-right font-black text-green-600 whitespace-nowrap">
                                 +₱{(parseFloat(sale.amount.toString()) * 0.90).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                               </td>
                             </tr>
@@ -338,7 +338,7 @@ export default function DashboardPage() {
                       </table>
                     </div>
                   ) : (
-                    <div className="text-center py-12 text-gray-400 font-medium text-sm">
+                    <div className="text-center py-10 md:py-12 text-gray-400 font-medium text-xs md:text-sm">
                       No customer transactions have logged into your workspace balance metrics statement index yet.
                     </div>
                   )}
