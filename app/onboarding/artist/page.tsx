@@ -27,26 +27,26 @@ export default async function ArtistOnboardingPage() {
     }
 
     return (
-        <div className="bg-[#FCFAF8] min-h-screen w-full flex items-center justify-center p-6 font-sans text-slate-800 relative">
+        <div className="bg-[#FCFAF8] min-h-screen w-full flex items-center justify-center p-0 md:p-6 font-sans text-slate-800 relative">
             
             {/* MAIN CONTAINER - Matches the exact structure of EditProfilePage */}
-            <div className="w-full max-w-2xl bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="w-full max-w-2xl bg-white md:rounded-3xl shadow-sm border-x border-b border-gray-100 overflow-hidden min-h-screen md:min-h-0 self-start md:self-center">
                 
                 {/* Header Banner - Configured with the matching palette */}
-                <div className="bg-[#1C4A5C] p-6 text-white flex items-center justify-between">
+                <div className="bg-[#1C4A5C] p-4 md:p-6 text-white flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <Image
                             src="/logo.png"
                             alt="GamâLokal Logo"
-                            width={32}
-                            height={32}
-                            className="object-contain brightness-0 invert"
+                            width={28}
+                            height={28}
+                            className="md:w-8 md:h-8 object-contain brightness-0 invert"
                         />
                         <div>
-                            <h1 className="text-2xl font-extrabold flex items-center gap-2">
-                                GamâLokal <span className="text-orange-300 font-medium text-sm">Artist Setup</span>
+                            <h1 className="text-xl md:text-2xl font-extrabold flex items-center gap-2">
+                                GamâLokal <span className="text-orange-300 font-medium text-xs md:text-sm">Artist Setup</span>
                             </h1>
-                            <p className="text-sm text-blue-50/80 font-medium mt-1">
+                            <p className="text-[10px] md:text-sm text-blue-50/80 font-medium mt-1">
                                 Set up your workspace parameters to unlock the seller dashboard.
                             </p>
                         </div>
@@ -54,40 +54,40 @@ export default async function ArtistOnboardingPage() {
                 </div>
 
                 {/* Form Elements - Mirroring input layout & transition animations from Edit Profile */}
-                <form action={setupArtistProfile} className="p-8 space-y-6">
+                <form action={setupArtistProfile} className="p-5 md:p-8 space-y-6">
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                            <label className="block text-sm font-bold text-gray-700">Specialty</label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                        <div className="space-y-1.5 md:space-y-2">
+                            <label className="block text-xs md:text-sm font-bold text-gray-700">Specialty</label>
                             <input
                                 name="specialty"
                                 type="text"
                                 required
                                 placeholder="e.g. Oil Painting, Pottery, Weaving"
-                                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#1C4A5C] focus:ring-2 focus:ring-[#1C4A5C]/20 outline-none transition-all"
+                                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-[#1C4A5C] focus:ring-2 focus:ring-[#1C4A5C]/20 outline-none transition-all"
                             />
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="block text-sm font-bold text-gray-700">Location (Barangay)</label>
+                        <div className="space-y-1.5 md:space-y-2">
+                            <label className="block text-xs md:text-sm font-bold text-gray-700">Location (Barangay)</label>
                             <input
                                 name="location"
                                 type="text"
                                 required
                                 placeholder="e.g. Brgy. Guadalupe"
-                                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#1C4A5C] focus:ring-2 focus:ring-[#1C4A5C]/20 outline-none transition-all"
+                                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-[#1C4A5C] focus:ring-2 focus:ring-[#1C4A5C]/20 outline-none transition-all"
                             />
                         </div>
                     </div>
 
                     {/* Integrated clean selection matching your profile configuration */}
-                    <div className="space-y-2">
-                        <label className="block text-sm font-bold text-gray-700">Price Range</label>
+                    <div className="space-y-1.5 md:space-y-2">
+                        <label className="block text-xs md:text-sm font-bold text-gray-700">Price Range</label>
                         <select 
                             name="price_range" 
                             required
                             defaultValue=""
-                            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#1C4A5C] focus:ring-2 focus:ring-[#1C4A5C]/20 outline-none transition-all bg-white cursor-pointer"
+                            className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-[#1C4A5C] focus:ring-2 focus:ring-[#1C4A5C]/20 outline-none transition-all bg-white cursor-pointer"
                         >
                             <option value="" disabled>Select a range</option>
                             <option value="₱ - Budget Friendly (Under ₱500)">₱ - Budget Friendly (Under ₱500)</option>
@@ -96,10 +96,10 @@ export default async function ArtistOnboardingPage() {
                         </select>
                     </div>
 
-                    <div className="pt-6 border-t border-gray-100">
+                    <div className="pt-6 border-t border-gray-100 pb-8 md:pb-0">
                         <button 
                             type="submit" 
-                            className="w-full bg-[#C87941] text-white font-bold py-3.5 rounded-full hover:bg-[#a86536] hover:shadow-md transition-all flex items-center justify-center gap-2"
+                            className="w-full bg-[#C87941] text-white font-black py-3.5 md:py-4 rounded-full text-xs md:text-sm uppercase tracking-widest hover:bg-[#a86536] hover:shadow-md transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-[#C87941]/20"
                         >
                             Complete Studio Setup &rarr;
                         </button>
