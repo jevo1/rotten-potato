@@ -88,8 +88,8 @@ export default function ProfileHeader({
         )}
       </div>
       
-      <div className="px-8 pb-8 relative">
-        <div className="relative -mt-16 mb-4 flex justify-between items-end">
+      <div className="px-6 md:px-8 pb-8 relative">
+        <div className="relative -mt-16 mb-6 flex flex-col md:flex-row md:justify-between items-center md:items-end gap-6 md:gap-0">
           {/* Avatar Container */}
           <div className="w-32 h-32 bg-white rounded-full p-1.5 shadow-lg shrink-0 z-10">
             <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 rounded-full overflow-hidden relative flex items-center justify-center border-2 border-white">
@@ -108,7 +108,7 @@ export default function ProfileHeader({
             </div>
           </div>
           
-          <div className="flex gap-3 mb-2">
+          <div className="flex flex-wrap justify-center gap-3 md:mb-2">
             {isOwner ? (
               <Link href="/profile/edit" className="px-6 py-2.5 bg-white hover:bg-gray-50 text-gray-700 text-sm font-bold rounded-full transition-all border border-gray-200 shadow-sm">
                 Edit Profile
@@ -147,9 +147,9 @@ export default function ProfileHeader({
 
         {/* Info Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="md:col-span-2 space-y-4">
-            <div>
-              <h1 className="text-3xl font-black text-gray-900 tracking-tight flex items-center gap-3">
+          <div className="md:col-span-2 flex flex-col items-center md:items-start space-y-4">
+            <div className="text-center md:text-left">
+              <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight flex items-center justify-center md:justify-start gap-3">
                 {profile.name}
                 {profile.role === 'artist' && (
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="#C87941" stroke="white" strokeWidth="2" className="drop-shadow-sm">
@@ -158,17 +158,17 @@ export default function ProfileHeader({
                 )}
               </h1>
               {artistDetails?.specialty && (
-                <p className="text-[#C87941] font-bold text-lg">{artistDetails.specialty}</p>
+                <p className="text-[#C87941] font-bold text-base md:text-lg">{artistDetails.specialty}</p>
               )}
             </div>
 
             {artistDetails?.bio && (
-              <p className="text-gray-600 leading-relaxed max-w-2xl whitespace-pre-line">
+              <p className="text-gray-600 text-sm md:text-base leading-relaxed max-w-2xl whitespace-pre-line text-center md:text-left">
                 {artistDetails.bio}
               </p>
             )}
 
-            <div className="flex flex-wrap items-center gap-6 text-sm font-medium text-gray-500">
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 md:gap-6 text-sm font-medium text-gray-500">
               <div className="flex items-center gap-1.5">
                 <span className="text-gray-900 font-bold">{followerCount}</span> Followers
               </div>
@@ -198,7 +198,7 @@ export default function ProfileHeader({
           </div>
 
           {/* Social Links Column */}
-          <div className="flex flex-col md:items-end justify-center gap-4">
+          <div className="flex flex-col items-center md:items-end justify-center gap-4">
             {hasSocials && (
               <div className="flex gap-3">
                 {socialLinks.instagram && (
