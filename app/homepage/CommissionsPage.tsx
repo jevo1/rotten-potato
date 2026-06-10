@@ -248,12 +248,12 @@ export default function CommissionsPage() {
   };
 
   return (
-    <div className="bg-[#FCFAF8] min-h-screen w-full text-slate-800 font-sans pb-20 relative">
+    <div className="bg-[#FCFAF8] min-h-screen w-full text-slate-800 font-sans pb-32 md:pb-20 relative">
       
       {/* Success Modal */}
       {successModal.isOpen && (
-        <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-[2rem] p-8 w-full max-w-sm shadow-2xl text-center flex flex-col items-center gap-6">
+        <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-0 md:p-4 backdrop-blur-sm">
+          <div className="bg-white w-full h-full md:h-auto md:max-w-sm md:rounded-[2rem] p-8 shadow-2xl text-center flex flex-col items-center justify-center md:justify-start gap-6 animate-in fade-in zoom-in duration-200">
             <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center text-green-600 animate-pulse">
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
             </div>
@@ -263,7 +263,7 @@ export default function CommissionsPage() {
             </div>
             <button 
               onClick={() => setSuccessModal({ ...successModal, isOpen: false })}
-              className="w-full bg-[#1C4A5C] text-white py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-lg shadow-[#1C4A5C]/20 transition-transform active:scale-95"
+              className="w-full max-w-[240px] bg-[#1C4A5C] text-white py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-lg shadow-[#1C4A5C]/20 transition-transform active:scale-95"
             >
               Great, thanks!
             </button>
@@ -273,41 +273,48 @@ export default function CommissionsPage() {
 
       {/* Post Commission Modal */}
       {isPostingModalOpen && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-lg shadow-xl">
-            <div className="flex justify-between items-center mb-4">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-0 md:p-4">
+          <div className="bg-white w-full h-full md:h-auto md:max-w-lg md:rounded-2xl p-6 md:p-8 shadow-xl flex flex-col animate-in fade-in zoom-in duration-200 overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-[#1C4A5C]">Post a Request</h2>
-              <button onClick={() => setIsPostingModalOpen(false)} className="text-gray-500 hover:text-gray-800 font-bold text-xl">&times;</button>
+              <button onClick={() => setIsPostingModalOpen(false)} className="text-gray-400 hover:text-gray-800 transition-colors">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
             </div>
             
-            <form onSubmit={handlePostRequest} className="flex flex-col gap-4">
+            <form onSubmit={handlePostRequest} className="flex flex-col gap-6">
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">Project Title</label>
-                <input type="text" name="title" required placeholder="e.g. Custom Watercolor Portrait" className="w-full p-2 border border-gray-300 rounded-md outline-none focus:border-[#1C4A5C]" />
+                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Project Title</label>
+                <input type="text" name="title" required placeholder="e.g. Custom Watercolor Portrait" className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl outline-none focus:ring-2 focus:ring-[#1C4A5C]/10 transition-all font-medium" />
               </div>
               
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">Detailed Description</label>
-                <textarea name="description" required rows={4} placeholder="Describe the style, size, references, etc." className="w-full p-2 border border-gray-300 rounded-md outline-none focus:border-[#1C4A5C]"></textarea>
+                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Detailed Description</label>
+                <textarea name="description" required rows={4} placeholder="Describe the style, size, references, etc." className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl outline-none focus:ring-2 focus:ring-[#1C4A5C]/10 transition-all font-medium resize-none"></textarea>
               </div>
 
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <label className="block text-sm font-bold text-gray-700 mb-1">Budget (₱)</label>
-                  <input type="number" name="budget" required placeholder="e.g. 1500" className="w-full p-2 border border-gray-300 rounded-md outline-none focus:border-[#1C4A5C]" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Budget (₱)</label>
+                  <input type="number" name="budget" required placeholder="e.g. 1500" className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl outline-none focus:ring-2 focus:ring-[#1C4A5C]/10 transition-all font-bold" />
                 </div>
-                <div className="flex-1">
-                  <label className="block text-sm font-bold text-gray-700 mb-1">Deadline</label>
-                  <input type="date" name="deadline" required className="w-full p-2 border border-gray-300 rounded-md outline-none focus:border-[#1C4A5C]" />
+                <div>
+                  <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Deadline</label>
+                  <input type="date" name="deadline" required className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl outline-none focus:ring-2 focus:ring-[#1C4A5C]/10 transition-all font-medium" />
                 </div>
               </div>
 
               <button 
                 type="submit" 
                 disabled={isPosting}
-                className="w-full bg-[#C87941] hover:bg-[#b06a39] text-white py-3 rounded-md font-bold mt-4 transition-colors disabled:opacity-50"
+                className="w-full bg-[#C87941] hover:bg-[#b06a39] text-white py-4 rounded-xl font-black uppercase tracking-widest mt-4 transition-all shadow-lg shadow-[#C87941]/20 disabled:opacity-50 active:scale-95 flex items-center justify-center gap-2"
               >
-                {isPosting ? 'Posting...' : 'Post Commission'}
+                {isPosting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Posting...</span>
+                  </>
+                ) : 'Post Commission'}
               </button>
             </form>
           </div>
@@ -316,21 +323,21 @@ export default function CommissionsPage() {
 
       {/* Review Modal */}
       {reviewJob && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl">
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-0 md:p-4 backdrop-blur-sm">
+          <div className="bg-white w-full h-full md:h-auto md:max-w-md md:rounded-[2rem] p-8 shadow-2xl flex flex-col animate-in fade-in zoom-in duration-200 overflow-y-auto">
             <h2 className="text-2xl font-extrabold text-[#1C4A5C] mb-1">Complete Commission</h2>
-            <p className="text-gray-500 text-sm mb-6">Leave a review for <strong className="text-gray-700">{reviewJob.artist?.name || 'the artist'}</strong>.</p>
+            <p className="text-gray-500 text-sm mb-8">Leave a review for <strong className="text-gray-700">{reviewJob.artist?.name || 'the artist'}</strong>.</p>
             
-            <form onSubmit={handleSubmitReview} className="flex flex-col gap-5">
+            <form onSubmit={handleSubmitReview} className="flex flex-col gap-6">
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Rating</label>
-                <div className="flex gap-2">
+                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Your Rating</label>
+                <div className="flex gap-3">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <button
                       key={star}
                       type="button"
                       onClick={() => setRating(star)}
-                      className={`text-3xl transition-transform hover:scale-110 ${star <= rating ? 'text-[#C87941]' : 'text-gray-200'}`}
+                      className={`text-4xl transition-all hover:scale-110 active:scale-90 ${star <= rating ? 'text-[#C87941] drop-shadow-sm' : 'text-gray-200'}`}
                     >
                       ★
                     </button>
@@ -339,29 +346,29 @@ export default function CommissionsPage() {
               </div>
               
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">Your Review</label>
+                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Your Review</label>
                 <textarea 
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
                   required 
-                  rows={3} 
+                  rows={4} 
                   placeholder="How was it working with this artist?" 
-                  className="w-full p-3 border border-gray-200 rounded-xl outline-none focus:border-[#1C4A5C] focus:ring-2 focus:ring-[#1C4A5C]/20 transition-all resize-none"
+                  className="w-full p-4 bg-gray-50 border-none rounded-2xl outline-none focus:ring-2 focus:ring-[#1C4A5C]/10 transition-all resize-none font-medium text-sm"
                 ></textarea>
               </div>
 
-              <div className="flex gap-3 mt-4">
+              <div className="flex flex-col sm:flex-row gap-3 mt-4 pb-10 md:pb-0">
                 <button 
                   type="button" 
                   onClick={() => setReviewJob(null)}
-                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl font-bold transition-colors"
+                  className="flex-1 px-6 py-4 rounded-xl text-sm font-black text-gray-400 hover:bg-gray-50 transition-all uppercase tracking-widest"
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit" 
                   disabled={isReviewing}
-                  className="flex-1 bg-[#1C4A5C] hover:bg-[#143745] text-white py-3 rounded-xl font-bold transition-colors disabled:opacity-50"
+                  className="flex-[2] bg-[#1C4A5C] hover:bg-[#143745] text-white py-4 rounded-xl font-black uppercase tracking-widest transition-all shadow-lg shadow-[#1C4A5C]/20 disabled:opacity-50 active:scale-95"
                 >
                   {isReviewing ? 'Submitting...' : 'Submit Review'}
                 </button>
@@ -374,47 +381,49 @@ export default function CommissionsPage() {
       <div className="max-w-5xl mx-auto px-4 md:px-6 pt-10">
         
         {/* Header Section */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
           <div>
-            <h1 className="text-3xl font-extrabold text-[#1C4A5C] mb-2">Commission Board</h1>
-            <p className="text-gray-500 font-medium">Find clients looking for your specific art style</p>
+            <h1 className="text-2xl md:text-3xl font-extrabold text-[#1C4A5C] mb-2">Commission Board</h1>
+            <p className="text-sm md:text-gray-500 font-medium">Find clients looking for your specific art style</p>
           </div>
           <button 
             onClick={() => setIsPostingModalOpen(true)}
-            className="bg-[#C87941] hover:bg-[#b06a39] text-white px-6 py-2.5 rounded-full font-bold shadow-sm hover:shadow-md transition-all"
+            className="w-full md:w-auto bg-[#C87941] hover:bg-[#b06a39] text-white px-6 py-3 md:py-2.5 rounded-full font-bold shadow-sm hover:shadow-md transition-all text-sm"
           >
             Post Commission Request
           </button>
         </div>
 
         {/* Sub-Tabs */}
-        <div className="flex gap-2 mb-8 bg-gray-100/50 p-1 rounded-xl w-fit border border-gray-200">
-          <button 
-            onClick={() => setActiveSubTab('Browse Requests')}
-            className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all ${
-              activeSubTab === 'Browse Requests' ? 'bg-white text-[#1C4A5C] shadow-sm border border-gray-200' : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            Browse Requests
-          </button>
-          <button 
-            onClick={() => setActiveSubTab('My Requests')}
-            className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all ${
-              activeSubTab === 'My Requests' ? 'bg-white text-[#1C4A5C] shadow-sm border border-gray-200' : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            My Requests
-          </button>
-          {currentUserRole === 'artist' && (
+        <div className="flex overflow-x-auto pb-2 mb-8 scrollbar-hide md:pb-0">
+          <div className="flex gap-2 bg-gray-100/50 p-1 rounded-xl w-fit border border-gray-200 whitespace-nowrap">
             <button 
-              onClick={() => setActiveSubTab('My Jobs')}
+              onClick={() => setActiveSubTab('Browse Requests')}
               className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all ${
-                activeSubTab === 'My Jobs' ? 'bg-white text-[#1C4A5C] shadow-sm border border-gray-200' : 'text-gray-500 hover:text-gray-700'
+                activeSubTab === 'Browse Requests' ? 'bg-white text-[#1C4A5C] shadow-sm border border-gray-200' : 'text-gray-500 hover:text-gray-700'
               }`}
             >
-              My Jobs
+              Browse Requests
             </button>
-          )}
+            <button 
+              onClick={() => setActiveSubTab('My Requests')}
+              className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all ${
+                activeSubTab === 'My Requests' ? 'bg-white text-[#1C4A5C] shadow-sm border border-gray-200' : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              My Requests
+            </button>
+            {currentUserRole === 'artist' && (
+              <button 
+                onClick={() => setActiveSubTab('My Jobs')}
+                className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all ${
+                  activeSubTab === 'My Jobs' ? 'bg-white text-[#1C4A5C] shadow-sm border border-gray-200' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                My Jobs
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Browse Requests Tab */}
@@ -427,7 +436,7 @@ export default function CommissionsPage() {
             ) : (
               openRequests.map((job) => (
                 <div key={job.request_id} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 transition-shadow">
-                  <div className="flex items-start justify-between gap-4 mb-4">
+                  <div className="flex flex-col sm:flex-row items-start justify-between gap-4 mb-4">
                     <div className="flex gap-4">
                       {job.client?.avatar_url ? (
                         <img src={job.client.avatar_url} alt="avatar" className="w-12 h-12 rounded-full border border-gray-100 object-cover" />
@@ -446,17 +455,17 @@ export default function CommissionsPage() {
                     </span>
                   </div>
 
-                  <div className="pl-16">
+                  <div className="pl-0 md:pl-16">
                     <p className="text-sm text-gray-700 mb-5 whitespace-pre-wrap">{job.description}</p>
-                    <div className="flex flex-wrap items-center gap-6 text-xs font-medium text-gray-500 mb-6">
+                    <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6 text-xs font-medium text-gray-500 mb-6">
                       <span className="text-[#C87941] font-bold text-sm">Client Budget: ₱{job.budget}</span>
                       <span>Deadline: {job.deadline ? new Date(job.deadline).toLocaleDateString() : 'Flexible'}</span>
                     </div>
 
                     {job.client_id === currentUserId ? (
-                      <button disabled className="bg-gray-100 text-gray-500 border border-gray-200 px-5 py-2 rounded-full text-sm font-bold cursor-not-allowed">Your Request</button>
+                      <button disabled className="w-full md:w-auto bg-gray-100 text-gray-500 border border-gray-200 px-5 py-2.5 rounded-full text-sm font-bold cursor-not-allowed">Your Request</button>
                     ) : currentUserRole !== 'artist' ? (
-                      <button disabled className="bg-gray-100 text-gray-500 border border-gray-200 px-5 py-2 rounded-full text-sm font-bold cursor-not-allowed">Artists Only</button>
+                      <button disabled className="w-full md:w-auto bg-gray-100 text-gray-500 border border-gray-200 px-5 py-2.5 rounded-full text-sm font-bold cursor-not-allowed">Artists Only</button>
                     ) : activeOfferForm === job.request_id ? (
                       <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 mt-4">
                         <h4 className="font-bold text-[#1C4A5C] mb-3">Submit Your Offer</h4>
@@ -482,14 +491,14 @@ export default function CommissionsPage() {
                           </div>
 
                           <textarea placeholder="Pitch your ideas to the client..." className="p-2 border border-gray-200 rounded-md min-h-[80px] outline-none" value={offerMessage} onChange={(e) => setOfferMessage(e.target.value)} disabled={isSubmitting} />
-                          <div className="flex gap-2 mt-2">
-                            <button onClick={() => handleSendOffer(job.request_id)} disabled={isSubmitting} className="bg-[#C87941] text-white px-4 py-2 rounded-md font-bold text-sm hover:bg-[#b06a39]">{isSubmitting ? 'Sending...' : 'Confirm Offer'}</button>
-                            <button onClick={() => setActiveOfferForm(null)} disabled={isSubmitting} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md font-bold text-sm hover:bg-gray-300">Cancel</button>
+                          <div className="flex flex-col sm:flex-row gap-2 mt-2">
+                            <button onClick={() => handleSendOffer(job.request_id)} disabled={isSubmitting} className="flex-1 bg-[#C87941] text-white px-4 py-2.5 rounded-md font-bold text-sm hover:bg-[#b06a39]">{isSubmitting ? 'Sending...' : 'Confirm Offer'}</button>
+                            <button onClick={() => setActiveOfferForm(null)} disabled={isSubmitting} className="flex-1 bg-gray-200 text-gray-700 px-4 py-2.5 rounded-md font-bold text-sm hover:bg-gray-300">Cancel</button>
                           </div>
                         </div>
                       </div>
                     ) : (
-                      <button onClick={() => setActiveOfferForm(job.request_id)} className="bg-[#C87941] hover:bg-[#b06a39] text-white px-5 py-2 rounded-full text-sm font-bold transition-colors shadow-sm">Send Offer</button>
+                      <button onClick={() => setActiveOfferForm(job.request_id)} className="w-full md:w-auto bg-[#C87941] hover:bg-[#b06a39] text-white px-6 py-2.5 rounded-full text-sm font-bold transition-colors shadow-sm">Send Offer</button>
                     )}
                   </div>
                 </div>
@@ -513,11 +522,11 @@ export default function CommissionsPage() {
             ) : (
               myRequests.map((job) => (
                 <div key={job.request_id} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-4">
-                    <div>
-                      <div className="flex items-center gap-3 mb-1">
+                  <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-4">
+                    <div className="w-full">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-1">
                         <h3 className="text-xl font-bold text-[#1C4A5C]">{job.title || `Request #${job.request_id}`}</h3>
-                        <span className={`px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider ${
+                        <span className={`w-fit px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider ${
                           job.status === 'open' ? 'bg-blue-50 text-blue-600' :
                           job.status === 'awaiting_deposit' ? 'bg-yellow-50 text-yellow-600' :
                           job.status === 'in_progress' ? 'bg-orange-50 text-orange-600' :
@@ -536,11 +545,11 @@ export default function CommissionsPage() {
                       )}
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
                       {job.status === 'awaiting_deposit' && (
                         <button 
                           disabled={isPaying}
-                          className="bg-[#C87941] hover:bg-[#b06a39] text-white px-6 py-2.5 rounded-full font-bold shadow-sm transition-all whitespace-nowrap disabled:opacity-50"
+                          className="w-full sm:w-auto bg-[#C87941] hover:bg-[#b06a39] text-white px-6 py-2.5 rounded-full font-bold shadow-sm transition-all whitespace-nowrap disabled:opacity-50"
                           onClick={() => handleCommissionPayment(job, 'deposit')}
                         >
                           {isPaying ? 'Redirecting...' : 'Pay Deposit'}
@@ -550,14 +559,14 @@ export default function CommissionsPage() {
                       {job.status === 'in_progress' && (
                         <>
                           <button 
-                            className="bg-[#1C4A5C] hover:bg-[#143745] text-white px-6 py-2.5 rounded-full font-bold shadow-sm transition-all whitespace-nowrap"
+                            className="w-full sm:w-auto bg-[#1C4A5C] hover:bg-[#143745] text-white px-6 py-2.5 rounded-full font-bold shadow-sm transition-all whitespace-nowrap"
                             onClick={() => router.push(`/commissions/${job.request_id}`)}
                           >
                             Workspace
                           </button>
                           <button 
                             onClick={() => setReviewJob(job)}
-                            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 rounded-full font-bold shadow-sm transition-all whitespace-nowrap"
+                            className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 rounded-full font-bold shadow-sm transition-all whitespace-nowrap"
                           >
                             Complete & Review
                           </button>
@@ -567,7 +576,7 @@ export default function CommissionsPage() {
                       {job.status === 'awaiting_final_payment' && (
                         <button 
                           disabled={isPaying}
-                          className="bg-[#C87941] hover:bg-[#b06a39] text-white px-6 py-2.5 rounded-full font-bold shadow-sm transition-all whitespace-nowrap disabled:opacity-50"
+                          className="w-full sm:w-auto bg-[#C87941] hover:bg-[#b06a39] text-white px-6 py-2.5 rounded-full font-bold shadow-sm transition-all whitespace-nowrap disabled:opacity-50"
                           onClick={() => handleCommissionPayment(job, 'final')}
                         >
                           {isPaying ? 'Redirecting...' : 'Pay Balance'}
@@ -576,7 +585,7 @@ export default function CommissionsPage() {
 
                       {job.status === 'completed' && (
                         <button 
-                          className="bg-[#1C4A5C] hover:bg-[#143745] text-white px-6 py-2.5 rounded-full font-bold shadow-sm transition-all whitespace-nowrap"
+                          className="w-full sm:w-auto bg-[#1C4A5C] hover:bg-[#143745] text-white px-6 py-2.5 rounded-full font-bold shadow-sm transition-all whitespace-nowrap"
                           onClick={() => router.push(`/commissions/${job.request_id}`)}
                         >
                           Workspace
