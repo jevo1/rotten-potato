@@ -265,11 +265,11 @@ export default function PostDetailModal({
   const topLevelComments = localComments.filter(c => !c.parent_id);
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
-      <div className="bg-white w-full max-w-5xl max-h-[90vh] rounded-[2rem] shadow-2xl overflow-hidden flex flex-col md:flex-row animate-in fade-in zoom-in duration-300">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-0 md:p-4">
+      <div className="bg-white w-full h-full md:h-auto md:max-w-5xl md:max-h-[90vh] md:rounded-[2rem] shadow-2xl overflow-hidden flex flex-col md:flex-row animate-in fade-in zoom-in duration-300">
         
         {/* Left Side: Image */}
-        <div className={`md:w-3/5 bg-black flex items-center justify-center relative ${!post.image_url && 'hidden md:flex'}`}>
+        <div className={`md:w-3/5 bg-black flex items-center justify-center relative min-h-[40vh] md:min-h-0 ${!post.image_url && 'hidden md:flex'}`}>
           {post.image_url ? (
             <Image 
               src={post.image_url} 
@@ -284,33 +284,33 @@ export default function PostDetailModal({
           )}
           <button 
             onClick={onClose}
-            className="absolute top-6 left-6 md:hidden bg-white/80 backdrop-blur-sm p-2 rounded-full text-gray-900 shadow-md"
+            className="absolute top-4 left-4 md:hidden bg-white/80 backdrop-blur-sm p-2 rounded-full text-gray-900 shadow-md z-20"
           >
             <X size={20} />
           </button>
         </div>
 
         {/* Right Side: Content & Interaction */}
-        <div className={`${post.image_url ? 'md:w-2/5' : 'w-full'} flex flex-col bg-white overflow-hidden`}>
+        <div className={`${post.image_url ? 'md:w-2/5' : 'w-full'} flex flex-col bg-white overflow-hidden h-full`}>
           {/* Header */}
-          <div className="p-6 border-b border-gray-50 flex items-center justify-between bg-white shrink-0">
+          <div className="p-4 md:p-6 border-b border-gray-50 flex items-center justify-between bg-white shrink-0">
             <div className="flex items-center gap-3">
               <Link href={`/profile/${post.user_id}`} onClick={onClose}>
-                <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 relative border border-gray-100">
+                <div className="w-8 h-8 md:w-10 md:h-10 rounded-full overflow-hidden bg-gray-100 relative border border-gray-100">
                   {userAvatar ? (
                     <Image src={userAvatar} alt={userName} fill className="object-cover" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center font-bold text-[#1C4A5C] bg-gray-100 uppercase">
+                    <div className="w-full h-full flex items-center justify-center font-bold text-[#1C4A5C] bg-gray-100 uppercase text-xs">
                       {userName.charAt(0)}
                     </div>
                   )}
                 </div>
               </Link>
               <div>
-                <Link href={`/profile/${post.user_id}`} onClick={onClose} className="font-bold text-gray-900 text-sm hover:text-[#1C4A5C] transition-colors leading-none block mb-1">
+                <Link href={`/profile/${post.user_id}`} onClick={onClose} className="font-bold text-gray-900 text-xs md:text-sm hover:text-[#1C4A5C] transition-colors leading-none block mb-1">
                   {userName}
                 </Link>
-                <div className="flex items-center gap-1.5 text-gray-400 text-[10px] font-medium">
+                <div className="flex items-center gap-1.5 text-gray-400 text-[9px] md:text-[10px] font-medium">
                   <Clock size={10} />
                   {formatRelativeTime(post.created_at)}
                 </div>
@@ -325,34 +325,34 @@ export default function PostDetailModal({
           </div>
 
           {/* Body: Post Content + Comments */}
-          <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8 bg-[#FCFAF8]/30">
-            <div className="space-y-4">
-              <span className="bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md">
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6 space-y-6 md:space-y-8 bg-[#FCFAF8]/30">
+            <div className="space-y-3 md:space-y-4">
+              <span className="bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest px-2 py-0.5 md:px-2.5 md:py-1 rounded-md">
                 Social Post
               </span>
-              <p className="text-gray-800 leading-relaxed text-sm whitespace-pre-line font-medium">
+              <p className="text-gray-800 leading-relaxed text-xs md:text-sm whitespace-pre-line font-medium">
                 {post.content}
               </p>
             </div>
 
             {/* Interaction Stats */}
-            <div className="flex items-center gap-6 py-4 border-y border-gray-100">
+            <div className="flex items-center gap-5 md:gap-6 py-3 md:py-4 border-y border-gray-100">
               <button 
                 onClick={handleLike}
-                className={`flex items-center gap-2 text-sm font-bold transition-all ${hasLiked ? 'text-red-500' : 'text-gray-400 hover:text-gray-600'}`}
+                className={`flex items-center gap-1.5 md:gap-2 text-xs md:text-sm font-bold transition-all ${hasLiked ? 'text-red-500' : 'text-gray-400 hover:text-gray-600'}`}
               >
-                <Heart size={20} fill={hasLiked ? "currentColor" : "none"} strokeWidth={2.5} /> 
+                <Heart fill={hasLiked ? "currentColor" : "none"} strokeWidth={2.5} className="w-[18px] h-[18px] md:w-5 md:h-5" /> 
                 {likesCount}
               </button>
-              <div className="flex items-center gap-2 text-sm font-bold text-[#1C4A5C]">
-                <MessageCircle size={20} strokeWidth={2.5} /> 
+              <div className="flex items-center gap-1.5 md:gap-2 text-xs md:text-sm font-bold text-[#1C4A5C]">
+                <MessageCircle strokeWidth={2.5} className="w-[18px] h-[18px] md:w-5 md:h-5" /> 
                 {localComments.length}
               </div>
               <button 
                 onClick={handleShare}
-                className={`flex items-center gap-2 text-sm font-bold transition-all ${isCopied ? 'text-green-600' : 'text-gray-400 hover:text-[#1C4A5C]'}`}
+                className={`flex items-center gap-1.5 md:gap-2 text-xs md:text-sm font-bold transition-all ${isCopied ? 'text-green-600' : 'text-gray-400 hover:text-[#1C4A5C]'}`}
               >
-                <Share2 size={18} />
+                <Share2 className="w-4 h-4 md:w-[18px] md:h-[18px]" />
                 {isCopied ? 'Copied!' : ''}
               </button>
             </div>

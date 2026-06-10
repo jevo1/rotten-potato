@@ -44,43 +44,43 @@ export default function PostArtworkModal({ isOpen, onClose, currentUser }: PostA
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      {/* Modal Container - Fixed Height within Viewport */}
-      <div className="bg-white w-full max-w-2xl max-h-[90vh] rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-0 md:p-4">
+      {/* Modal Container - Full screen on mobile, fixed within viewport on desktop */}
+      <div className="bg-white w-full h-full md:h-auto md:max-w-2xl md:max-h-[90vh] md:rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
         
         {/* Header - Fixed */}
-        <div className="bg-[#1C4A5C] p-6 text-white flex items-center justify-between flex-none">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-white/20 rounded-full overflow-hidden relative shrink-0 border-2 border-white/20">
+        <div className="bg-[#1C4A5C] p-4 md:p-6 text-white flex items-center justify-between flex-none">
+          <div className="flex items-center gap-3 md:gap-4">
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-white/20 rounded-full overflow-hidden relative shrink-0 border-2 border-white/20">
               {currentUser?.avatar_url ? (
                 <Image src={currentUser.avatar_url} alt="Me" fill className="object-cover" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center font-bold text-lg">
+                <div className="w-full h-full flex items-center justify-center font-bold text-base md:text-lg">
                   {currentUser?.name?.charAt(0) || '?'}
                 </div>
               )}
             </div>
             <div>
-              <h1 className="text-xl font-black leading-tight">List an Artwork</h1>
-              <p className="text-xs text-blue-50/70 font-medium mt-0.5">Posting as <span className="text-white font-bold">{currentUser?.name || 'Artist'}</span></p>
+              <h1 className="text-lg md:text-xl font-black leading-tight">List an Artwork</h1>
+              <p className="text-[10px] md:text-xs text-blue-50/70 font-medium mt-0.5">Posting as <span className="text-white font-bold">{currentUser?.name || 'Artist'}</span></p>
             </div>
           </div>
           <button 
             onClick={onClose}
             className="text-white/70 hover:text-white transition-colors bg-white/10 p-2 rounded-full hover:bg-white/20"
           >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            <svg width="20" height="20" className="md:w-6 md:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
         </div>
 
         {/* Scrollable Form Body */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-8">
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-8">
           <form action={handleSubmit} className="space-y-6">
             
             {/* Image Upload Area */}
             <div className="space-y-2">
-              <label className="block text-sm font-black text-gray-700 uppercase tracking-wider">Artwork Image *</label>
-              <div className="relative border-2 border-dashed border-gray-200 rounded-2xl h-72 flex flex-col items-center justify-center bg-gray-50 hover:bg-gray-100 transition-all cursor-pointer overflow-hidden group">
+              <label className="block text-[10px] md:text-sm font-black text-gray-700 uppercase tracking-wider">Artwork Image *</label>
+              <div className="relative border-2 border-dashed border-gray-200 rounded-2xl h-60 md:h-72 flex flex-col items-center justify-center bg-gray-50 hover:bg-gray-100 transition-all cursor-pointer overflow-hidden group">
                 {previewUrl ? (
                   <div className="relative w-full h-full">
                     <Image src={previewUrl} alt="Preview" fill className="object-contain" />
@@ -91,11 +91,11 @@ export default function PostArtworkModal({ isOpen, onClose, currentUser }: PostA
                   </div>
                 ) : (
                   <div className="text-center p-4">
-                    <div className="w-14 h-14 bg-[#1C4A5C]/5 text-[#1C4A5C] rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    <div className="w-12 h-12 md:w-14 md:h-14 bg-[#1C4A5C]/5 text-[#1C4A5C] rounded-2xl flex items-center justify-center mx-auto mb-3 md:mb-4 group-hover:scale-110 transition-transform">
+                      <svg width="24" height="24" className="md:w-7 md:h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                     </div>
-                    <p className="text-sm font-black text-gray-600">Click to upload image</p>
-                    <p className="text-xs text-gray-400 mt-1.5 font-medium">PNG, JPG, or WEBP (Max 5MB)</p>
+                    <p className="text-xs md:text-sm font-black text-gray-600">Click to upload image</p>
+                    <p className="text-[10px] text-gray-400 mt-1 font-medium">PNG, JPG, or WEBP (Max 5MB)</p>
                   </div>
                 )}
                 <input 
@@ -109,25 +109,25 @@ export default function PostArtworkModal({ isOpen, onClose, currentUser }: PostA
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
               <div className="space-y-2">
-                <label className="block text-sm font-black text-gray-700 uppercase tracking-wider">Title *</label>
+                <label className="block text-[10px] md:text-sm font-black text-gray-700 uppercase tracking-wider">Title *</label>
                 <input 
                   type="text" 
                   name="title" 
                   required 
                   placeholder="e.g. Sunset in Lintaon"
-                  className="w-full px-5 py-4 rounded-2xl bg-gray-50 border-none text-sm text-gray-900 font-medium focus:ring-2 focus:ring-[#1C4A5C]/10 outline-none transition-all"
+                  className="w-full px-4 md:px-5 py-3 md:py-4 rounded-2xl bg-gray-50 border-none text-sm text-gray-900 font-medium focus:ring-2 focus:ring-[#1C4A5C]/10 outline-none transition-all"
                 />
               </div>
               <div className="space-y-2">
-                <label className="block text-sm font-black text-gray-700 uppercase tracking-wider">Category *</label>
+                <label className="block text-[10px] md:text-sm font-black text-gray-700 uppercase tracking-wider">Category *</label>
                 <div className="relative">
                   <select 
                     name="category" 
                     required 
                     defaultValue=""
-                    className="w-full px-5 py-4 rounded-2xl bg-gray-50 border-none text-sm text-gray-900 font-medium focus:ring-2 focus:ring-[#1C4A5C]/10 outline-none transition-all appearance-none"
+                    className="w-full px-4 md:px-5 py-3 md:py-4 rounded-2xl bg-gray-50 border-none text-sm text-gray-900 font-medium focus:ring-2 focus:ring-[#1C4A5C]/10 outline-none transition-all appearance-none"
                   >
                     <option value="" disabled>Select a category</option>
                     <option value="Digital">Digital</option>
@@ -140,15 +140,15 @@ export default function PostArtworkModal({ isOpen, onClose, currentUser }: PostA
                     <option value="Crafts">Crafts</option>
                   </select>
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                    <svg width="14" height="14" className="md:w-4 md:h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
               <div className="space-y-2">
-                <label className="block text-sm font-black text-gray-700 uppercase tracking-wider">Price (₱) *</label>
+                <label className="block text-[10px] md:text-sm font-black text-gray-700 uppercase tracking-wider">Price (₱) *</label>
                 <input 
                   type="number" 
                   name="price" 
@@ -156,11 +156,11 @@ export default function PostArtworkModal({ isOpen, onClose, currentUser }: PostA
                   min="0"
                   step="0.01"
                   placeholder="0.00"
-                  className="w-full px-5 py-4 rounded-2xl bg-gray-50 border-none text-sm text-gray-900 font-bold focus:ring-2 focus:ring-[#1C4A5C]/10 outline-none transition-all"
+                  className="w-full px-4 md:px-5 py-3 md:py-4 rounded-2xl bg-gray-50 border-none text-sm text-gray-900 font-bold focus:ring-2 focus:ring-[#1C4A5C]/10 outline-none transition-all"
                 />
               </div>
               <div className="space-y-2">
-                <label className="block text-sm font-black text-gray-700 uppercase tracking-wider">Stock Quantity *</label>
+                <label className="block text-[10px] md:text-sm font-black text-gray-700 uppercase tracking-wider">Stock Quantity *</label>
                 <input 
                   type="number" 
                   name="stock_quantity" 
@@ -168,38 +168,38 @@ export default function PostArtworkModal({ isOpen, onClose, currentUser }: PostA
                   min="1"
                   defaultValue="1"
                   placeholder="e.g. 5"
-                  className="w-full px-5 py-4 rounded-2xl bg-gray-50 border-none text-sm text-gray-900 font-bold focus:ring-2 focus:ring-[#1C4A5C]/10 outline-none transition-all"
+                  className="w-full px-4 md:px-5 py-3 md:py-4 rounded-2xl bg-gray-50 border-none text-sm text-gray-900 font-bold focus:ring-2 focus:ring-[#1C4A5C]/10 outline-none transition-all"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="block text-sm font-black text-gray-700 uppercase tracking-wider">Description</label>
+              <label className="block text-[10px] md:text-sm font-black text-gray-700 uppercase tracking-wider">Description</label>
               <textarea 
                 name="description" 
                 rows={4}
                 placeholder="Tell us about the inspiration, materials used, or dimensions..."
-                className="w-full px-5 py-4 rounded-2xl bg-gray-50 border-none text-sm text-gray-900 font-medium focus:ring-2 focus:ring-[#1C4A5C]/10 outline-none transition-all resize-none placeholder:text-gray-400"
+                className="w-full px-4 md:px-5 py-3 md:py-4 rounded-2xl bg-gray-50 border-none text-sm text-gray-900 font-medium focus:ring-2 focus:ring-[#1C4A5C]/10 outline-none transition-all resize-none placeholder:text-gray-400"
               ></textarea>
             </div>
 
             {/* Sticky/Fixed Footer Action */}
-            <div className="pt-6 border-t border-gray-100 flex gap-4">
+            <div className="pt-6 border-t border-gray-100 flex gap-4 pb-10 md:pb-0">
               <button 
                 type="button"
                 onClick={onClose}
-                className="flex-1 px-6 py-4 rounded-2xl text-sm font-black text-gray-500 hover:bg-gray-100 transition-all uppercase tracking-widest"
+                className="flex-1 px-4 md:px-6 py-3 md:py-4 rounded-2xl text-xs md:text-sm font-black text-gray-500 hover:bg-gray-100 transition-all uppercase tracking-widest"
               >
                 Cancel
               </button>
               <button 
                 type="submit" 
                 disabled={isSubmitting}
-                className="flex-[2] bg-[#1C4A5C] text-white font-black py-4 rounded-2xl hover:bg-[#143745] hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-[#1C4A5C]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 uppercase tracking-widest text-sm"
+                className="flex-[2] bg-[#1C4A5C] text-white font-black py-3 md:py-4 rounded-2xl hover:bg-[#143745] hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-[#1C4A5C]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 md:gap-3 uppercase tracking-widest text-xs md:text-sm"
               >
                 {isSubmitting ? (
                   <>
-                    <div className="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <div className="w-4 h-4 md:w-5 md:h-5 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
                     <span>Listing...</span>
                   </>
                 ) : (

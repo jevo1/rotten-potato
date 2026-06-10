@@ -40,12 +40,12 @@ export default function CreatePostModal({ isOpen, onClose }: CreatePostModalProp
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-0 md:p-4">
+      <div className="bg-white w-full h-full md:h-auto md:max-w-lg md:rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
         
         {/* Header */}
-        <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-[#1C4A5C]">Create Community Post</h2>
+        <div className="p-4 md:p-6 border-b border-gray-100 flex items-center justify-between shrink-0">
+          <h2 className="text-lg md:text-xl font-bold text-[#1C4A5C]">Create Community Post</h2>
           <button 
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-full"
@@ -55,12 +55,12 @@ export default function CreatePostModal({ isOpen, onClose }: CreatePostModalProp
         </div>
 
         {/* Body */}
-        <form action={handleSubmit} className="p-6 space-y-4">
+        <form action={handleSubmit} className="p-4 md:p-6 space-y-4 flex-1 overflow-y-auto">
           <textarea 
             name="content" 
             required
             placeholder="What's on your mind? Share your process or a status update..."
-            className="w-full min-h-[120px] p-4 rounded-2xl bg-gray-50 border-none focus:ring-2 focus:ring-[#1C4A5C]/10 outline-none transition-all resize-none text-sm text-gray-700 placeholder:text-gray-400 font-medium"
+            className="w-full min-h-[150px] md:min-h-[120px] p-4 rounded-2xl bg-gray-50 border-none focus:ring-2 focus:ring-[#1C4A5C]/10 outline-none transition-all resize-none text-sm text-gray-700 placeholder:text-gray-400 font-medium"
           ></textarea>
 
           {/* Image Preview */}
@@ -77,10 +77,10 @@ export default function CreatePostModal({ isOpen, onClose }: CreatePostModalProp
             </div>
           )}
 
-          <div className="flex items-center justify-between pt-2">
+          <div className="flex items-center justify-between pt-2 pb-10 md:pb-0">
             <label className="flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 rounded-full cursor-pointer transition-colors text-gray-600">
               <ImageIcon size={18} />
-              <span className="text-xs font-bold uppercase tracking-wider">Add Photo</span>
+              <span className="text-[10px] md:text-xs font-bold uppercase tracking-wider">Add Photo</span>
               <input 
                 type="file" 
                 name="image" 
@@ -93,7 +93,7 @@ export default function CreatePostModal({ isOpen, onClose }: CreatePostModalProp
             <button 
               type="submit" 
               disabled={isSubmitting}
-              className="bg-[#1C4A5C] text-white font-bold py-2.5 px-8 rounded-full hover:bg-[#143745] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg shadow-[#1C4A5C]/10"
+              className="bg-[#1C4A5C] text-white font-bold py-2 md:py-2.5 px-6 md:px-8 rounded-full hover:bg-[#143745] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg shadow-[#1C4A5C]/10 text-sm"
             >
               {isSubmitting ? (
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
