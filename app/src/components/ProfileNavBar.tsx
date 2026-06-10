@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { NavBar } from '@/app/src/components/NavBar';
 
 interface ProfileNavBarProps {
-  userId: string;
+  userId?: string;
   displayName: string;
   avatarUrl: string | null;
   isArtist: boolean;

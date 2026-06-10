@@ -220,14 +220,13 @@ export const NavBar: React.FC<NavBarProps> = ({
                 {/* Right Side Icons & Profile */}
                 <div className="flex items-center gap-2 md:gap-3 min-w-fit relative">
                     
-                    {/* List Artwork Button */}
+                    {/* List Artwork Button - Desktop Only */}
                     <button
                         onClick={() => setIsPostModalOpen(true)}
-                        className="flex items-center gap-2 bg-[#f2a83b] text-slate-900 px-4 md:px-5 py-2 rounded-full font-bold text-sm hover:bg-[#e09b36] hover:scale-105 transition-all shadow-sm active:scale-95"
+                        className="hidden md:flex items-center gap-2 bg-[#f2a83b] text-slate-900 px-5 py-2 rounded-full font-bold text-sm hover:bg-[#e09b36] hover:scale-105 transition-all shadow-sm active:scale-95"
                     >
                         <Plus size={16} strokeWidth={3} />
-                        <span className="hidden md:inline">List Artwork</span>
-                        <span className="md:hidden">List</span>
+                        <span>List Artwork</span>
                     </button>
 
                     <div className="flex items-center gap-1">
@@ -394,31 +393,78 @@ export const NavBar: React.FC<NavBarProps> = ({
             </nav>
 
             {/* Mobile Bottom Navigation */}
-            <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-6 py-2 flex justify-between items-center z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-                {tabs.map((tab) => {
-                    const Icon = tab.icon;
-                    return (
+            <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 h-16 z-50 shadow-[0_-4px_12px_rgba(0,0,0,0.1)]">
+                <div className="grid grid-cols-5 h-full items-center">
+                    {/* Home */}
+                    <button
+                        onClick={() => setActiveTab(0)}
+                        className={`flex flex-col items-center gap-1 transition-all ${
+                            activeTab === 0 ? 'text-[#1C4A5C]' : 'text-gray-400'
+                        }`}
+                    >
+                        <div className={`p-1 rounded-lg ${activeTab === 0 ? 'bg-slate-100' : ''}`}>
+                            <Home size={22} strokeWidth={activeTab === 0 ? 2.5 : 2} />
+                        </div>
+                        <span className={`text-[10px] font-bold ${activeTab === 0 ? 'opacity-100' : 'opacity-70'}`}>
+                            Home
+                        </span>
+                    </button>
+
+                    {/* Marketplace */}
+                    <button
+                        onClick={() => setActiveTab(1)}
+                        className={`flex flex-col items-center gap-1 transition-all ${
+                            activeTab === 1 ? 'text-[#1C4A5C]' : 'text-gray-400'
+                        }`}
+                    >
+                        <div className={`p-1 rounded-lg ${activeTab === 1 ? 'bg-slate-100' : ''}`}>
+                            <Store size={22} strokeWidth={activeTab === 1 ? 2.5 : 2} />
+                        </div>
+                        <span className={`text-[10px] font-bold ${activeTab === 1 ? 'opacity-100' : 'opacity-70'}`}>
+                            Market
+                        </span>
+                    </button>
+
+                    {/* Center + Button */}
+                    <div className="relative flex justify-center">
                         <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
-                            className={`flex flex-col items-center gap-1 transition-all ${
-                                activeTab === tab.id
-                                    ? 'text-[#1C4A5C]'
-                                    : 'text-gray-400 hover:text-gray-600'
-                            }`}
+                            onClick={() => setIsPostModalOpen(true)}
+                            className="absolute -top-12 w-14 h-14 bg-[#f2a83b] text-slate-900 rounded-full flex items-center justify-center shadow-[0_8px_16px_-4px_rgba(242,168,59,0.5)] active:scale-95 transition-transform border-4 border-[#FCFAF8] z-[60]"
                         >
-                            <div className={`p-1 rounded-lg ${activeTab === tab.id ? 'bg-slate-100' : ''}`}>
-                                <Icon 
-                                    size={22}
-                                    strokeWidth={activeTab === tab.id ? 2.5 : 2}
-                                />
-                            </div>
-                            <span className={`text-[10px] font-bold ${activeTab === tab.id ? 'opacity-100' : 'opacity-70'}`}>
-                                {tab.label}
-                            </span>
+                            <Plus size={28} strokeWidth={3} />
                         </button>
-                    );
-                })}
+                    </div>
+
+                    {/* Commission */}
+                    <button
+                        onClick={() => setActiveTab(2)}
+                        className={`flex flex-col items-center gap-1 transition-all ${
+                            activeTab === 2 ? 'text-[#1C4A5C]' : 'text-gray-400'
+                        }`}
+                    >
+                        <div className={`p-1 rounded-lg ${activeTab === 2 ? 'bg-slate-100' : ''}`}>
+                            <ClipboardList size={22} strokeWidth={activeTab === 2 ? 2.5 : 2} />
+                        </div>
+                        <span className={`text-[10px] font-bold ${activeTab === 2 ? 'opacity-100' : 'opacity-70'}`}>
+                            Service
+                        </span>
+                    </button>
+
+                    {/* Messages */}
+                    <button
+                        onClick={() => setActiveTab(3)}
+                        className={`flex flex-col items-center gap-1 transition-all ${
+                            activeTab === 3 ? 'text-[#1C4A5C]' : 'text-gray-400'
+                        }`}
+                    >
+                        <div className={`p-1 rounded-lg ${activeTab === 3 ? 'bg-slate-100' : ''}`}>
+                            <MessageSquare size={22} strokeWidth={activeTab === 3 ? 2.5 : 2} />
+                        </div>
+                        <span className={`text-[10px] font-bold ${activeTab === 3 ? 'opacity-100' : 'opacity-70'}`}>
+                            Inbox
+                        </span>
+                    </button>
+                </div>
             </div>
 
             <PostArtworkModal 

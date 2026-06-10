@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { sendMessage } from '@/app/actions/index';
+import { ChevronLeft } from 'lucide-react';
 
 type MessageUser = {
   name: string;
@@ -30,6 +31,7 @@ export default function MessagesPage() {
   const [activeConvoId, setActiveConvoId] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showChatOnMobile, setShowChatOnMobile] = useState(false);
   
   const [replyText, setReplyText] = useState('');
   const [isSending, setIsSending] = useState(false);
@@ -201,7 +203,9 @@ export default function MessagesPage() {
       <div className="h-full w-full flex">
         
         {/* --- Conversations Sidebar --- */}
-        <div className="w-full md:w-80 lg:w-96 flex flex-col border-r border-gray-200 bg-white z-20">
+        <div className={`w-full md:w-80 lg:w-96 flex flex-col border-r border-gray-200 bg-white z-20 ${
+          showChatOnMobile ? 'hidden md:flex' : 'flex'
+        }`}>
           <div className="p-6 pb-4">
             <h1 className="text-2xl font-black text-[#1C4A5C] mb-4">Inbox</h1>
             <div className="relative">
@@ -223,7 +227,10 @@ export default function MessagesPage() {
               filteredConversations.map((convo) => (
                 <button
                   key={convo.otherUserId}
-                  onClick={() => setActiveConvoId(convo.otherUserId)}
+                  onClick={() => {
+                    setActiveConvoId(convo.otherUserId);
+                    setShowChatOnMobile(true);
+                  }}
                   className={`w-full text-left p-3.5 rounded-2xl transition-all flex items-center gap-3.5 mb-1 group ${
                     activeConvoId === convo.otherUserId 
                       ? 'bg-[#1C4A5C] text-white shadow-lg shadow-[#1C4A5C]/20' 
@@ -263,12 +270,22 @@ export default function MessagesPage() {
         </div>
 
         {/* --- Chat Window --- */}
-        <div className="flex-1 flex flex-col bg-white overflow-hidden">
+        <div className={`flex-1 flex flex-col bg-white overflow-hidden ${
+          !showChatOnMobile ? 'hidden md:flex' : 'flex'
+        }`}>
           {activeConversation ? (
             <>
               {/* Chat Header */}
               <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-white/80 backdrop-blur-md z-10">
                 <div className="flex items-center gap-4">
+                  {/* Back Button (Mobile Only) */}
+                  <button 
+                    onClick={() => setShowChatOnMobile(false)}
+                    className="md:hidden p-2 -ml-2 text-gray-400 hover:text-[#1C4A5C] transition-colors"
+                  >
+                    <ChevronLeft size={24} strokeWidth={2.5} />
+                  </button>
+
                   <div className="relative">
                     <div className="w-10 h-10 rounded-full bg-[#1C4A5C] text-white flex items-center justify-center font-black shadow-md shadow-[#1C4A5C]/10">
                       {activeConversation.otherUserName.charAt(0)}
@@ -290,7 +307,7 @@ export default function MessagesPage() {
               </div>
 
               {/* Messages History */}
-              <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-4 bg-[#FCFAF8]/40">
+              <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6 space-y-4 bg-[#FCFAF8]/40">
                 {activeConversation.messages.map((msg, index) => {
                   const isMine = msg.sender_id === currentUserId;
                   const prevMsg = activeConversation.messages[index - 1];
@@ -306,7 +323,7 @@ export default function MessagesPage() {
                         </div>
                       )}
                       <div className={`flex ${isMine ? 'justify-end' : 'justify-start'} group animate-in fade-in slide-in-from-bottom-2 duration-300`}>
-                        <div className={`max-w-[80%] md:max-w-[65%] rounded-2xl px-4 py-3 shadow-sm relative ${
+                        <div className={`max-w-[85%] md:max-w-[65%] rounded-2xl px-4 py-3 shadow-sm relative ${
                           isMine 
                             ? 'bg-[#1C4A5C] text-white rounded-tr-none' 
                             : 'bg-white border border-gray-100 text-gray-800 rounded-tl-none'
@@ -321,7 +338,7 @@ export default function MessagesPage() {
               </div>
 
               {/* Reply Form */}
-              <div className="p-6 bg-white border-t border-gray-100">
+              <div className="p-4 md:p-6 bg-white border-t border-gray-100">
                 <form onSubmit={handleSendReply} className="flex flex-row items-center gap-3 w-full max-w-7xl mx-auto">
                   <div className="flex-1">
                     <textarea

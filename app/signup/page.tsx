@@ -17,40 +17,40 @@ export default function SignupPage({ searchParams }: { searchParams: { error?: s
 
       <div className="relative z-10 flex min-h-screen w-full flex-col md:flex-row">
         {/* Left Side: Marketing Text */}
-        <div className="flex flex-1 flex-col justify-end p-8 md:p-16 lg:p-24">
-          <h1 className="mb-4 text-5xl font-extrabold tracking-tight md:text-6xl lg:text-7xl">
+        <div className="hidden md:flex flex-col justify-end p-8 md:p-16 lg:p-24 min-h-[40vh] md:min-h-screen md:flex-1">
+          <h1 className="mb-4 text-3xl font-extrabold tracking-tight md:text-6xl lg:text-7xl">
             It&apos;s time to boost<br />
             <span className="relative inline-block mt-2">
               your creativity
-              <span className="absolute -bottom-2 left-0 h-1.5 w-full bg-teal-500"></span>
+              <span className="absolute -bottom-1 md:-bottom-2 left-0 h-1 md:h-1.5 w-full bg-teal-500"></span>
             </span>
           </h1>
 
-          <div className="mt-12 w-fit rounded-2xl bg-white/10 p-6 backdrop-blur-md border border-white/20">
-            <p className="text-sm text-white/80 mb-2 font-medium">Already a member?</p>
-            <Link href="/login" className="flex items-center text-lg font-bold hover:text-teal-300 transition-colors">
+          <div className="mt-8 md:mt-12 w-fit rounded-2xl bg-white/10 p-5 md:p-6 backdrop-blur-md border border-white/20">
+            <p className="text-xs md:text-sm text-white/80 mb-2 font-medium">Already a member?</p>
+            <Link href="/login" className="flex items-center text-base md:text-lg font-bold hover:text-teal-300 transition-colors">
               Sign in <span className="ml-2">→</span>
             </Link>
           </div>
         </div>
 
         {/* Right Side: Form */}
-        <div className="flex w-full flex-col items-center justify-center bg-white/5 p-8 backdrop-blur-lg border-l border-white/10 md:w-[450px] lg:w-[500px]">
+        <div className="flex w-full flex-col items-center justify-center bg-white/5 p-6 md:p-8 backdrop-blur-lg border-t md:border-t-0 md:border-l border-white/10 md:w-[450px] lg:w-[500px]">
           <div className="w-full max-w-sm">
-            <div className="mb-10 flex items-center justify-center gap-2">
-                      <div className="flex items-center gap-2 text-2xl font-extrabold tracking-tight">
+            <div className="mb-8 md:mb-10 flex items-center justify-center gap-2">
+                      <div className="flex items-center gap-2 text-xl md:text-2xl font-extrabold tracking-tight">
                           <Image 
                             src="/logo.png" 
                             alt="GamâLokal Logo" 
-                            width={40} 
-                            height={40} 
-                            className="object-contain"
+                            width={32} 
+                            height={32} 
+                            className="md:w-10 md:h-10 object-contain"
                           />
                           GamâLokal 
                        </div>
             </div>
 
-            <h2 className="mb-8 text-3xl font-bold tracking-tight">Sign up</h2>
+            <h2 className="mb-6 md:mb-8 text-2xl md:text-3xl font-bold tracking-tight text-center md:text-left">Sign up</h2>
 
             {error && (
               <div className="mb-6 rounded-xl bg-red-500/20 border border-red-500/50 p-4 text-sm text-red-200">
@@ -96,7 +96,7 @@ export default function SignupPage({ searchParams }: { searchParams: { error?: s
               </div>
 
               {/* Role Selection */}
-              <div className="flex items-center justify-between pt-2 px-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 pt-2 px-2">
                 <label className="flex cursor-pointer items-center gap-2">
                   <input type="radio" name="role" value="client" defaultChecked className="h-4 w-4 accent-teal-500" />
                   <span className="text-sm font-medium text-white/90">I want to Buy Art</span>
@@ -135,6 +135,13 @@ export default function SignupPage({ searchParams }: { searchParams: { error?: s
                 Google
               </button>
             </form>
+
+            <Link 
+              href="/login" 
+              className="mt-8 text-center block md:hidden text-white/70 text-sm"
+            >
+              Already a member? <span className="text-white font-bold underline">Sign in</span>
+            </Link>
           </div>
         </div>
       </div>

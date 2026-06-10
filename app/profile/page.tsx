@@ -1,7 +1,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import ProfileNavBar from './ProfileNavBar'
+import ProfileNavBar from '@/app/src/components/ProfileNavBar'
 import ProfileHeader from '@/app/src/components/ProfileHeader'
 import ProfileGallery from '@/app/src/components/ProfileGallery'
 
@@ -59,7 +59,7 @@ export default async function ProfilePage() {
         />
       </div>
 
-      <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-10">
+      <main className="flex-1 max-w-5xl mx-auto w-full px-4 md:px-6 py-6 md:py-10">
         <ProfileHeader 
           profile={profile}
           artistDetails={artistDetails}

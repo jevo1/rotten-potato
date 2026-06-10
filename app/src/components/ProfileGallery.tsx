@@ -66,12 +66,12 @@ export default function ProfileGallery({ artworks, posts, reviews, profileName, 
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 md:space-y-8">
       {/* Filter Tabs */}
-      <div className="flex gap-8 border-b border-gray-100 overflow-x-auto no-scrollbar">
+      <div className="flex gap-4 md:gap-8 border-b border-gray-100 overflow-x-auto no-scrollbar">
         <button 
           onClick={() => setFilter('all')}
-          className={`pb-4 text-sm font-bold transition-all border-b-2 whitespace-nowrap ${
+          className={`pb-4 text-xs md:text-sm font-bold transition-all border-b-2 whitespace-nowrap ${
             filter === 'all' ? 'border-[#1C4A5C] text-[#1C4A5C]' : 'border-transparent text-gray-400 hover:text-gray-600'
           }`}
         >
@@ -79,7 +79,7 @@ export default function ProfileGallery({ artworks, posts, reviews, profileName, 
         </button>
         <button 
           onClick={() => setFilter('artworks')}
-          className={`pb-4 text-sm font-bold transition-all border-b-2 whitespace-nowrap ${
+          className={`pb-4 text-xs md:text-sm font-bold transition-all border-b-2 whitespace-nowrap ${
             filter === 'artworks' ? 'border-[#1C4A5C] text-[#1C4A5C]' : 'border-transparent text-gray-400 hover:text-gray-600'
           }`}
         >
@@ -87,7 +87,7 @@ export default function ProfileGallery({ artworks, posts, reviews, profileName, 
         </button>
         <button 
           onClick={() => setFilter('posts')}
-          className={`pb-4 text-sm font-bold transition-all border-b-2 whitespace-nowrap ${
+          className={`pb-4 text-xs md:text-sm font-bold transition-all border-b-2 whitespace-nowrap ${
             filter === 'posts' ? 'border-[#1C4A5C] text-[#1C4A5C]' : 'border-transparent text-gray-400 hover:text-gray-600'
           }`}
         >
@@ -95,7 +95,7 @@ export default function ProfileGallery({ artworks, posts, reviews, profileName, 
         </button>
         <button 
           onClick={() => setFilter('reviews')}
-          className={`pb-4 text-sm font-bold transition-all border-b-2 whitespace-nowrap ${
+          className={`pb-4 text-xs md:text-sm font-bold transition-all border-b-2 whitespace-nowrap ${
             filter === 'reviews' ? 'border-[#1C4A5C] text-[#1C4A5C]' : 'border-transparent text-gray-400 hover:text-gray-600'
           }`}
         >
@@ -105,32 +105,32 @@ export default function ProfileGallery({ artworks, posts, reviews, profileName, 
 
       {/* Content */}
       {filter === 'reviews' ? (
-        <div className="space-y-6">
+        <div className="space-y-4 md:space-y-6">
           {reviews.length > 0 ? (
             reviews.map((review) => (
-              <div key={review.review_id} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex gap-4">
-                <div className="w-12 h-12 bg-gray-100 rounded-full overflow-hidden shrink-0 relative border border-gray-100">
+              <div key={review.review_id} className="bg-white p-4 md:p-6 rounded-2xl border border-gray-100 shadow-sm flex gap-3 md:gap-4">
+                <div className="w-10 h-10 md:w-12 md:h-12 bg-gray-100 rounded-full overflow-hidden shrink-0 relative border border-gray-100">
                   {review.users?.avatar_url ? (
                     <Image src={review.users.avatar_url} alt={review.users.name} fill className="object-cover" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center font-bold text-gray-400 text-sm">
+                    <div className="w-full h-full flex items-center justify-center font-bold text-gray-400 text-xs md:text-sm">
                       {review.users?.name?.charAt(0)}
                     </div>
                   )}
                 </div>
                 <div className="flex-1">
                   <div className="flex justify-between items-start mb-1">
-                    <h5 className="font-bold text-gray-900">{review.users?.name || 'Anonymous Client'}</h5>
-                    <span className="text-[10px] text-gray-400 font-medium">
+                    <h5 className="font-bold text-sm md:text-base text-gray-900">{review.users?.name || 'Anonymous Client'}</h5>
+                    <span className="text-[9px] md:text-[10px] text-gray-400 font-medium">
                       {new Date(review.created_at).toLocaleDateString()}
                     </span>
                   </div>
                   <div className="flex items-center gap-0.5 text-[#f2a83b] mb-2">
                     {[...Array(5)].map((_, i) => (
-                      <svg key={i} width="12" height="12" viewBox="0 0 24 24" fill={i < review.rating ? "currentColor" : "none"} stroke={i < review.rating ? "none" : "currentColor"} strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                      <svg key={i} viewBox="0 0 24 24" fill={i < review.rating ? "currentColor" : "none"} stroke={i < review.rating ? "none" : "currentColor"} strokeWidth="2" className="w-2.5 h-2.5 md:w-3 md:h-3"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                     ))}
                   </div>
-                  <p className="text-gray-600 text-sm leading-relaxed">
+                  <p className="text-gray-600 text-xs md:text-sm leading-relaxed">
                     {review.comment || 'No comment provided.'}
                   </p>
                 </div>
@@ -146,7 +146,7 @@ export default function ProfileGallery({ artworks, posts, reviews, profileName, 
       ) : (
         <>
           {filteredItems.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
               {filteredItems.map((item, index) => (
                 <div 
                   key={`${item.type}-${('artwork_id' in item ? item.artwork_id : item.post_id) || index}`}
@@ -160,35 +160,35 @@ export default function ProfileGallery({ artworks, posts, reviews, profileName, 
                       className="object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                     {item.type === 'artwork' && 'price' in item && (
-                      <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full shadow-sm">
-                        <span className="text-[#C87941] font-bold text-sm">₱{item.price}</span>
+                      <div className="absolute top-2 md:top-3 right-2 md:right-3 bg-white/90 backdrop-blur-sm px-2 md:px-3 py-0.5 md:py-1 rounded-full shadow-sm">
+                        <span className="text-[#C87941] font-bold text-xs md:text-sm">₱{item.price}</span>
                       </div>
                     )}
-                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <div className="absolute inset-0 bg-black/20 opacity-0 md:group-hover:opacity-100 transition-opacity flex items-center justify-center">
                       <button 
                         onClick={() => handleViewDetails(item)}
-                        className="bg-white text-[#1C4A5C] px-5 py-2 rounded-full font-bold text-sm shadow-xl transform translate-y-2 group-hover:translate-y-0 transition-all"
+                        className="bg-white text-[#1C4A5C] px-4 md:px-5 py-1.5 md:py-2 rounded-full font-bold text-xs md:text-sm shadow-xl transform translate-y-2 md:group-hover:translate-y-0 transition-all"
                       >
                         View Details
                       </button>
                     </div>
                   </div>
-                  <div className="p-4 flex-1 flex flex-col">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-md ${
+                  <div className="p-3 md:p-4 flex-1 flex flex-col">
+                    <div className="flex items-center gap-2 mb-1.5 md:mb-2">
+                      <span className={`text-[9px] md:text-[10px] font-bold uppercase tracking-widest px-1.5 md:px-2 py-0.5 rounded-md ${
                         item.type === 'artwork' ? 'bg-orange-50 text-orange-600' : 'bg-blue-50 text-blue-600'
                       }`}>
                         {item.type}
                       </span>
-                      <span className="text-[10px] text-gray-400 font-medium">
+                      <span className="text-[9px] md:text-[10px] text-gray-400 font-medium">
                         {new Date(item.created_at).toLocaleDateString()}
                       </span>
                     </div>
-                    <h4 className="font-bold text-gray-900 line-clamp-1 group-hover:text-[#1C4A5C] transition-colors">
+                    <h4 className="font-bold text-sm md:text-base text-gray-900 line-clamp-1 group-hover:text-[#1C4A5C] transition-colors">
                       {'title' in item ? item.title : item.content?.split('\n')[0] || 'Untitled Post'}
                     </h4>
                     {('description' in item && item.description) || ('content' in item && item.content) ? (
-                      <p className="text-gray-500 text-xs mt-1 line-clamp-2 leading-relaxed">
+                      <p className="text-gray-500 text-[11px] md:text-xs mt-1 line-clamp-2 leading-relaxed">
                         {'description' in item ? item.description : item.content}
                       </p>
                     ) : null}
