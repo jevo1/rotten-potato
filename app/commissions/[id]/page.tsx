@@ -67,6 +67,8 @@ export default function CommissionWorkspace() {
 
   const isClient = user?.id === commission.client_id;
   const isArtist = user?.id === commission.artist_id;
+  const inTransitStates = ['shipped', 'ready_for_pickup', 'out_for_delivery'];
+  const isInTransit = inTransitStates.includes(commission.shipping_status);
   const acceptedOffer = commission.offers?.find((o: any) => o.status === 'accepted');
   const totalAmount = acceptedOffer?.offer_amount || commission.budget;
   const depositAmount = (totalAmount * (acceptedOffer?.deposit_percentage || 50)) / 100;
@@ -74,10 +76,29 @@ export default function CommissionWorkspace() {
 
   const steps = [
     { label: 'Hired', status: 'completed', icon: CheckCircle },
-    { label: 'Deposit', status: commission.status !== 'awaiting_deposit' ? 'completed' : 'current', icon: Clock },
-    { label: 'In Progress', status: ['in_progress', 'awaiting_final_payment', 'completed'].includes(commission.status) ? 'completed' : 'upcoming', icon: Clock },
-    { label: 'Paid', status: commission.status === 'completed' ? 'completed' : commission.status === 'awaiting_final_payment' ? 'current' : 'upcoming', icon: Clock },
-    { label: 'Delivered', status: commission.shipping_status === 'delivered' ? 'completed' : 'upcoming', icon: Truck },
+    { 
+      label: 'Deposit', 
+      status: commission.status === 'awaiting_deposit' ? 'current' : 'completed', 
+      icon: commission.status === 'awaiting_deposit' ? Clock : CheckCircle 
+    },
+    { 
+      label: 'In Progress', 
+      status: commission.status === 'in_progress' ? 'current' : 
+              ['awaiting_final_payment', 'completed'].includes(commission.status) ? 'completed' : 'upcoming', 
+      icon: commission.status === 'in_progress' ? Clock : (['awaiting_final_payment', 'completed'].includes(commission.status) ? CheckCircle : Clock)
+    },
+    { 
+      label: 'Paid', 
+      status: commission.status === 'awaiting_final_payment' ? 'current' : 
+              commission.status === 'completed' ? 'completed' : 'upcoming', 
+      icon: commission.status === 'awaiting_final_payment' ? Clock : (commission.status === 'completed' ? CheckCircle : Clock)
+    },
+    { 
+      label: 'Delivered', 
+      status: commission.shipping_status === 'delivered' ? 'completed' : 
+              isInTransit ? 'current' : 'upcoming', 
+      icon: Truck 
+    },
   ];
 
   const handlePayDeposit = async () => {
@@ -347,7 +368,7 @@ export default function CommissionWorkspace() {
                     </div>
                     
                     {/* Artist Control for Shipping */}
-                    {isArtist && commission.status === 'completed' && (
+                    {isArtist && commission.status === 'completed' && !isInTransit && commission.shipping_status !== 'delivered' && (
                       <div className="space-y-3 mt-4">
                         {commission.fulfillment_method === 'courier' && (
                           <input 
@@ -372,6 +393,30 @@ export default function CommissionWorkspace() {
                           className="w-full bg-[#1C4A5C] text-white py-3 rounded-xl text-[10px] font-black uppercase tracking-widest"
                         >
                           Update Fulfillment Status
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Delivered Action for Artist */}
+                    {isArtist && isInTransit && (
+                      <div className="mt-4">
+                        <button 
+                          onClick={() => handleUpdateShipping('delivered')}
+                          className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors shadow-lg shadow-green-900/10"
+                        >
+                          Mark as Delivered / Picked Up
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Delivered Action for Client */}
+                    {isClient && isInTransit && (
+                      <div className="mt-4">
+                        <button 
+                          onClick={() => handleUpdateShipping('delivered')}
+                          className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors shadow-lg shadow-green-900/10"
+                        >
+                          Confirm Receipt / Delivery
                         </button>
                       </div>
                     )}
